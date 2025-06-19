@@ -10,25 +10,50 @@ interface BannerProps {
 
 const Banner: React.FC<BannerProps> = ({ title, imageBanner }) => {
   return (
-    <div className="relative w-full">
-      <h1 className="text-2xl text-white transform -translate-x-1/4 -translate-y-1/2 top-1/2 left-1/4 absolute font-bold capitalize">
-        {title}
-      </h1>
-      <div className="w-full h-fit flex items-center justify-center">
-        <Image
-          src={imageBanner}
-          alt={title}
-          className="object-cover w-full h-[200px]"
-          height={400}
-          width={1920}
-          priority
-          sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          quality={75} // Adjust quality for better performance
-          placeholder="blur" // Optional: add a placeholder while the image loads
-          blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA"
-        />
-      </div>
-    </div>
+    <div className="relative w-full h-[400px] max-md:h-[200px]">
+  <h1
+    className="
+      absolute
+      bottom-4
+      h-16
+      w-full
+      flex
+      justify-center
+      items-center
+      bg-primary
+      px-6
+      text-4xl
+      text-white
+      font-semibold
+      capitalize
+      aline
+      max-md:text-lg
+      max-md:h-10
+      max-md:bottom-0
+      tracking-wide
+      drop-shadow-lg
+    "
+  >
+    {title}
+  </h1>
+  <div className="w-full h-full">
+    <Image
+      src={imageBanner}
+      alt={title}
+      className="object-cover w-full h-full"
+      height={400}
+      width={1920}
+      priority
+      sizes="(max-width: 1920px) 100vw, (max-width: 1200px) 50vw, 33vw"
+      quality={100}
+      placeholder="blur"
+      blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA"
+    />
+  </div>
+</div>
+
+
+
   );
 };
 

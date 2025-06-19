@@ -9,7 +9,7 @@ const Headerbottonright = () => {
             <Link className="hover:text-secondary uppercase" href="/productpromotion">
               PROMOTION
             </Link>
-            <Link className="hover:text-secondary uppercase" href="/productcollection">
+            <Link className="hover:text-secondary uppercase" href="/nouveau-product">
             Nouveau PRODUITS
             </Link>
             <Link className="hover:text-secondary " href="/bestproductcollection">

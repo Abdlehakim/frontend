@@ -1,6 +1,6 @@
 // src/app/(your-route)/productsBestCollection.tsx
 import React from "react";
-import ProductCard from "@/components/product/category/ProductCard";
+import ProductCard from "@/components/product/categorie/ProductCard";
 import { fetchData } from "@/lib/fetchData";
 
 interface Product {

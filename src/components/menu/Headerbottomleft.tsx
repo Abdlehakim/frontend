@@ -1,4 +1,3 @@
-// app/components/Headerbottom/Headerbottomleft.tsx
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
@@ -7,25 +6,27 @@ import Link from "next/link";
 import { FaBars } from "react-icons/fa6";
 import { fetchData } from "@/lib/fetchData";
 
-interface Category {
+// Follow src/models/stock/Categorie.ts interface
+export interface Categorie {
   _id: string;
   reference: string;
   name: string;
   slug: string;
   iconUrl?: string | null;
+  imageUrl?: string | null;
+  bannerUrl?: string | null;
 }
 
+// Added iconUrl to subcategories interface
 export interface SubCategorie {
   _id: string;
-  reference: string;
   name: string;
   slug: string;
-  vadmin: "approve" | "not-approve";
-  productCount?: number;
+  iconUrl?: string | null;
 }
 
 interface HeaderbottomleftProps {
-  categories: Category[];
+  categories: Categorie[];
 }
 
 const Headerbottomleft: React.FC<HeaderbottomleftProps> = ({ categories }) => {
@@ -106,39 +107,49 @@ const Headerbottomleft: React.FC<HeaderbottomleftProps> = ({ categories }) => {
           onClick={e => e.stopPropagation()}
         >
           <div className="flex flex-col w-[300px] bg-white z-30">
-            {categories.map(category => (
+            {categories.map(categorie => (
               <div
-                key={category._id}
+                key={categorie._id}
                 className="relative"
-                onMouseEnter={() => handleMouseEnter(category._id)}
+                onMouseEnter={() => handleMouseEnter(categorie._id)}
                 onMouseLeave={() => setActiveCategory(null)}
               >
                 <Link
-                  href={`/${category.slug}`}
+                  href={`/${categorie.slug}`}
                   onClick={closeMenu}
                   className="flex items-center gap-[12px] duration-300 hover:bg-primary hover:text-white p-4"
                 >
-                  {category.iconUrl && (
+                  {categorie.iconUrl && (
                     <Image
-                      src={category.iconUrl}
-                      alt={category.name}
+                      src={categorie.iconUrl}
+                      alt={categorie.name}
                       width={20}
                       height={20}
+                      className="w-[20px] h-[20px]"
                     />
                   )}
-                  <span className="font-bold text-base">{category.name}</span>
+                  <span className="font-bold text-base">{categorie.name}</span>
                 </Link>
 
-                {activeCategory === category._id &&
-                  subcategories[category._id]?.length > 0 && (
+                                {activeCategory === categorie._id &&
+                  subcategories[categorie._id]?.length > 0 && (
                     <div className="absolute top-0 left-full pl-4 w-[300px]">
-                      {subcategories[category._id].map(subCat => (
+                      {subcategories[categorie._id].map(subCat => (
                         <Link
                           key={subCat._id}
-                          href={`/${subCat.slug}`}
-                          onClick={closeMenu}
+                          href={`/${categorie.slug}/${subCat.slug}`}
+                         onClick={closeMenu}
                           className="flex bg-white items-center gap-[12px] duration-300 hover:bg-primary hover:text-white p-4"
                         >
+                          {subCat.iconUrl && (
+                            <Image
+                              src={subCat.iconUrl}
+                              alt={subCat.name}
+                              width={20}
+                              height={20}
+                              className="w-[20px] h-[20px]"
+                            />
+                          )}
                           <span className="font-bold text-base">{subCat.name}</span>
                         </Link>
                       ))}

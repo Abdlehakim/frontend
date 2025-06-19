@@ -1,78 +1,39 @@
-import React from "react";
-import { cache } from "react";
-import SimilarProductCard from "@/components/product/SimilarProductCard";
+// src/app/components/product/SimilarProduct.tsx
 
-interface Product {
-  _id: string;
-  name: string;
-  ref: string;
-  price: number;
-  tva: number;
-  imageUrl: string;
-  images: string[];
-  material: string;
-  color: string;
-  dimensions: string;
-  warranty: string;
-  weight: string;
-  discount?: number;
-  status: string;
-  statuspage: string;
-  vadmin: string;
-  slug: string;
-  nbreview: number;
-  averageRating: number;
-  stock: number;
-  info: string;
-  description: string;
-  boutique: {
-    _id: string;
-    name: string;
-  };
-  brand: {
-    _id: string;
-    name: string;
-  };
-  category: {
-    _id: string;
-    name: string;
-    slug: string;
-  };
-}
+import React from 'react';
+import { fetchData } from '@/lib/fetchData';
+import SimilarProductCard from '@/components/product/SimilarProductCard';
+import { Product } from '@/types/Product';
 
-const fetchSimilarProductsData = cache(async function <T>(endpoint: string): Promise<T> {
-  const backendUrl =
-    process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3000";
-  const res = await fetch(`${backendUrl}${endpoint}`, { cache: "no-store" });
-  if (!res.ok) {
-    throw new Error(`Failed to fetch ${endpoint}`);
-  }
-  return res.json();
-});
+export const revalidate = 60;
 
 interface SimilarProductProps {
-  category: string;
+  categorie: string;
 }
 
-export default async function SimilarProduct({
-  category,
-}: SimilarProductProps) {
+export default async function SimilarProduct({ categorie }: SimilarProductProps) {
+  let products: Product[] = [];
 
-  
-  const SimilarProduct = await fetchSimilarProductsData<Product[]>(
-    `/api/products/SimilarProduct/Similar?categoryId=${category}&limit=4`
-  );
+  try {
+    products = await fetchData<Product[]>(
+      `/products/SimilarProduct/Similar?categorieId=${categorie}&limit=4`
+    );
+  } catch (err) {
+    console.error('Error fetching similar products:', err);
+  }
 
-  if (!SimilarProduct) {
-    return <div>No similar products found.</div>;
+  if (!products.length) {
+    return <div className="text-center py-8">No similar products found.</div>;
   }
 
   return (
-    <div className="flex flex-col items-center w-full gap-[20px]">
-      <h2 className="font-bold text-HomePageTitles text-2xl">
-        Similar Product
-      </h2>
-      <SimilarProductCard products={SimilarProduct} />
-    </div>
+    <section className="flex flex-col items-center w-full gap-5 py-8">
+      <h2 className="font-bold text-HomePageTitles text-2xl">Similar Products</h2>
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-6 w-full max-w-7xl mx-auto">
+        {products.map((product) => (
+          <SimilarProductCard key={product._id} product={product} />
+        ))}
+      </div>
+    </section>
   );
 }

@@ -1,7 +1,7 @@
 // src/app/(client)/ProductPromotionHomePage.tsx
 import React from "react";
 import { fetchData } from "@/lib/fetchData";
-import ProductCard from "@/components/product/category/ProductCard";
+import ProductCard from "@/components/product/categorie/ProductCard";
 
 interface Product {
   _id: string;

@@ -1,0 +1,74 @@
+export interface AttributeValueItem {
+  name: string;
+  value?: string;
+  hex?: string;
+}
+
+export interface ProductDetail {
+  name: string;
+  description?: string | null;
+}
+
+export interface Boutique {
+  _id: string;
+  name: string;
+}
+
+export interface Brand {
+  _id: string;
+  name: string;
+}
+
+export interface Categorie {
+  _id: string;
+  name: string;
+  slug: string;
+}
+
+export interface SubCategorie {
+  _id: string;
+  name: string;
+  slug: string;
+}
+
+export interface Product {
+  _id: string;
+  name: string;
+  info?: string | null;
+  description?: string | null;
+  reference: string;
+  slug: string;
+
+  categorie?: Categorie | null;
+  subCategorie?: SubCategorie | null;
+  boutique?: Boutique | null;
+  brand?: Brand | null;
+
+  stock: number;
+  price: number;
+  tva: number;
+  discount?: number;
+  stockStatus: 'in stock' | 'out of stock';
+  statuspage: 'none' | 'New-Products' | 'promotion' | 'best-collection';
+  vadmin: 'not-approve' | 'approve';
+
+  mainImageUrl: string;
+  mainImageId?: string | null;
+  extraImagesUrl: string[];
+  extraImagesId: string[];
+
+  nbreview: number;
+  averageRating: number;
+
+  createdBy: string;
+  updatedBy?: string | null;
+  createdAt: string;
+  updatedAt: string;
+
+  attributes: Array<{
+    attributeSelected: string;
+    value: string | AttributeValueItem[];
+  }>;
+
+  productDetails: ProductDetail[];
+}

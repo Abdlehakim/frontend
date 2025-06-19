@@ -9,74 +9,8 @@ import { addItem } from "@/store/cartSlice";
 import ReviewClient from "@/components/product/reviews/ReviewClient";
 import { addToWishlist } from "@/store/wishlistSlice";
 import { RootState } from "@/store";
-
-interface Product {
-  _id: string;
-  name: string;
-  info: string;
-  description?: string;
-
-  reference: string;
-  slug: string;
-
-  categorie: {
-    _id: string;
-    name: string;
-    slug: string;
-  };
-
-  subcategorie?: {
-    _id: string;
-    name: string;
-    slug: string;
-  } | null;
-
-  boutique?: {
-    _id: string;
-    name: string;
-  } | null;
-
-  brand?: {
-    _id: string;
-    name: string;
-  } | null;
-
-  stock: number;
-  price: number;
-  tva: number;
-  discount: number;
-
-  stockStatus: "in stock" | "out of stock";
-  statuspage: "none" | "New-Products" | "promotion" | "best-collection";
-  vadmin: "not-approve" | "approve";
-
-  mainImageUrl: string;
-  mainImageId?: string | null;
-  extraImagesUrl: string[];
-  extraImagesId: string[];
-
-  nbreview: number;
-  averageRating: number;
-
-  attributes: Array<{
-    attributeSelected: string;
-    value:
-      | string
-      | Array<{ name: string; value: string }>
-      | Array<{ name: string; hex: string }>
-      | Record<string, string>;
-  }>;
-
-  productDetails: Array<{
-    name: string;
-    description?: string;
-  }>;
-
-  createdBy: string;
-  updatedBy?: string | null;
-  createdAt: string;
-  updatedAt: string;
-}
+import { Product } from "@/types/Product";
+import type { CartItem } from "@/store/cartSlice";
 
 interface ProductCardProps {
   products: Product[];
@@ -90,14 +24,15 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
     wishlistItems.some((item) => item.slug === slug);
 
   const handleWishlistClick = (product: Product) => {
+    if (!product.categorie) return;
     dispatch(
       addToWishlist({
         name: product.name,
         mainImageUrl: product.mainImageUrl,
         price: product.price,
         categorie: {
-          name: product.categorie.name ?? "Unknown",
-          slug: product.categorie.slug ?? "uncategorized",
+          name: product.categorie.name,
+          slug: product.categorie.slug,
         },
         slug: product.slug,
       })
@@ -114,15 +49,15 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
         const isOutOfStock =
           product.stockStatus === "out of stock" || product.stock === 0;
 
+        const categorieSlug = product.categorie?.slug ?? "categorie";
+
         return (
           <div
             key={product._id}
-            className="group-hover:scale-[0.9] hover:!scale-100 h-[520px] flex gap-[10px] flex-col duration-500"
+            className="group-hover:scale-[0.9] hover:!scale-[1.1] h-[520px] flex gap-[10px] flex-col transform scale-transform duration-200 ease-in-out"
           >
             {/* Product Image / Link */}
-            <Link
-              href={`/${product.categorie.slug ?? "categorie"}/${product.slug}`}
-            >
+            <Link href={`/${categorieSlug}/${product.slug}`}> 
               <Image
                 className="w-full h-[380px] mx-auto top-5 object-cover"
                 src={product.mainImageUrl ?? "/placeholder.png"}
@@ -134,11 +69,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
 
             {/* Product Info */}
             <div className="flex-col flex px-2 w-full h-[200px]">
-              <Link
-                href={`/${product.categorie.slug ?? "categorie"}/${
-                  product.slug
-                }`}
-              >
+              <Link href={`/${categorieSlug}/${product.slug}`}> 
                 <div className="flex justify-between h-[65px] max-sm:h-16 max-md:h-20">
                   <div className="flex-col flex gap-[4px]">
                     <p className="text-2xl max-md:text-lg font-bold capitalize">
@@ -172,11 +103,28 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
             <div className="flex text-lg max-md:text-sm justify-between h-[45px]">
               {/* Add to Cart Button */}
               <button
-                onClick={() => {
-                  if (isOutOfStock) return;
-                  const cartItem = { ...product, ref: product.reference };
-                  dispatch(addItem({ item: cartItem, quantity: 1 }));
-                }}
+  onClick={() => {
+    if (isOutOfStock) return;
+
+    const cartItem: Omit<CartItem, "quantity"> = {
+      _id:          product._id,
+      name:         product.name,
+      reference:    product.reference,
+      price:        product.price,
+      mainImageUrl: product.mainImageUrl,
+      discount:     product.discount ?? 0,
+      slug:         product.slug,
+      // map `product.categorie` → `cartItem.categorie`, or leave `undefined`
+      categorie: product.categorie
+        ? {
+            name: product.categorie.name,
+            slug: product.categorie.slug,
+          }
+        : undefined,
+    };
+
+    dispatch(addItem({ item: cartItem, quantity: 1 }));
+  }}
                 className={`AddtoCart w-[50%] max-lg:w-[60%] max-md:rounded-[3px] group/box relative ${
                   isOutOfStock
                     ? "bg-gray-400 cursor-not-allowed"
@@ -196,9 +144,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
 
               {/* View Button */}
               <Link
-                href={`/${product.categorie.slug ?? "categorie"}/${
-                  product.slug
-                }`}
+                href={`/${categorieSlug}/${product.slug}`}
                 className="w-[25%] max-lg:w-[30%] relative"
               >
                 <button className="AddtoCart bg-white max-md:rounded-[3px] h-full w-full group/box text-primary border border-primary">

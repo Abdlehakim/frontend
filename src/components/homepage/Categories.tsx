@@ -56,7 +56,7 @@ export default async function CategoriesPage() {
             </p>
           </div>
 
-          <div className="grid grid-cols-5 gap-[16px] w-full max-xl:grid-cols-3 max-lg:grid-cols-3 max-md:grid-cols-3">
+          <div className="grid grid-cols-6 gap-[16px] w-full max-xl:grid-cols-3 max-lg:grid-cols-3 max-md:grid-cols-3">
             {categories.map((category) => (
               <Link
                 key={category._id}

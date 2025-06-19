@@ -1,14 +1,14 @@
-// src/app/bestproductcollection/page.tsx
+// src/app/nouveau-product/page.tsx
 
-import Banner from "@/components/Banner";
 import ProductSectionByCollection from "@/components/product/collection/ProductSectionByCollection";
+import Banner from "@/components/Banner";
 import { fetchData } from "@/lib/fetchData";
 
 export const revalidate = 60;
 
-interface BestProductBanner {
-  BCbannerTitle?: string | null;
-  BCbannerImgUrl?: string | null;
+interface NewProductsBanner {
+  NPBannerTitle?: string | null;
+  NPBannerImgUrl?: string | null;
 }
 
 interface Product {
@@ -40,21 +40,21 @@ interface Product {
   category: { _id: string; name: string; slug: string };
 }
 
-export default async function BestProductCollectionPage() {
-  const bannerData: BestProductBanner = await fetchData<BestProductBanner>(
-    "NavMenu/BestProductCollection/getBestProductBannerData"
-  ).catch(() => ({} as BestProductBanner));
+export default async function NewProductsPage() {
+  const bannerData: NewProductsBanner = await fetchData<NewProductsBanner>(
+    "NavMenu/NewProducts/getNewProductsBannerData"
+  ).catch(() => ({} as NewProductsBanner));
 
   const products: Product[] = await fetchData<Product[]>(
-    "NavMenu/BestProductCollection/getBestProductCollection"
+    "NavMenu/NewProducts/getNewProducts"
   ).catch(() => [] as Product[]);
 
   return (
     <>
-      {bannerData.BCbannerTitle && bannerData.BCbannerImgUrl && (
+      {bannerData.NPBannerTitle && bannerData.NPBannerImgUrl && (
         <Banner
-          title={bannerData.BCbannerTitle}
-          imageBanner={bannerData.BCbannerImgUrl}
+          title={bannerData.NPBannerTitle}
+          imageBanner={bannerData.NPBannerImgUrl}
         />
       )}
 

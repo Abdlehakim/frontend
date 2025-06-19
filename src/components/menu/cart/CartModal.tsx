@@ -1,9 +1,11 @@
+"use client";
+
 import React, { useMemo, useCallback, useState, useEffect } from "react";
 import Image from "next/image";
 import { FaRegTrashAlt } from "react-icons/fa";
 import Link from "next/link";
 import { useDispatch } from "react-redux";
-import { removeItem, updateItemQuantity, CartItem } from "@/store/cartSlice"; // Import CartItem from your Redux slice
+import { removeItem, updateItemQuantity, CartItem } from "@/store/cartSlice";
 import Pagination from "@/components/PaginationClient";
 
 interface CartModalProps {
@@ -17,14 +19,13 @@ const CartModal: React.FC<CartModalProps> = ({ items, onClose }) => {
   const totalPrice = useMemo(() => {
     return items.reduce((total, item) => {
       const finalPrice =
-        item.discount && item.discount > 0
+        item.discount > 0
           ? item.price - (item.price * item.discount) / 100
           : item.price;
       return total + finalPrice * item.quantity;
     }, 0);
   }, [items]);
 
-  // Increment item quantity (removed stock check)
   const incrementHandler = useCallback(
     (item: CartItem, event: React.MouseEvent) => {
       event.stopPropagation();
@@ -69,7 +70,6 @@ const CartModal: React.FC<CartModalProps> = ({ items, onClose }) => {
     );
   }, [items, currentPage, itemsPerPage]);
 
-  // Ensure that the current page is within bounds when items change
   useEffect(() => {
     if (currentPage > totalPages) {
       setCurrentPage(totalPages);
@@ -102,14 +102,16 @@ const CartModal: React.FC<CartModalProps> = ({ items, onClose }) => {
             >
               <Image
                 className="object-cover"
-                src={item.imageUrl || "/path/to/default-image.jpg"}
+                src={item.mainImageUrl || "/path/to/default-image.jpg"}
                 alt={item.name}
                 width={60}
                 height={60}
               />
               <div className="text-black flex-col flex gap-[8px]">
                 <p className="text-sm font-bold">{item.name}</p>
-                <p className="text-gray-800 text-xs">Quantity: {item.quantity}</p>
+                <p className="text-gray-800 text-xs">
+                  Quantity: {item.quantity}
+                </p>
                 <p className="text-gray-800 text-xs">
                   Price Unit: TND{" "}
                   {(
@@ -140,7 +142,7 @@ const CartModal: React.FC<CartModalProps> = ({ items, onClose }) => {
                   className="flex gap-[8px] items-center justify-center hover:bg-[#15335E] border-2 border-[#15335E] rounded text-black hover:text-white cursor-pointer"
                   onClick={(event) => removeCartHandler(item._id, event)}
                 >
-                  <span className="">Remove</span>
+                  <span>Remove</span>
                   <FaRegTrashAlt size={15} />
                 </button>
               </div>

@@ -59,7 +59,7 @@ const StoresCard: React.FC<StoresCardProps> = ({ store, itemsPerSlide }) => {
         )}
 
         {/* Overlay Info – hidden until hover */}
-        <div className="absolute inset-0 bg-black bg-opacity-70 flex flex-col justify-start items-start px-20 py-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+        <div className="absolute inset-0 bg-black bg-opacity-70 flex flex-col justify-start items-start px-20 py-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100 rounded-xl">
           <h2 className="text-2xl font-bold uppercase text-white mb-4">
             {store.name}
           </h2>

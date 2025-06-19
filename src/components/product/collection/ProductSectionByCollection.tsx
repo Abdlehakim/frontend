@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import ProductCard from "@/components/product/category/ProductCard";
+import ProductCard from "@/components/product/categorie/ProductCard";
 import FilterProducts from "@/components/product/filter/FilterProducts";
 import Pagination from "@/components/PaginationClient";
 import FilterPriceOrder from "@/components/product/filter/FilterPriceOrder";
