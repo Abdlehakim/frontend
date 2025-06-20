@@ -7,7 +7,7 @@ interface OrderPriceProps {
 
 const FilterPriceOrder: React.FC<OrderPriceProps> = ({ setSortOrder, sortOrder }) => {
   return (
-    <div className="gap-[8px] flex items-center justify-end">
+    <div className="gap-[8px] flex items-center justify-end my-8">
       <label htmlFor="sort-order" className="font-bold">
         Trier par prix :
       </label>

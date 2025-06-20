@@ -25,15 +25,16 @@ export default async function HomePage() {
   const image = bannerData.HPbannerImgUrl?.trim() ?? "";
 
   return (
-    <>
+    <div className="flex flex-col jsutify-start gap-10">
       {/* Only show banner when both title and image exist */}
       {title && image && <Banner title={title} imageBanner={image} />}
+
       <Categories />
       <NewProductCollection />
       <BestProductCollection />
       <ProductInPromotionCollection />
       <Brands />
       <Stores />
-    </>
+    </div>
   );
 }

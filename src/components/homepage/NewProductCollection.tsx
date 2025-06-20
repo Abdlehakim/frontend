@@ -24,7 +24,7 @@ export default async function NewProductCollection() {
   return (
     <>
       {products.length > 0 && (
-        <div className="desktop max-lg:w-[95%] flex flex-col justify-center items-center gap-[40px] py-8">
+        <div className="desktop max-lg:w-[95%] flex flex-col justify-center items-center gap-[30px] py-8">
           <div className="col-span-full flex flex-col items-center gap-[8px]">
             <h2 className="font-bold text-HomePageTitles text-2xl">
               {productData.HPNewProductTitle}

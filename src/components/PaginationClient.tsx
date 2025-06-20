@@ -49,7 +49,7 @@ const PaginationClient: React.FC<PaginationProps> = ({
   };
 
   return (
-    <div className="flex justify-center items-center gap-[8px] w-full h-[70px]">
+    <div className="flex justify-center items-center gap-[8px] w-full h-[70px] my-8">
       {/* Previous button */}
       <div
         className={`flex justify-end items-center  gap-[4px] cursor-pointer w-20 ${
@@ -67,8 +67,8 @@ const PaginationClient: React.FC<PaginationProps> = ({
           <p
             key={index}
             onClick={() => handlePageChange(page)}
-            className={`cursor-pointer text-lg rounded w-8 h-10 text-center content-center ${
-              currentPage === page ? 'bg-black text-white' : ''
+            className={`cursor-pointer text-lg rounded w-8 h-8 text-center content-center ${
+              currentPage === page ? 'bg-primary text-white' : ''
             }`}
           >
             {page}

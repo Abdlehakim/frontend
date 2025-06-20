@@ -1,11 +1,12 @@
+// src/components/homepage/Stores.tsx
 import React from "react";
-import { cache } from "react";
 import StoresCarousel from "@/components/OurStores/StoresCarousel";
+import { fetchData } from "@/lib/fetchData";
 
-// We can revalidate every 60 seconds (ISR)
+// Revalidate every 60 seconds (ISR)
 export const revalidate = 60;
 
-// TypeScript interface matching your store documents:
+// TypeScript interfaces
 export interface StoreType {
   _id?: string;
   name: string;
@@ -22,50 +23,55 @@ export interface StoreType {
   };
 }
 
-// Wrap the fetch call in React's cache function
-const fetchStoreData = cache(async function fetchStoreData(): Promise<StoreType[]> {
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3000";
-  const res = await fetch(`${backendUrl}/api/store`, {
-    // "no-store" ensures we always get fresh data on each request.
-    // Adjust if you want different caching behavior.
-    cache: "no-store",
-  });
-
-  if (!res.ok) {
-    throw new Error(`Failed to fetch store data: ${res.status} ${res.statusText}`);
-  }
-
-  return res.json();
-});
+interface BoutiqueHomePageTitles {
+  HPboutiqueTitle?: string;
+  HPboutiqueSubTitle?: string;
+}
 
 export default async function Stores() {
-  let storesData: StoreType[];
-
+  // 1) Fetch the homepage titles for "Nos boutiques"
+  let titles: BoutiqueHomePageTitles = {};
   try {
-    storesData = await fetchStoreData();
-  } catch (error) {
-    console.error("Error fetching store data:", error);
+    titles = await fetchData<BoutiqueHomePageTitles>(
+      "store/storeHomePageTitles"
+    );
+  } catch (err) {
+    console.error("Error fetching boutique titles:", err);
+  }
+
+  // 2) Fetch the actual list of stores
+  let storesData: StoreType[] = [];
+  try {
+    storesData = await fetchData<StoreType[]>("store");
+  } catch (err) {
+    console.error("Error fetching store data:", err);
     return (
       <div className="w-[95%] mx-auto py-8">
-        <p className="text-red-500">Failed to load store data.</p>
+        <p className="text-red-500">Échec du chargement des boutiques.</p>
       </div>
     );
   }
 
-  // No data found case
-  if (!storesData || storesData.length === 0) {
-    return (
-      <>
-      </>
-    );
+  // 3) If there are no stores, render nothing (or a placeholder as you prefer)
+  if (!storesData.length) {
+    return null;
   }
 
-  // If data was successfully fetched, render the carousel
   return (
     <div className="w-[95%] mx-auto py-8">
-      <div className="flex w-full flex-col gap-[8px] items-center">
-        <h3 className="font-bold text-4xl text-HomePageTitles">Nos boutiques</h3>
+      {/* Dynamic title & subtitle */}
+      <div className="flex w-full flex-col gap-[8px] items-center mb-4">
+        <h3 className="font-bold text-4xl text-HomePageTitles">
+          {titles.HPboutiqueTitle || "Nos boutiques"}
+        </h3>
+        {titles.HPboutiqueSubTitle && (
+          <p className="text-base text-[#525566]">
+            {titles.HPboutiqueSubTitle}
+          </p>
+        )}
       </div>
+
+      {/* Carousel */}
       <StoresCarousel storesData={storesData} />
     </div>
   );

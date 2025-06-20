@@ -14,7 +14,7 @@ const Banner: React.FC<BannerProps> = ({ title, imageBanner }) => {
   <div
     className="
       absolute
-      bottom-8
+      bottom-0
       max-md:bottom-0
       w-full  
       flex-col
@@ -25,7 +25,7 @@ const Banner: React.FC<BannerProps> = ({ title, imageBanner }) => {
       drop-shadow-lg
     "
   >
-  <h1 className="h-16 flex items-center bg-primary pl-6 max-md:text-lg capitalize max-md:h-10 max-md:justify-center max-md:pl-0">{title}</h1> 
+  <h1 className="h-16 flex items-center bg-primary pl-6 max-md:text-lg capitalize max-md:h-10 justify-center max-md:pl-0">{title}</h1> 
   <div className="h-2 bg-secondary"></div>
   </div>
   <div className="w-full h-full">

@@ -25,7 +25,7 @@ export default async function ProductPromotionHomePage() {
   return (
     <>
       {products.length > 0 && (
-        <div className="desktop max-lg:w-[95%] flex flex-col justify-center items-center gap-[40px] py-8">
+        <div className="desktop max-lg:w-[95%] flex flex-col justify-center items-center gap-[30px] py-8">
           {/* Header */}
           <div className="col-span-full flex flex-col items-center gap-[8px]">
             <h2 className="font-bold text-2xl text-HomePageTitles capitalize">
