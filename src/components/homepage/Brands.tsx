@@ -42,7 +42,7 @@ export default async function BrandsPage() {
         <div className="max-md:w-[95%] flex flex-col gap-[40px] max-md:gap-[16px] py-8">
           {/* Page Header */}
           <div className="flex flex-col gap-[8px] max-md:gap-[4px] text-center w-full">
-            <h3 className="font-bold text-4xl text-HomePageTitles">
+            <h3 className="font-bold text-2xl text-HomePageTitles capitalize">
               {titles.HPbrandTitle}
             </h3>
             <p className="text-base text-[#525566]">{titles.HPbrandSubTitle}</p>

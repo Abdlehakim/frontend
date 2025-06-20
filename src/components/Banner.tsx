@@ -11,31 +11,23 @@ interface BannerProps {
 const Banner: React.FC<BannerProps> = ({ title, imageBanner }) => {
   return (
     <div className="relative w-full h-[400px] max-md:h-[200px]">
-  <h1
+  <div
     className="
       absolute
-      bottom-4
-      h-16
-      w-full
-      flex
-      justify-center
-      items-center
-      bg-primary
-      px-6
+      bottom-8
+      max-md:bottom-0
+      w-full  
+      flex-col
       text-4xl
       text-white
-      font-semibold
-      capitalize
-      aline
-      max-md:text-lg
-      max-md:h-10
-      max-md:bottom-0
+      font-semibold    
       tracking-wide
       drop-shadow-lg
     "
   >
-    {title}
-  </h1>
+  <h1 className="h-16 flex items-center bg-primary pl-6 max-md:text-lg capitalize max-md:h-10 max-md:justify-center max-md:pl-0">{title}</h1> 
+  <div className="h-2 bg-secondary"></div>
+  </div>
   <div className="w-full h-full">
     <Image
       src={imageBanner}
