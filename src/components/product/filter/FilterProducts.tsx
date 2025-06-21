@@ -1,6 +1,11 @@
 "use client";
 
-import React, { ReactElement, HTMLAttributes, cloneElement, useState } from "react";
+import React, {
+  ReactElement,
+  HTMLAttributes,
+  cloneElement,
+  useState,
+} from "react";
 import Slider from "rc-slider";
 import "rc-slider/assets/index.css";
 
@@ -23,7 +28,11 @@ function handleRender(
     "aria-valuemin": 1,
     "aria-valuemax": 200000,
     "aria-valuenow": value,
-    style: { ...origin.props.style, borderColor: "#007bff", backgroundColor: "#fff" },
+    style: {
+      ...origin.props.style,
+      borderColor: "#007bff",
+      backgroundColor: "#fff",
+    },
   });
 }
 
@@ -76,7 +85,10 @@ const FilterProducts: React.FC<FilterProductsProps> = ({
     <>
       {/* ===== mobile toggle ===== */}
       <div className="xl:hidden flex justify-end">
-        <button className="py-2 rounded w-60 border" onClick={() => setShowMobileFilters(true)}>
+        <button
+          className="py-2 rounded w-60 border"
+          onClick={() => setShowMobileFilters(true)}
+        >
           Filtres
         </button>
       </div>
@@ -96,14 +108,22 @@ const FilterProducts: React.FC<FilterProductsProps> = ({
       )}
 
       {/* ===== desktop sidebar ===== */}
-      <div className="hidden xl:flex flex-col 2xl:w-[15%] xl:w-[20%] px-4">{renderFilters()}</div>
+      <div
+        className="hidden xl:flex flex-col
+    2xl:w-[20%] xl:w-[20%]
+    h-fit overflow-y-auto
+    px-4 my-8 border-2 border-primary rounded-md py-4 mx-4
+sticky top-8"
+      >
+        {renderFilters()}
+      </div>
     </>
   );
 
   /* ---------- helpers ---------- */
   function renderFilters() {
     return (
-      <>
+      <div className="flex flex-col gap-4">
         <SelectFilter
           id="brand-filter"
           label="Marque"
@@ -132,7 +152,7 @@ const FilterProducts: React.FC<FilterProductsProps> = ({
         />
 
         {/* ----- price range ----- */}
-        <div className="mb-4">
+        <div className="flex flex-col gap-2">
           <label className="font-bold">Prix :</label>
           <div className="flex gap-2 mb-2">
             <input
@@ -140,14 +160,18 @@ const FilterProducts: React.FC<FilterProductsProps> = ({
               placeholder="Min"
               className="w-1/2 p-2 border rounded"
               value={minPrice ?? ""}
-              onChange={(e) => setMinPrice(e.target.value ? Number(e.target.value) : null)}
+              onChange={(e) =>
+                setMinPrice(e.target.value ? Number(e.target.value) : null)
+              }
             />
             <input
               type="number"
               placeholder="Max"
               className="w-1/2 p-2 border rounded"
               value={maxPrice ?? ""}
-              onChange={(e) => setMaxPrice(e.target.value ? Number(e.target.value) : null)}
+              onChange={(e) =>
+                setMaxPrice(e.target.value ? Number(e.target.value) : null)
+              }
             />
           </div>
           <Slider
@@ -166,7 +190,7 @@ const FilterProducts: React.FC<FilterProductsProps> = ({
         </div>
 
         {/* ----- sort ----- */}
-        <div className="mb-4">
+        <div className="flex flex-col gap-2">
           <label htmlFor="sort-order" className="font-bold">
             Trier par prix :
           </label>
@@ -180,7 +204,7 @@ const FilterProducts: React.FC<FilterProductsProps> = ({
             <option value="desc">Du plus cher</option>
           </select>
         </div>
-      </>
+      </div>
     );
   }
 };
@@ -202,7 +226,7 @@ const SelectFilter: React.FC<SelectFilterProps> = ({
   options,
   placeholder,
 }) => (
-  <div className="mb-4">
+  <div className="flex flex-col gap-2">
     <label htmlFor={id} className="font-bold">
       {label} :
     </label>

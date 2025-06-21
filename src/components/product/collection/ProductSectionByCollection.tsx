@@ -100,7 +100,7 @@ export default function ProductSectionByCollection({ products }: Props) {
         <FilterPriceOrder sortOrder={sortOrder} setSortOrder={setSortOrder} />
       </div>
 
-      <div className="xl:flex xl:gap-10 flex-col xl:flex-row">
+      <div className="flex flex-col xl:flex-row gap-16">
         {/* sidebar filters */}
         <CollectionProductsFilter
           selectedCategorie={selectedCategorie}
@@ -124,7 +124,7 @@ export default function ProductSectionByCollection({ products }: Props) {
         />
 
         {/* products + pagination */}
-        <div className="flex flex-col items-center w-full gap-5">
+        <div className="flex flex-col gap-16">
           <ProductCard products={currentProducts} />
 
           {filteredProducts.length > 0 && (

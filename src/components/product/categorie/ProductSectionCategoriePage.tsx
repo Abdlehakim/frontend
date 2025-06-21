@@ -1,11 +1,11 @@
-// src/components/product/categorie/ProductSectionCategoriePage.tsx
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-import { Product, SubCategorie } from "@/types/Product";  
+import { Product, SubCategorie } from "@/types/Product";
 import ProductCard from "@/components/product/categorie/ProductCard";
 import Pagination from "@/components/PaginationClient";
 import FilterProducts from "@/components/product/filter/FilterProducts";
+import FilterPriceOrder from "@/components/product/filter/FilterPriceOrder";
 
 export const revalidate = 60;
 
@@ -23,9 +23,7 @@ export default function ProductSectionCategoriePage({
   /* ---------- filter state ---------- */
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
   const [selectedBoutique, setSelectedBoutique] = useState<string | null>(null);
-  const [selectedSubCategorie, setSelectedSubCategorie] = useState<string | null>(
-    null
-  );
+  const [selectedSubCategorie, setSelectedSubCategorie] = useState<string | null>(null);
   const [minPrice, setMinPrice] = useState<number | null>(null);
   const [maxPrice, setMaxPrice] = useState<number | null>(null);
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
@@ -69,12 +67,18 @@ export default function ProductSectionCategoriePage({
   useEffect(() => {
     let filtered = [...initialProducts];
 
-    if (selectedBrand)       filtered = filtered.filter((p) => p.brand?._id === selectedBrand);
-    if (selectedBoutique)    filtered = filtered.filter((p) => p.boutique?._id === selectedBoutique);
+    if (selectedBrand)
+      filtered = filtered.filter((p) => p.brand?._id === selectedBrand);
+    if (selectedBoutique)
+      filtered = filtered.filter((p) => p.boutique?._id === selectedBoutique);
     if (selectedSubCategorie)
-      filtered = filtered.filter((p) => p.subcategorie?._id === selectedSubCategorie);
-    if (minPrice !== null)   filtered = filtered.filter((p) => p.price >= minPrice);
-    if (maxPrice !== null)   filtered = filtered.filter((p) => p.price <= maxPrice);
+      filtered = filtered.filter(
+        (p) => p.subcategorie?._id === selectedSubCategorie
+      );
+    if (minPrice !== null)
+      filtered = filtered.filter((p) => p.price >= minPrice);
+    if (maxPrice !== null)
+      filtered = filtered.filter((p) => p.price <= maxPrice);
 
     filtered.sort((a, b) =>
       sortOrder === "asc" ? a.price - b.price : b.price - a.price
@@ -101,40 +105,47 @@ export default function ProductSectionCategoriePage({
 
   /* ---------- render ---------- */
   return (
-    <div className="flex flex-col xl:flex-row gap-4 w-[90%] mx-auto">
-      <FilterProducts
-        selectedBrand={selectedBrand}
-        setSelectedBrand={setSelectedBrand}
-        selectedBoutique={selectedBoutique}
-        setSelectedBoutique={setSelectedBoutique}
-        selectedSubCategorie={selectedSubCategorie}
-        setSelectedSubCategorie={setSelectedSubCategorie}
-        minPrice={minPrice}
-        setMinPrice={setMinPrice}
-        maxPrice={maxPrice}
-        setMaxPrice={setMaxPrice}
-        brands={brands}
-        boutiques={boutiques}
-        subcategories={subcategories}
-        sortOrder={sortOrder}
-        setSortOrder={setSortOrder}
-      />
+    <div className="flex flex-col w-[90%] mx-auto gap-6">
+      {/* sort dropdown */}
+      <div className="flex justify-end">
+        <FilterPriceOrder sortOrder={sortOrder} setSortOrder={setSortOrder} />
+      </div>
 
-      <div className="flex flex-col items-center w-full gap-5">
-        {currentProducts.length ? (
-          <>
-            <div className="w-full">
-              <ProductCard products={currentProducts} />
-            </div>
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-            />
-          </>
-        ) : (
-          <p className="w-full text-center py-10">Aucun produit trouvé.</p>
-        )}
+      <div className="flex flex-col xl:flex-row w-full gap-16">
+        <FilterProducts
+          selectedBrand={selectedBrand}
+          setSelectedBrand={setSelectedBrand}
+          selectedBoutique={selectedBoutique}
+          setSelectedBoutique={setSelectedBoutique}
+          selectedSubCategorie={selectedSubCategorie}
+          setSelectedSubCategorie={setSelectedSubCategorie}
+          minPrice={minPrice}
+          setMinPrice={setMinPrice}
+          maxPrice={maxPrice}
+          setMaxPrice={setMaxPrice}
+          brands={brands}
+          boutiques={boutiques}
+          subcategories={subcategories}
+          sortOrder={sortOrder}
+          setSortOrder={setSortOrder}
+        />
+
+        <div className="flex flex-col items-center w-full gap-16">
+          {currentProducts.length ? (
+            <>
+              <div className="w-full my-8">
+                <ProductCard products={currentProducts} />
+              </div>
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+              />
+            </>
+          ) : (
+            <p className="w-full text-center py-10">Aucun produit trouvé.</p>
+          )}
+        </div>
       </div>
     </div>
   );

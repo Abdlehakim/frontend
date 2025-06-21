@@ -22,7 +22,6 @@ export default async function ProductPage({
     product = await fetchData<Product>(
       `/products/MainProductSection/${slugProduct}`
     );
-    console.log(product);
   } catch (err) {
     console.error("Error fetching product:", err);
   }

@@ -5,6 +5,7 @@ import { Product } from "@/types/Product";
 import ProductCard from "@/components/product/categorie/ProductCard";
 import Pagination from "@/components/PaginationClient";
 import SubCategorieFilterProducts from "@/components/product/filter/SubCategorieFilterProducts";
+import FilterPriceOrder from "@/components/product/filter/FilterPriceOrder";
 
 export const revalidate = 60;
 
@@ -65,7 +66,14 @@ export default function ProductSectionSubCategoriePage({
 
     setProducts(filtered);
     setCurrentPage(1);
-  }, [initialProducts, selectedBrand, selectedBoutique, minPrice, maxPrice, sortOrder]);
+  }, [
+    initialProducts,
+    selectedBrand,
+    selectedBoutique,
+    minPrice,
+    maxPrice,
+    sortOrder,
+  ]);
 
   /* ---------- pagination ---------- */
   const totalPages = Math.ceil(products.length / itemsPerPage);
@@ -76,37 +84,44 @@ export default function ProductSectionSubCategoriePage({
 
   /* ---------- render ---------- */
   return (
-    <div className="flex flex-col xl:flex-row gap-4 w-[90%] mx-auto">
-      <SubCategorieFilterProducts
-        selectedBrand={selectedBrand}
-        setSelectedBrand={setSelectedBrand}
-        selectedBoutique={selectedBoutique}
-        setSelectedBoutique={setSelectedBoutique}
-        minPrice={minPrice}
-        setMinPrice={setMinPrice}
-        maxPrice={maxPrice}
-        setMaxPrice={setMaxPrice}
-        brands={brands}
-        boutiques={boutiques}
-        sortOrder={sortOrder}
-        setSortOrder={setSortOrder}
-      />
+    <div className="flex flex-col gap-16 w-[90%] mx-auto">
+      {/* sort dropdown */}
+      <div className="flex justify-end">
+        <FilterPriceOrder sortOrder={sortOrder} setSortOrder={setSortOrder} />
+      </div>
 
-      <div className="flex flex-col items-center w-full gap-5">
-        {currentProducts.length ? (
-          <>
-            <div className="w-full">
-              <ProductCard products={currentProducts} />
-            </div>
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-            />
-          </>
-        ) : (
-          <p className="w-full text-center py-10">Aucun produit trouvé.</p>
-        )}
+      <div className="flex flex-col xl:flex-row gap-16 w-full">
+        <SubCategorieFilterProducts
+          selectedBrand={selectedBrand}
+          setSelectedBrand={setSelectedBrand}
+          selectedBoutique={selectedBoutique}
+          setSelectedBoutique={setSelectedBoutique}
+          minPrice={minPrice}
+          setMinPrice={setMinPrice}
+          maxPrice={maxPrice}
+          setMaxPrice={setMaxPrice}
+          brands={brands}
+          boutiques={boutiques}
+          sortOrder={sortOrder}
+          setSortOrder={setSortOrder}
+        />
+
+        <div className="flex flex-col items-center w-full gap-16">
+          {currentProducts.length ? (
+            <>
+              <div className="w-full">
+                <ProductCard products={currentProducts} />
+              </div>
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={setCurrentPage}
+              />
+            </>
+          ) : (
+            <p className="w-full text-center py-10">Aucun produit trouvé.</p>
+          )}
+        </div>
       </div>
     </div>
   );

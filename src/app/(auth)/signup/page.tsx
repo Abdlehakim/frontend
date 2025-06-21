@@ -43,9 +43,6 @@ export default function SignUpPage() {
         return;
       }
 
-      const data = await res.json();
-      console.log("Sign-up success:", data);
-
       // Redirect upon success
       const redirectTo = searchParams.get("redirectTo") || "/";
       router.push(redirectTo);

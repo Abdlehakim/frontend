@@ -41,7 +41,7 @@ interface StoresCardProps {
 const StoresCard: React.FC<StoresCardProps> = ({ store, itemsPerSlide }) => {
   return (
     <div
-      className="relative group"
+      className="relative group cursor-pointer"
       style={{
         flex: `0 0 ${90 / itemsPerSlide}%`,
       }}
@@ -222,14 +222,14 @@ const StoresCarousel: React.FC<StoresProps> = ({ storesData }) => {
         {/* Navigation Buttons */}
         <button
           onClick={prevSlide}
-          className="absolute top-1/2 left-4 transform -translate-y-1/2 z-10 p-1 text-primary"
-          aria-label="Previous slide"
+          className="absolute top-1/2 left-4 transform -translate-y-1/2 z-10 p-1 text-primary hover:text-secondary hover:scale-110"
+          aria-label="Previous slide "
         >
           <FaRegArrowAltCircleLeft size={40} />
         </button>
         <button
           onClick={nextSlide}
-          className="absolute top-1/2 right-4 transform -translate-y-1/2 z-10 p-1 text-primary"
+          className="absolute top-1/2 right-4 transform -translate-y-1/2 z-10 p-1 text-primary hover:text-secondary hover:scale-110"
           aria-label="Next slide"
         >
           <FaRegArrowAltCircleRight size={40} />

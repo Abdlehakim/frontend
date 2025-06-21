@@ -22,9 +22,9 @@ export const revalidate = 60;
 export default async function SubCategoriePage({
   params,
 }: {
-  params: PageParams;
+  params: PageParams | Promise<PageParams>;
 }) {
-  const { slugSubCategorie } = params;
+  const { slugSubCategorie } = await params;
 
   /* ---------- sub-category meta ---------- */
   const sub: SectionData = await fetchData<SectionData>(

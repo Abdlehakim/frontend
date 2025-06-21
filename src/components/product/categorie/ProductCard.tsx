@@ -141,7 +141,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
                   {isOutOfStock ? "Rupture de stock" : "A. au panier"}
                 </p>
                 {!isOutOfStock && (
-                  <p className="text-white absolute flex items-center justify-center w-full h-full duration-300 -translate-x-[100%] lg:group-hover/box:translate-x-[-30%] ease">
+                  <p className="text-white absolute flex items-center justify-center w-full h-full duration-300 -translate-x-[100%] lg:group-hover/box:translate-x-[-35%] ease">
                     <FaCartShopping className="w-6 h-6" />
                   </p>
                 )}

@@ -39,9 +39,7 @@ const Milanotorino = () => {
        }
       })
     .then(response => response.json())
-    .then((data) => {
-        console.log('Form data submitted:', data);
-        // Optionally reset the form after successful submission
+    .then(() => {
         setFormData({ name: '', email: '', message: '' });
       })
     .catch(error => console.error('Error:', error));

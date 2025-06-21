@@ -3,6 +3,8 @@ import React from "react";
 import ProductCard from "@/components/product/categorie/ProductCard";
 import { fetchData } from "@/lib/fetchData";
 import { Product } from "@/types/Product";
+import Link from "next/link";
+import { FiArrowRight } from "react-icons/fi";
 
 interface ProductsBestCollectionDataType {
   HPBestCollectionTitle?: string;
@@ -25,17 +27,42 @@ export default async function ProductsBestCollection() {
   return (
     <>
       {products.length > 0 && (
-        <div className="desktop max-lg:w-[95%] flex flex-col justify-center items-center gap-[30px] py-8">
+        <div className="desktop max-lg:w-[95%] flex flex-col items-center gap-8 py-8">
           {/* Title & Subtitle */}
-          <div className="col-span-full flex flex-col items-center gap-[8px]">
+          <div className="flex w-full flex-col items-center gap-2 relative">
             <h2 className="font-bold text-2xl text-HomePageTitles capitalize">
               {header.HPBestCollectionTitle}
             </h2>
             <p className="text-base text-[#525566]">
               {header.HPBestCollectionSubTitle}
             </p>
+            <div className="absolute w-full flex justify-end">
+              <Link
+                href="/bestproductcollection"
+                className="
+        group
+        inline-flex
+        items-center
+        border-2 border-secondary
+        text-secondary
+        font-semibold
+        uppercase
+        tracking-wide
+        px-6 py-2
+        rounded-full
+        transition-colors duration-200 ease-in-out
+        hover:bg-secondary hover:text-white
+      "
+              >
+                Voir plus ...
+                <FiArrowRight
+                  className="ml-2 w-5 h-5 transition-transform duration-200 group-hover:translate-x-1"
+                  aria-hidden="true"
+                />
+              </Link>
+            </div>
           </div>
-
+          {/* Product grid */}
           <ProductCard products={products} />
         </div>
       )}

@@ -6,7 +6,7 @@ import { Product, SubCategorie } from "@/types/Product";
 export const revalidate = 60;
 
 interface CategorieData {
-  _id?: string;             // 👈 on en a besoin maintenant
+  _id?: string;        
   name?: string | null;
   slug?: string | null;
   bannerUrl?: string | null;
@@ -14,8 +14,13 @@ interface CategorieData {
 
 type PageParams = { slugCategorie: string };
 
-export default async function CategoriePage({ params }: { params: PageParams }) {
-  const { slugCategorie } = params;
+export default async function CategoriePage({
+  params,
+}: {
+  params: PageParams | Promise<PageParams>;
+}) {
+  const { slugCategorie } = await params;
+
 
   /* -------- catégorie -------- */
   const categorie: CategorieData = await fetchData<CategorieData>(

@@ -1,4 +1,4 @@
-// If you keep all product types in a single file, update it like this:
+// src/types/Product.ts
 
 export interface AttributeValueItem {
   name: string;

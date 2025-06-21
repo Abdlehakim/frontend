@@ -133,7 +133,7 @@ const CartLogic = () => {
       {/* Show the floating cart button when scrolling */}
       {isScrolling && (
         <div
-          className="fixed top-5 right-5 rounded-full z-50 bg-[#15335D] w-fit p-4 flex items-center gap-[16px] border-10 border-black select-none"
+          className="fixed top-5 right-5 rounded-full z-50 bg-[#15335D] w-fit p-4 flex items-center gap-[16px] border-4 border-white shadow-lg cursor-pointer"
           ref={onscrollCartModalWrapperRef}
           onClick={toggleCartModalOnscroll}
         >

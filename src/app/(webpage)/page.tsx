@@ -31,9 +31,9 @@ export default async function HomePage() {
 
       <Categories />
       <NewProductCollection />
-      <BestProductCollection />
       <ProductInPromotionCollection />
       <Brands />
+      <BestProductCollection />
       <Stores />
     </div>
   );
