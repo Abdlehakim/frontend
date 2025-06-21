@@ -1,7 +1,11 @@
+// If you keep all product types in a single file, update it like this:
+
 export interface AttributeValueItem {
   name: string;
   value?: string;
   hex?: string;
+  image?: string;
+  imageId?: string;
 }
 
 export interface ProductDetail {
@@ -40,7 +44,7 @@ export interface Product {
   slug: string;
 
   categorie?: Categorie | null;
-  subCategorie?: SubCategorie | null;
+  subcategorie?: SubCategorie | null;       // 👈 unified name
   boutique?: Boutique | null;
   brand?: Brand | null;
 
@@ -48,27 +52,21 @@ export interface Product {
   price: number;
   tva: number;
   discount?: number;
-  stockStatus: 'in stock' | 'out of stock';
-  statuspage: 'none' | 'New-Products' | 'promotion' | 'best-collection';
-  vadmin: 'not-approve' | 'approve';
+  stockStatus: "in stock" | "out of stock";
+  statuspage: "none" | "New-Products" | "promotion" | "best-collection";
 
   mainImageUrl: string;
-  mainImageId?: string | null;
+  mainImageId?: string;
   extraImagesUrl: string[];
   extraImagesId: string[];
 
   nbreview: number;
   averageRating: number;
 
-  createdBy: string;
-  updatedBy?: string | null;
-  createdAt: string;
-  updatedAt: string;
-
-  attributes: Array<{
-    attributeSelected: string;
-    value: string | AttributeValueItem[];
-  }>;
+  attributes: {
+    attributeSelected: string;  // or ObjectId
+    value?: string | AttributeValueItem[];
+  }[];
 
   productDetails: ProductDetail[];
 }

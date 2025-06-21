@@ -3,11 +3,12 @@
 import React, { useState, useMemo, useCallback, useEffect } from "react";
 import Image from "next/image";
 import {
-  FaPhoneAlt,
+  FaRegClock,
   FaMapMarkerAlt,
   FaRegArrowAltCircleLeft,
   FaRegArrowAltCircleRight,
 } from "react-icons/fa";
+import { BsSunFill, BsMoonFill } from "react-icons/bs";
 
 // Reuse the same interface from your server component,
 // or define a local copy that matches exactly.
@@ -41,9 +42,9 @@ const StoresCard: React.FC<StoresCardProps> = ({ store, itemsPerSlide }) => {
   return (
     <div
       className="relative group"
-     style={{
-    flex: `0 0 ${90 / itemsPerSlide}%`
-  }}
+      style={{
+        flex: `0 0 ${90 / itemsPerSlide}%`,
+      }}
     >
       {/* Image + overlay container */}
       <div className="relative">
@@ -58,45 +59,95 @@ const StoresCard: React.FC<StoresCardProps> = ({ store, itemsPerSlide }) => {
           />
         )}
 
-        {/* Overlay Info – hidden until hover */}
-        <div className="absolute inset-0 bg-black bg-opacity-70 flex flex-col justify-start items-start px-20 py-4 opacity-0 transition-opacity duration-300 group-hover:opacity-100 rounded-xl">
-          <h2 className="text-2xl font-bold uppercase text-white mb-4">
-            {store.name}
-          </h2>
+        <h2 className="bg-primary absolute top-0 w-full rounded-t-xl h-20 flex justify-center items-center text-2xl font-bold capitalize text-white tracking-wide border-b-8 border-secondary">
+          {store.name}
+        </h2>
 
-          <div className="flex flex-col gap-2 text-white">
+        {/* Overlay Info – hidden until hover */}
+        <div className="absolute top-20 h-72 w-full p-2 bg-black bg-opacity-80 flex flex-col justify-start items-start opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+          {/* <div className="flex flex-col gap-2 text-white">
             <div className="flex items-center gap-2">
               <FaPhoneAlt size={20} />
               <span className="font-semibold">{store.phoneNumber}</span>
             </div>
-            <div className="flex items-center gap-2">
+            
+          </div> */}
+
+          <div className="mt-4 ml-4 w-[90%]">
+  <h3 className="font-semibold text-xl text-white">
+    TEMPS OUVERT :
+  </h3>
+
+  {/* thin separator */}
+  <div className="h-[2px] w-full bg-white/40 my-1" />
+
+<ul className="text-sm divide-y divide-white/20">
+  {Object.entries(store.openingHours).map(([day, hours]) => {
+    // Build an array of non-empty ranges
+    const ranges =
+      Array.isArray(hours) && hours.length
+        ? hours
+            .map(({ open, close }) =>
+              open || close ? `${open} – ${close}` : ""
+            )
+            .filter(Boolean)
+        : [];
+
+    return (
+      <li
+        key={day}
+        className="
+          grid grid-cols-[auto_1fr] items-center gap-x-3 py-1
+          text-white tabular-nums
+        "
+      >
+        {/* left column: clock icon + day */}
+        <span className="flex items-center gap-1.5">
+          <FaRegClock size={12} />
+          <span className="font-medium">{day}</span>
+        </span>
+
+        {/* right column: 1-or-2 ranges on ONE line */}
+        {ranges.length ? (
+          <div
+            className="
+              flex items-center justify-end gap-x-4
+              whitespace-nowrap
+            "
+          >
+            {/* first (morning) shift */}
+            <span className="flex items-center gap-1.5">
+              <BsSunFill size={12} />
+              {ranges[0]}
+            </span>
+
+            {/* second (afternoon/evening) shift — render only if it exists */}
+            {ranges[1] && (
+              <span className="flex items-center gap-1.5">
+                <BsMoonFill size={12} />
+                {ranges[1]}
+              </span>
+            )}
+          </div>
+        ) : (
+          <span className="justify-self-end">Fermé</span>
+        )}
+      </li>
+    );
+  })}
+</ul>
+
+
+
+  {/* bottom separator */}
+  <div className="h-[2px] w-full bg-white/40 my-1" />
+</div>
+        </div>
+        <div className='bg-primary h-12 absolute bottom-0 w-full flex justify-center text-xl items-center gap-4 text-white tracking-wide rounded-b-xl'>
               <FaMapMarkerAlt size={20} />
               <span className="font-semibold">
                 {store.address}, {store.city}
-              </span>
-            </div>
-          </div>
-
-          <div className="mt-4">
-            <h3 className="font-semibold text-lg text-white mb-2">
-              TEMPS OUVERT :
-            </h3>
-            <ul className="text-sm text-white space-y-1">
-              {Object.entries(store.openingHours).map(([day, hours]) => (
-                <li key={day} className="flex gap-2">
-                  <span className="font-medium">{day}:</span>
-                  {Array.isArray(hours) && hours.length > 0
-                    ? hours
-                        .map(({ open, close }) =>
-                          open || close ? `${open} - ${close}` : ""
-                        )
-                        .filter(Boolean)
-                        .join(" / ") || "fermé"
-                    : "fermé"}
-                </li>
-              ))}
-            </ul>
-          </div>
+              </span>  
         </div>
       </div>
     </div>
@@ -171,14 +222,14 @@ const StoresCarousel: React.FC<StoresProps> = ({ storesData }) => {
         {/* Navigation Buttons */}
         <button
           onClick={prevSlide}
-          className="absolute top-1/2 left-4 transform -translate-y-1/2 z-10 p-1"
+          className="absolute top-1/2 left-4 transform -translate-y-1/2 z-10 p-1 text-primary"
           aria-label="Previous slide"
         >
           <FaRegArrowAltCircleLeft size={40} />
         </button>
         <button
           onClick={nextSlide}
-          className="absolute top-1/2 right-4 transform -translate-y-1/2 z-10 p-1 "
+          className="absolute top-1/2 right-4 transform -translate-y-1/2 z-10 p-1 text-primary"
           aria-label="Next slide"
         >
           <FaRegArrowAltCircleRight size={40} />
@@ -192,7 +243,7 @@ const StoresCarousel: React.FC<StoresProps> = ({ storesData }) => {
             key={idx}
             onClick={() => setCurrentSlide(idx)}
             className={`w-3 h-3 rounded-full ${
-              idx === currentSlide ? "bg-black" : "bg-gray-300"
+              idx === currentSlide ? "bg-primary" : "bg-gray-300"
             }`}
             aria-label={`Go to slide ${idx + 1}`}
           />

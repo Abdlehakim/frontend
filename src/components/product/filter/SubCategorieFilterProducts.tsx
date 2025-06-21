@@ -32,13 +32,11 @@ interface OptionItem {
   _id: string;
   name: string;
 }
-interface FilterProductsProps {
+interface Props {
   selectedBrand: string | null;
   setSelectedBrand: (id: string | null) => void;
   selectedBoutique: string | null;
   setSelectedBoutique: (id: string | null) => void;
-  selectedSubCategorie: string | null;
-  setSelectedSubCategorie: (id: string | null) => void;
 
   minPrice: number | null;
   setMinPrice: (v: number | null) => void;
@@ -47,26 +45,22 @@ interface FilterProductsProps {
 
   brands: OptionItem[];
   boutiques: OptionItem[];
-  subcategories: OptionItem[];
 
   sortOrder: "asc" | "desc";
   setSortOrder: (o: "asc" | "desc") => void;
 }
 
-const FilterProducts: React.FC<FilterProductsProps> = ({
+const SubCategorieFilterProducts: React.FC<Props> = ({
   selectedBrand,
   setSelectedBrand,
   selectedBoutique,
   setSelectedBoutique,
-  selectedSubCategorie,
-  setSelectedSubCategorie,
   minPrice,
   setMinPrice,
   maxPrice,
   setMaxPrice,
   brands,
   boutiques,
-  subcategories,
   sortOrder,
   setSortOrder,
 }) => {
@@ -74,7 +68,7 @@ const FilterProducts: React.FC<FilterProductsProps> = ({
 
   return (
     <>
-      {/* ===== mobile toggle ===== */}
+      {/* mobile toggle */}
       <div className="xl:hidden flex justify-end">
         <button className="py-2 rounded w-60 border" onClick={() => setShowMobileFilters(true)}>
           Filtres
@@ -95,8 +89,10 @@ const FilterProducts: React.FC<FilterProductsProps> = ({
         </div>
       )}
 
-      {/* ===== desktop sidebar ===== */}
-      <div className="hidden xl:flex flex-col 2xl:w-[15%] xl:w-[20%] px-4">{renderFilters()}</div>
+      {/* desktop sidebar */}
+      <div className="hidden xl:flex flex-col 2xl:w-[15%] xl:w-[20%] px-4">
+        {renderFilters()}
+      </div>
     </>
   );
 
@@ -104,7 +100,7 @@ const FilterProducts: React.FC<FilterProductsProps> = ({
   function renderFilters() {
     return (
       <>
-        <SelectFilter
+        <Select
           id="brand-filter"
           label="Marque"
           value={selectedBrand}
@@ -113,7 +109,7 @@ const FilterProducts: React.FC<FilterProductsProps> = ({
           placeholder="Toutes les marques"
         />
 
-        <SelectFilter
+        <Select
           id="boutique-filter"
           label="Boutique"
           value={selectedBoutique}
@@ -122,16 +118,7 @@ const FilterProducts: React.FC<FilterProductsProps> = ({
           placeholder="Toutes les boutiques"
         />
 
-        <SelectFilter
-          id="subcategory-filter"
-          label="Sous-catégorie"
-          value={selectedSubCategorie}
-          onChange={setSelectedSubCategorie}
-          options={subcategories}
-          placeholder="Toutes les sous-catégories"
-        />
-
-        {/* ----- price range ----- */}
+        {/* price */}
         <div className="mb-4">
           <label className="font-bold">Prix :</label>
           <div className="flex gap-2 mb-2">
@@ -165,7 +152,7 @@ const FilterProducts: React.FC<FilterProductsProps> = ({
           />
         </div>
 
-        {/* ----- sort ----- */}
+        {/* sort */}
         <div className="mb-4">
           <label htmlFor="sort-order" className="font-bold">
             Trier par prix :
@@ -185,8 +172,8 @@ const FilterProducts: React.FC<FilterProductsProps> = ({
   }
 };
 
-/* ---------- small reusable select component ---------- */
-interface SelectFilterProps {
+/* ---------- tiny reusable select ---------- */
+interface SelectProps {
   id: string;
   label: string;
   value: string | null;
@@ -194,7 +181,7 @@ interface SelectFilterProps {
   options: OptionItem[];
   placeholder: string;
 }
-const SelectFilter: React.FC<SelectFilterProps> = ({
+const Select: React.FC<SelectProps> = ({
   id,
   label,
   value,
@@ -222,4 +209,4 @@ const SelectFilter: React.FC<SelectFilterProps> = ({
   </div>
 );
 
-export default FilterProducts;
+export default SubCategorieFilterProducts;

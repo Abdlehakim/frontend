@@ -14,9 +14,7 @@ function handleRender(
   origin: ReactElement<HTMLAttributes<HTMLDivElement>>,
   { index, value }: RenderProps
 ): ReactElement<HTMLAttributes<HTMLDivElement>> {
-  const ariaLabel =
-    index === 0 ? "Minimum price slider handle" : "Maximum price slider handle";
-
+  const ariaLabel = index === 0 ? "Minimum price" : "Maximum price";
   return cloneElement(origin, {
     role: "slider",
     "aria-label": ariaLabel,
@@ -32,61 +30,72 @@ interface OptionItem {
   _id: string;
   name: string;
 }
-interface FilterProductsProps {
+
+interface Props {
+  /* selections */
+  selectedCategorie: string | null;
+  setSelectedCategorie: (id: string | null) => void;
+  selectedSubCategorie: string | null;
+  setSelectedSubCategorie: (id: string | null) => void;
   selectedBrand: string | null;
   setSelectedBrand: (id: string | null) => void;
   selectedBoutique: string | null;
   setSelectedBoutique: (id: string | null) => void;
-  selectedSubCategorie: string | null;
-  setSelectedSubCategorie: (id: string | null) => void;
 
+  /* price */
   minPrice: number | null;
   setMinPrice: (v: number | null) => void;
   maxPrice: number | null;
   setMaxPrice: (v: number | null) => void;
 
+  /* option lists */
+  categories: OptionItem[];
+  subcategories: OptionItem[];
   brands: OptionItem[];
   boutiques: OptionItem[];
-  subcategories: OptionItem[];
 
+  /* sort */
   sortOrder: "asc" | "desc";
   setSortOrder: (o: "asc" | "desc") => void;
 }
 
-const FilterProducts: React.FC<FilterProductsProps> = ({
+const CollectionProductsFilter: React.FC<Props> = ({
+  selectedCategorie,
+  setSelectedCategorie,
+  selectedSubCategorie,
+  setSelectedSubCategorie,
   selectedBrand,
   setSelectedBrand,
   selectedBoutique,
   setSelectedBoutique,
-  selectedSubCategorie,
-  setSelectedSubCategorie,
   minPrice,
   setMinPrice,
   maxPrice,
   setMaxPrice,
+  categories,
+  subcategories,
   brands,
   boutiques,
-  subcategories,
   sortOrder,
   setSortOrder,
 }) => {
-  const [showMobileFilters, setShowMobileFilters] = useState(false);
+  const [openMobile, setOpenMobile] = useState(false);
 
   return (
     <>
-      {/* ===== mobile toggle ===== */}
+      {/* mobile toggle */}
       <div className="xl:hidden flex justify-end">
-        <button className="py-2 rounded w-60 border" onClick={() => setShowMobileFilters(true)}>
+        <button className="border rounded w-60 py-2" onClick={() => setOpenMobile(true)}>
           Filtres
         </button>
       </div>
 
-      {showMobileFilters && (
-        <div className="fixed inset-0 bg-black/50 flex items-end xl:hidden z-40">
-          <div className="bg-white mx-auto w-[90%] p-8 rounded-2xl mb-60">
+      {openMobile && (
+        <div className="fixed inset-0 bg-black/50 xl:hidden flex items-end z-40">
+          <div className="bg-white w-[90%] mx-auto p-8 rounded-2xl mb-60">
             <button
-              className="text-right w-full text-blue-600 font-bold mb-4"
-              onClick={() => setShowMobileFilters(false)}
+              className="text-blue-600 font-bold w-full text-right mb-4"
+              onClick={() => setOpenMobile(false)}
             >
               Fermer ✕
             </button>
@@ -95,8 +104,10 @@ const FilterProducts: React.FC<FilterProductsProps> = ({
         </div>
       )}
 
-      {/* ===== desktop sidebar ===== */}
-      <div className="hidden xl:flex flex-col 2xl:w-[15%] xl:w-[20%] px-4">{renderFilters()}</div>
+      {/* desktop sidebar */}
+      <div className="hidden xl:flex flex-col 2xl:w-[15%] xl:w-[20%] px-4">
+        {renderFilters()}
+      </div>
     </>
   );
 
@@ -104,26 +115,17 @@ const FilterProducts: React.FC<FilterProductsProps> = ({
   function renderFilters() {
     return (
       <>
-        <SelectFilter
-          id="brand-filter"
-          label="Marque"
-          value={selectedBrand}
-          onChange={setSelectedBrand}
-          options={brands}
-          placeholder="Toutes les marques"
+        <Select
+          id="categorie"
+          label="Catégorie"
+          value={selectedCategorie}
+          onChange={setSelectedCategorie}
+          options={categories}
+          placeholder="Toutes les catégories"
         />
 
-        <SelectFilter
-          id="boutique-filter"
-          label="Boutique"
-          value={selectedBoutique}
-          onChange={setSelectedBoutique}
-          options={boutiques}
-          placeholder="Toutes les boutiques"
-        />
-
-        <SelectFilter
-          id="subcategory-filter"
+        <Select
+          id="subcategorie"
           label="Sous-catégorie"
           value={selectedSubCategorie}
           onChange={setSelectedSubCategorie}
@@ -131,21 +133,39 @@ const FilterProducts: React.FC<FilterProductsProps> = ({
           placeholder="Toutes les sous-catégories"
         />
 
-        {/* ----- price range ----- */}
+        <Select
+          id="brand"
+          label="Marque"
+          value={selectedBrand}
+          onChange={setSelectedBrand}
+          options={brands}
+          placeholder="Toutes les marques"
+        />
+
+        <Select
+          id="boutique"
+          label="Boutique"
+          value={selectedBoutique}
+          onChange={setSelectedBoutique}
+          options={boutiques}
+          placeholder="Toutes les boutiques"
+        />
+
+        {/* price */}
         <div className="mb-4">
           <label className="font-bold">Prix :</label>
           <div className="flex gap-2 mb-2">
             <input
               type="number"
               placeholder="Min"
-              className="w-1/2 p-2 border rounded"
+              className="w-1/2 border rounded p-2"
               value={minPrice ?? ""}
               onChange={(e) => setMinPrice(e.target.value ? Number(e.target.value) : null)}
             />
             <input
               type="number"
               placeholder="Max"
-              className="w-1/2 p-2 border rounded"
+              className="w-1/2 border rounded p-2"
               value={maxPrice ?? ""}
               onChange={(e) => setMaxPrice(e.target.value ? Number(e.target.value) : null)}
             />
@@ -155,24 +175,24 @@ const FilterProducts: React.FC<FilterProductsProps> = ({
             min={1}
             max={10000}
             value={[minPrice ?? 1, maxPrice ?? 10000]}
+            allowCross={false}
             onChange={(vals) => {
               const [min, max] = vals as number[];
               setMinPrice(min);
               setMaxPrice(max);
             }}
-            allowCross={false}
             handleRender={handleRender}
           />
         </div>
 
-        {/* ----- sort ----- */}
+        {/* sort */}
         <div className="mb-4">
-          <label htmlFor="sort-order" className="font-bold">
+          <label htmlFor="sort" className="font-bold">
             Trier par prix :
           </label>
           <select
-            id="sort-order"
-            className="w-full p-2 border rounded"
+            id="sort"
+            className="w-full border rounded p-2"
             value={sortOrder}
             onChange={(e) => setSortOrder(e.target.value as "asc" | "desc")}
           >
@@ -185,16 +205,16 @@ const FilterProducts: React.FC<FilterProductsProps> = ({
   }
 };
 
-/* ---------- small reusable select component ---------- */
-interface SelectFilterProps {
+/* ---------- tiny reusable select ---------- */
+interface SelectProps {
   id: string;
   label: string;
   value: string | null;
-  onChange: (id: string | null) => void;
+  onChange: (v: string | null) => void;
   options: OptionItem[];
   placeholder: string;
 }
-const SelectFilter: React.FC<SelectFilterProps> = ({
+const Select: React.FC<SelectProps> = ({
   id,
   label,
   value,
@@ -208,7 +228,7 @@ const SelectFilter: React.FC<SelectFilterProps> = ({
     </label>
     <select
       id={id}
-      className="w-full p-2 border rounded"
+      className="w-full border rounded p-2"
       value={value ?? ""}
       onChange={(e) => onChange(e.target.value || null)}
     >
@@ -222,4 +242,4 @@ const SelectFilter: React.FC<SelectFilterProps> = ({
   </div>
 );
 
-export default FilterProducts;
+export default CollectionProductsFilter;

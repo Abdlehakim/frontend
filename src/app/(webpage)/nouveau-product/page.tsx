@@ -1,66 +1,36 @@
 // src/app/nouveau-product/page.tsx
 
-import ProductSectionByCollection from "@/components/product/collection/ProductSectionByCollection";
 import Banner from "@/components/Banner";
+import ProductSectionByCollection from "@/components/product/collection/ProductSectionByCollection";
 import { fetchData } from "@/lib/fetchData";
+import type { Product } from "@/types/Product";
 
 export const revalidate = 60;
 
+/* -------- banner DTO as returned by the API -------- */
 interface NewProductsBanner {
   NPBannerTitle?: string | null;
   NPBannerImgUrl?: string | null;
 }
 
-interface Product {
-  _id: string;
-  name: string;
-  ref: string;
-  price: number;
-  tva: number;
-  imageUrl: string;
-  images: string[];
-  material: string;
-  color: string;
-  dimensions: string;
-  warranty: string;
-  weight: string;
-  discount?: number;
-  status: string;
-  statuspage: string;
-  vadmin: string;
-  slug: string;
-  nbreview: number;
-  averageRating: number;
-  stock: number;
-  info: string;
-  description: string;
-
-  boutique: { _id: string; name: string };
-  brand: { _id: string; name: string };
-  category: { _id: string; name: string; slug: string };
-}
-
 export default async function NewProductsPage() {
-  const bannerData: NewProductsBanner = await fetchData<NewProductsBanner>(
+  /* banner */
+  const banner: NewProductsBanner = await fetchData<NewProductsBanner>(
     "NavMenu/NewProducts/getNewProductsBannerData"
   ).catch(() => ({} as NewProductsBanner));
 
+  /* latest products */
   const products: Product[] = await fetchData<Product[]>(
     "NavMenu/NewProducts/getNewProducts"
-  ).catch(() => [] as Product[]);
+  ).catch(() => []);
 
   return (
     <>
-      {bannerData.NPBannerTitle && bannerData.NPBannerImgUrl && (
-        <Banner
-          title={bannerData.NPBannerTitle}
-          imageBanner={bannerData.NPBannerImgUrl}
-        />
+      {banner.NPBannerTitle && banner.NPBannerImgUrl && (
+        <Banner title={banner.NPBannerTitle} imageBanner={banner.NPBannerImgUrl} />
       )}
 
-      {products.length > 0 && (
-        <ProductSectionByCollection products={products} />
-      )}
+      {products.length > 0 && <ProductSectionByCollection products={products} />}
     </>
   );
 }

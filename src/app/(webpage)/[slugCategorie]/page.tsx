@@ -1,34 +1,36 @@
-// src/app/(webpage)/[slugCategorie]/page.tsx
-
 import Banner from "@/components/Banner";
 import ProductSectionCategoriePage from "@/components/product/categorie/ProductSectionCategoriePage";
 import { fetchData } from "@/lib/fetchData";
-import { Product } from "@/types/Product";
+import { Product, SubCategorie } from "@/types/Product";
 
 export const revalidate = 60;
 
 interface CategorieData {
+  _id?: string;             // 👈 on en a besoin maintenant
   name?: string | null;
   slug?: string | null;
   bannerUrl?: string | null;
 }
 
-type PageParams = { slugCategorie: string; slugProduct: string };
+type PageParams = { slugCategorie: string };
 
-export default async function categoriePage({
-  params,
-}: {
-  params: Promise<PageParams>;
-}) {
-  const { slugCategorie } = await params;
+export default async function CategoriePage({ params }: { params: PageParams }) {
+  const { slugCategorie } = params;
 
-
-  // fetch categorie metadata
+  /* -------- catégorie -------- */
   const categorie: CategorieData = await fetchData<CategorieData>(
     `NavMenu/categorieSubCategoriePage/${slugCategorie}`
   ).catch(() => ({} as CategorieData));
 
-  // fetch products server-side and pass them down
+  /* -------- sous-catégories approuvées -------- */
+  let subcategories: SubCategorie[] = [];
+  if (categorie._id) {
+    subcategories = await fetchData<SubCategorie[]>(
+      `NavMenu/categorieSubCategoriePage/categorie/${categorie._id}`
+    ).catch(() => []);
+  }
+
+  /* -------- produits -------- */
   const initialProducts: Product[] = await fetchData<Product[]>(
     `NavMenu/categorieSubCategoriePage/products/${slugCategorie}`
   ).catch(() => []);
@@ -41,6 +43,7 @@ export default async function categoriePage({
       <ProductSectionCategoriePage
         slugCategorie={slugCategorie}
         initialProducts={initialProducts}
+        initialSubcategories={subcategories}
       />
     </div>
   );

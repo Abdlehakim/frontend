@@ -61,7 +61,7 @@ export default async function Stores() {
     <div className="w-[95%] mx-auto py-8">
       {/* Dynamic title & subtitle */}
       <div className="flex w-full flex-col gap-[8px] items-center mb-4">
-        <h3 className="font-bold text-4xl text-HomePageTitles">
+        <h3 className="font-bold text-2xl text-HomePageTitles capitalize">
           {titles.HPboutiqueTitle || "Nos boutiques"}
         </h3>
         {titles.HPboutiqueSubTitle && (

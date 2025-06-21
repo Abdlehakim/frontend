@@ -77,7 +77,7 @@ const AllStore: React.FC<AllStoreProps> = ({ store }) => {
             {/* Info Section */}
             <div className="bg-white w-2/3 h-full overflow-hidden">
               <div className="p-6">
-                <h2 className="text-center text-2xl font-bold uppercase mb-4">
+                <h2 className="font-bold text-2xl text-HomePageTitles capitalize">
                   {item.name}
                 </h2>
                 <div className="text-center text-black flex justify-center items-center gap-[16px]">

@@ -1,36 +1,27 @@
-// src/components/product/categorie/ProductSectionCategoriePage.tsx
 "use client";
 
 import React, { useState, useEffect, useMemo } from "react";
-import { Product, SubCategorie } from "@/types/Product";  
+import { Product } from "@/types/Product";
 import ProductCard from "@/components/product/categorie/ProductCard";
 import Pagination from "@/components/PaginationClient";
-import FilterProducts from "@/components/product/filter/FilterProducts";
+import SubCategorieFilterProducts from "@/components/product/filter/SubCategorieFilterProducts";
 
 export const revalidate = 60;
 
-/* ---------- props ---------- */
 interface Props {
-  slugCategorie: string;
+  slugSubCategorie: string;
   initialProducts: Product[];
-  initialSubcategories: SubCategorie[];
 }
 
-export default function ProductSectionCategoriePage({
+export default function ProductSectionSubCategoriePage({
   initialProducts,
-  initialSubcategories,
 }: Props) {
-  /* ---------- filter state ---------- */
+  /* ---------- filter & pagination state ---------- */
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
   const [selectedBoutique, setSelectedBoutique] = useState<string | null>(null);
-  const [selectedSubCategorie, setSelectedSubCategorie] = useState<string | null>(
-    null
-  );
   const [minPrice, setMinPrice] = useState<number | null>(null);
   const [maxPrice, setMaxPrice] = useState<number | null>(null);
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
-
-  /* ---------- pagination ---------- */
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 8;
 
@@ -57,40 +48,24 @@ export default function ProductSectionCategoriePage({
     [initialProducts]
   );
 
-  // 👉  ALWAYS show every approved sub-category
-  const subcategories = useMemo(
-    () => initialSubcategories.map((s) => ({ _id: s._id, name: s.name })),
-    [initialSubcategories]
-  );
-
   /* ---------- filtered list ---------- */
   const [products, setProducts] = useState<Product[]>(initialProducts);
 
   useEffect(() => {
     let filtered = [...initialProducts];
 
-    if (selectedBrand)       filtered = filtered.filter((p) => p.brand?._id === selectedBrand);
-    if (selectedBoutique)    filtered = filtered.filter((p) => p.boutique?._id === selectedBoutique);
-    if (selectedSubCategorie)
-      filtered = filtered.filter((p) => p.subcategorie?._id === selectedSubCategorie);
-    if (minPrice !== null)   filtered = filtered.filter((p) => p.price >= minPrice);
-    if (maxPrice !== null)   filtered = filtered.filter((p) => p.price <= maxPrice);
+    if (selectedBrand)    filtered = filtered.filter((p) => p.brand?._id === selectedBrand);
+    if (selectedBoutique) filtered = filtered.filter((p) => p.boutique?._id === selectedBoutique);
+    if (minPrice !== null) filtered = filtered.filter((p) => p.price >= minPrice);
+    if (maxPrice !== null) filtered = filtered.filter((p) => p.price <= maxPrice);
 
     filtered.sort((a, b) =>
       sortOrder === "asc" ? a.price - b.price : b.price - a.price
     );
 
     setProducts(filtered);
-    setCurrentPage(1); // reset when filters change
-  }, [
-    initialProducts,
-    selectedBrand,
-    selectedBoutique,
-    selectedSubCategorie,
-    minPrice,
-    maxPrice,
-    sortOrder,
-  ]);
+    setCurrentPage(1);
+  }, [initialProducts, selectedBrand, selectedBoutique, minPrice, maxPrice, sortOrder]);
 
   /* ---------- pagination ---------- */
   const totalPages = Math.ceil(products.length / itemsPerPage);
@@ -102,20 +77,17 @@ export default function ProductSectionCategoriePage({
   /* ---------- render ---------- */
   return (
     <div className="flex flex-col xl:flex-row gap-4 w-[90%] mx-auto">
-      <FilterProducts
+      <SubCategorieFilterProducts
         selectedBrand={selectedBrand}
         setSelectedBrand={setSelectedBrand}
         selectedBoutique={selectedBoutique}
         setSelectedBoutique={setSelectedBoutique}
-        selectedSubCategorie={selectedSubCategorie}
-        setSelectedSubCategorie={setSelectedSubCategorie}
         minPrice={minPrice}
         setMinPrice={setMinPrice}
         maxPrice={maxPrice}
         setMaxPrice={setMaxPrice}
         brands={brands}
         boutiques={boutiques}
-        subcategories={subcategories}
         sortOrder={sortOrder}
         setSortOrder={setSortOrder}
       />

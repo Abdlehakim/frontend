@@ -49,15 +49,21 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
         const isOutOfStock =
           product.stockStatus === "out of stock" || product.stock === 0;
 
+        /* ---------------- slugs for routing ---------------- */
         const categorieSlug = product.categorie?.slug ?? "categorie";
+        const subcategorieSlug =
+          product.subcategorie?.slug ?? "sous-categorie";
+
+        /* final link: /<categorie>/<subcategorie>/<product> */
+        const productUrl = `/${categorieSlug}/${subcategorieSlug}/${product.slug}`;
 
         return (
           <div
             key={product._id}
             className="group-hover:scale-[0.9] hover:!scale-[1.1] h-[520px] flex gap-[10px] flex-col transform scale-transform duration-200 ease-in-out"
           >
-            {/* Product Image / Link */}
-            <Link href={`/${categorieSlug}/${product.slug}`}> 
+            {/* --------- Product Image --------- */}
+            <Link href={productUrl}>
               <Image
                 className="w-full h-[380px] mx-auto top-5 object-cover"
                 src={product.mainImageUrl ?? "/placeholder.png"}
@@ -67,9 +73,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
               />
             </Link>
 
-            {/* Product Info */}
+            {/* --------- Product Info --------- */}
             <div className="flex-col flex px-2 w-full h-[200px]">
-              <Link href={`/${categorieSlug}/${product.slug}`}> 
+              <Link href={productUrl}>
                 <div className="flex justify-between h-[65px] max-sm:h-16 max-md:h-20">
                   <div className="flex-col flex gap-[4px]">
                     <p className="text-2xl max-md:text-lg font-bold capitalize">
@@ -99,32 +105,31 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
               </Link>
             </div>
 
-            {/* Actions: Add to cart, View, Wishlist */}
+            {/* --------- Actions (cart / view / wishlist) --------- */}
             <div className="flex text-lg max-md:text-sm justify-between h-[45px]">
-              {/* Add to Cart Button */}
+              {/* Add to Cart */}
               <button
-  onClick={() => {
-    if (isOutOfStock) return;
+                onClick={() => {
+                  if (isOutOfStock) return;
 
-    const cartItem: Omit<CartItem, "quantity"> = {
-      _id:          product._id,
-      name:         product.name,
-      reference:    product.reference,
-      price:        product.price,
-      mainImageUrl: product.mainImageUrl,
-      discount:     product.discount ?? 0,
-      slug:         product.slug,
-      // map `product.categorie` → `cartItem.categorie`, or leave `undefined`
-      categorie: product.categorie
-        ? {
-            name: product.categorie.name,
-            slug: product.categorie.slug,
-          }
-        : undefined,
-    };
+                  const cartItem: Omit<CartItem, "quantity"> = {
+                    _id: product._id,
+                    name: product.name,
+                    reference: product.reference,
+                    price: product.price,
+                    mainImageUrl: product.mainImageUrl,
+                    discount: product.discount ?? 0,
+                    slug: product.slug,
+                    categorie: product.categorie
+                      ? {
+                          name: product.categorie.name,
+                          slug: product.categorie.slug,
+                        }
+                      : undefined,
+                  };
 
-    dispatch(addItem({ item: cartItem, quantity: 1 }));
-  }}
+                  dispatch(addItem({ item: cartItem, quantity: 1 }));
+                }}
                 className={`AddtoCart w-[50%] max-lg:w-[60%] max-md:rounded-[3px] group/box relative ${
                   isOutOfStock
                     ? "bg-gray-400 cursor-not-allowed"
@@ -142,11 +147,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
                 )}
               </button>
 
-              {/* View Button */}
-              <Link
-                href={`/${categorieSlug}/${product.slug}`}
-                className="w-[25%] max-lg:w-[30%] relative"
-              >
+              {/* View */}
+              <Link href={productUrl} className="w-[25%] max-lg:w-[30%] relative">
                 <button className="AddtoCart bg-white max-md:rounded-[3px] h-full w-full group/box text-primary border border-primary">
                   <p className="absolute flex items-center justify-center w-full h-full transition-all duration-300 transform lg:group-hover/box:translate-y-[-100%] ease max-md:text-xs">
                     Voir
@@ -157,7 +159,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
                 </button>
               </Link>
 
-              {/* Wishlist Button */}
+              {/* Wishlist */}
               <button
                 onClick={() => handleWishlistClick(product)}
                 className="h-full relative bg-white hover:bg-primary max-md:rounded-[3px] AddtoCart w-[15%] group/box text-primary hover:text-white border border-primary max-lg:hidden transition-all duration-300"
