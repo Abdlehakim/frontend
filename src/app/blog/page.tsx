@@ -1,40 +1,32 @@
-import PostCard from "@/components/Post/PostCard";
+// src/app/blog/page.tsx
+
 import Banner from "@/components/Banner";
-import { cache } from "react";
-import { notFound } from "next/navigation";
+import PostCard from "@/components/Post/PostCard";
+import { fetchData } from "@/lib/fetchData";
 
 export const revalidate = 60;
 
-interface blogBanner {
-  title: string;
-  banner: string;
+/* ---------- banner type exactly as returned by the API ---------- */
+interface BlogBanner {
+  BlogBannerTitle?: string | null;
+  BlogBannerImgUrl?: string | null;
 }
 
-const fetchData = cache(async function <T>(endpoint: string): Promise<T | null> {
-  const backendUrl =
-    process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3000";
-  const res = await fetch(`${backendUrl}${endpoint}`, { cache: "no-store" });
-  if (!res.ok) {
-    return null;
-  }
-  return res.json();
-});
+export default async function BlogPage() {
+  /* banner */
+  const banner: BlogBanner = await fetchData<BlogBanner>(
+    "blog/getBlogBannerData"
+  ).catch(() => ({} as BlogBanner));
 
-export default async function Blog() {
-  const blogBannerData = await fetchData<blogBanner | null>(
-    `/api/Blog/BlogBanner`
-  );
-  if (!blogBannerData) {
-    notFound();
-  }
-  
+
   return (
     <>
-      <Banner
-        title={blogBannerData.title}
-        imageBanner={blogBannerData.banner}
-      />
-      <PostCard />
+      {banner.BlogBannerTitle && banner.BlogBannerImgUrl && (
+        <Banner
+          title={banner.BlogBannerTitle}
+          imageBanner={banner.BlogBannerImgUrl}
+        />
+      )}
     </>
   );
 }

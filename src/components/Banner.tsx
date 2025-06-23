@@ -10,7 +10,7 @@ interface BannerProps {
 
 const Banner: React.FC<BannerProps> = ({ title, imageBanner }) => {
   return (
-    <div className="relative w-full h-[400px] max-md:h-[200px] mb-6">
+    <div className="relative w-full h-[400px] max-md:h-[200px]">
       
         <Image
           src={imageBanner}
