@@ -1,4 +1,4 @@
-// src/app/(your-route)/Categories.tsx
+// src/components/homepage/Categories.tsx
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -33,7 +33,7 @@ export const revalidate = 60;
 
 export default async function CategoriesPage() {
   // Fetch titles and categories with inline fallbacks
-  const categoryTitles: CategorieTitles =
+  const categorieTitles: CategorieTitles =
     await fetchData<CategorieTitles>("categories/title").catch(
       () => ({} as CategorieTitles)
     );
@@ -49,36 +49,36 @@ export default async function CategoriesPage() {
         <div className="desktop max-md:w-[95%] max-md:gap-[10px] flex flex-col gap-[40px] py-8">
           <div className="flex-col flex gap-[8px] items-center w-full max-lg:text-center">
             <h3 className="font-bold text-2xl text-HomePageTitles capitalize">
-              {categoryTitles.HPcategorieTitle ?? ""}
+              {categorieTitles.HPcategorieTitle ?? ""}
             </h3>
             <p className="text-base text-[#525566]">
-              {categoryTitles.HPcategorieSubTitle ?? ""}
+              {categorieTitles.HPcategorieSubTitle ?? ""}
             </p>
           </div>
 
           <div className="grid grid-cols-6 gap-[16px] w-full max-xl:grid-cols-3 max-lg:grid-cols-3 max-md:grid-cols-3">
-            {categories.map((category) => (
+            {categories.map((categorie) => (
               <Link
-                key={category._id}
-                href={`/${category.slug}`}
+                key={categorie._id}
+                href={`/${categorie.slug}`}
                 className="rounded-full"
               >
                 <div className="relative rounded-full group overflow-hidden justify-center items-center aspect-square">
                   <div className="absolute inset-0 bg-black/60 rounded-full opacity-0 lg:group-hover:opacity-80 transition-opacity" />
                   <p className="absolute top-1/2 left-1/2 w-[85%] -translate-x-1/2 -translate-y-1/2 bg-white text-black text-lg rounded-3xl text-center py-1 max-xl:px-3 transition-all">
-                    {category.name}
+                    {categorie.name}
                   </p>
                   <p className="absolute top-[80%] left-1/2 -translate-x-1/2 -translate-y-1/2 text-white text-lg opacity-0 lg:group-hover:opacity-100 transition-opacity pt-2 max-xl:text-xs">
-                    {category.numberproduct}
+                    {categorie.numberproduct}
                   </p>
                   <Image
                     className="rounded-full w-[400px] h-[400px] object-cover"
-                    src={category.imageUrl || "/fallback-image.jpg"}
-                    alt={category.name}
+                    src={categorie.imageUrl || "/fallback-image.jpg"}
+                    alt={categorie.name}
                     width={100}
                     height={100}
                     placeholder="blur"
-                    blurDataURL={category.imageUrl || "/fallback-image.jpg"}
+                    blurDataURL={categorie.imageUrl || "/fallback-image.jpg"}
                     sizes="(max-width: 640px) 15vw, (max-width: 1200px) 15vw"
                   />
                 </div>

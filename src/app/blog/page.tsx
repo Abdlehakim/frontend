@@ -1,5 +1,6 @@
 import Banner from "@/components/Banner";
 import PostCard from "@/components/post/PostCard";
+import PostCategories from "@/components/menu/blog/PostCategories";
 import { fetchData } from "@/lib/fetchData";
 import { notFound } from "next/navigation";
 
@@ -27,9 +28,9 @@ export default async function BlogPage() {
   ).catch(() => ({} as BlogBanner));
 
   // 2) post cards
-  const posts = await fetchData<PostCardItem[]>("blog/PostCardData").catch(
-    () => []
-  );
+  const posts = await fetchData<PostCardItem[]>(
+    "blog/getAllPostCardData"
+  ).catch(() => []);
   if (posts.length === 0) {
     notFound();
   }
@@ -42,7 +43,10 @@ export default async function BlogPage() {
           imageBanner={banner.BlogBannerImgUrl}
         />
       )}
-      <PostCard posts={posts} />
+      <PostCategories />
+      <div className="max-md:p-4 p-16 w-full grid grid-cols-4 max-md:grid-cols-1  gap-4 relative">
+        <PostCard posts={posts} />
+      </div>
     </>
   );
 }

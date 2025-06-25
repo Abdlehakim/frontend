@@ -23,16 +23,15 @@ interface Props {
 
 export default function PostCard({ posts }: Props) {
   return (
-    <section className="py-8 w-[96%] mx-auto flex flex-col items-center gap-5">
-      <div className="grid grid-cols-4 max-xl:grid-cols-2 max-md:grid-cols-1 w-full gap-10">
+    <>  
         {posts.map((post) => (
           <Link
             key={post.slug}
             href={`/blog/${post.postCategorie?.slug ?? ''}/${post.postSubCategorie?.slug ?? ''}/${post.slug}`}
             aria-label={`Read more: ${post.title}`}
-            className="group block transform transition duration-300 hover:scale-95"
+            className="group block transform transition duration-300 hover:scale-95 px-4"
           >
-            <div className="relative w-full h-80">
+            <div className="relative w-full h-60 max-md:h-40">
               <Image
                 src={post.imageUrl}
                 alt={post.title}
@@ -56,12 +55,12 @@ export default function PostCard({ posts }: Props) {
                 })}
               </time>
 
-              <h2 className="text-gray-800 text-2xl font-bold line-clamp-2 mb-2">
+              <h2 className="text-gray-800 text-2xl max-md:text-lg font-bold line-clamp-2 max-md:line-clamp-1 mb-2">
                 {post.title}
               </h2>
 
               <div
-                className="text-gray-600 line-clamp-2 mb-4 prose prose-sm max-w-none"
+                className="text-gray-600 line-clamp-3 prose prose-sm max-w-none"
                 dangerouslySetInnerHTML={{ __html: post.description }}
               />
 
@@ -72,7 +71,6 @@ export default function PostCard({ posts }: Props) {
             </article>
           </Link>
         ))}
-      </div>
-    </section>
+    </>
   );
 }
