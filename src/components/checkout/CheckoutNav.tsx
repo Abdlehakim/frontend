@@ -1,6 +1,11 @@
 import React from "react";
+import { AiOutlineCheckCircle } from "react-icons/ai"; // ← NEW
 
-const CheckoutNav: React.FC<{ currentStep: string }> = ({ currentStep }) => {
+interface CheckoutNavProps {
+  currentStep: "cart" | "checkout" | "order-summary";
+}
+
+const CheckoutNav: React.FC<CheckoutNavProps> = ({ currentStep }) => {
   return (
     <div className="w-full h-[200px] flex justify-center">
       <ol className="items-center flex w-full max-w-2xl text-center text-sm font-medium text-gray-500 dark:text-gray-400 sm:text-base">
@@ -13,20 +18,7 @@ const CheckoutNav: React.FC<{ currentStep: string }> = ({ currentStep }) => {
           }`}
         >
           <span className="flex items-center after:mx-2 after:text-gray-200 after:content-['/'] dark:after:text-gray-500 sm:after:hidden">
-            <svg
-              className="me-2 h-4 w-4 sm:h-5 sm:w-5"
-              aria-hidden="true"
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke="currentColor"
-                d="M8.5 11.5 11 14l4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-              />
-            </svg>
+            <AiOutlineCheckCircle className="me-2 h-4 w-4 sm:h-5 sm:w-5" />
             Cart
           </span>
         </li>
@@ -40,20 +32,7 @@ const CheckoutNav: React.FC<{ currentStep: string }> = ({ currentStep }) => {
           }`}
         >
           <span className="flex items-center after:mx-2 after:text-gray-200 after:content-['/'] dark:after:text-gray-500 sm:after:hidden">
-            <svg
-              className="me-2 h-4 w-4 sm:h-5 sm:w-5"
-              aria-hidden="true"
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <path
-                stroke="currentColor"
-                d="M8.5 11.5 11 14l4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-              />
-            </svg>
+            <AiOutlineCheckCircle className="me-2 h-4 w-4 sm:h-5 sm:w-5" />
             Checkout
           </span>
         </li>
@@ -66,20 +45,7 @@ const CheckoutNav: React.FC<{ currentStep: string }> = ({ currentStep }) => {
               : "text-primary-700 dark:text-primary-500"
           }`}
         >
-          <svg
-            className="me-2 h-4 w-4 sm:h-5 sm:w-5"
-            aria-hidden="true"
-            xmlns="http://www.w3.org/2000/svg"
-            width="24"
-            height="24"
-            fill="none"
-            viewBox="0 0 24 24"
-          >
-            <path
-              stroke="currentColor"
-              d="M8.5 11.5 11 14l4-4m6 2a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"
-            />
-          </svg>
+          <AiOutlineCheckCircle className="me-2 h-4 w-4 sm:h-5 sm:w-5" />
           Order summary
         </li>
       </ol>

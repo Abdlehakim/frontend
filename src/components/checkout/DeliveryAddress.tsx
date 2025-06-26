@@ -3,6 +3,7 @@
 import { useEffect, useState, useCallback } from "react";
 import { useAuth } from "@/hooks/useAuth";
 import AddAddress from "./AddAddress"; // <-- import your AddAddress component
+import { AiOutlinePlus } from "react-icons/ai"; // ← NEW
 
 interface Address {
   _id: string;
@@ -112,17 +113,7 @@ export default function DeliveryAddressSelect() {
                        dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 
                        dark:hover:text-white dark:focus:ring-gray-700"
           >
-            <svg
-              className="h-5 w-5"
-              aria-hidden="true"
-              xmlns="http://www.w3.org/2000/svg"
-              width="24"
-              height="24"
-              fill="none"
-              viewBox="0 0 24 24"
-            >
-              <path stroke="currentColor" d="M5 12h14m-7 7V5" />
-            </svg>
+            <AiOutlinePlus className="h-5 w-5" />
             Add new address
           </button>
         </div>

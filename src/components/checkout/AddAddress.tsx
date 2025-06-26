@@ -3,6 +3,7 @@
 import React, { useState } from "react";
 import { toast } from "react-toastify";
 import { useAuth } from "@/hooks/useAuth"; // Update the path if needed
+import { AiOutlinePlus } from "react-icons/ai"; // ← NEW
 
 interface AddAddressProps {
   isFormVisible: boolean;
@@ -53,12 +54,15 @@ export default function AddAddress({
     }
 
     try {
-      const response = await fetch(`${backendUrl}/api/client/address/postAddress`, {
-        method: "POST",
-        credentials: "include", // send cookies if using cookie-based auth
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(addressData),
-      });
+      const response = await fetch(
+        `${backendUrl}/api/client/address/postAddress`,
+        {
+          method: "POST",
+          credentials: "include", // send cookies if using cookie-based auth
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(addressData),
+        }
+      );
 
       if (!response.ok) {
         // Handle server errors
@@ -110,7 +114,7 @@ export default function AddAddress({
 
   return (
     <div className="min-w-screen h-screen animated fadeIn faster fixed left-0 top-0 flex justify-center items-center inset-0 z-50 outline-none focus:outline-none bg-no-repeat bg-center bg-cover backdrop-filter backdrop-brightness-75">
-      <div className="absoluteopacity-80 inset-0 z-0"></div>
+      <div className="absolute opacity-80 inset-0 z-0"></div>
       <form
         onSubmit={handleSubmit}
         className="space-y-4 w-full max-w-lg p-5 relative mx-auto my-auto rounded-xl shadow-lg bg-white"
@@ -249,17 +253,7 @@ export default function AddAddress({
                          px-5 py-2.5 text-sm font-medium hover:bg-[#15335E] 
                          hover:border-[#15335E]"
             >
-              <svg
-                className="h-5 w-5"
-                aria-hidden="true"
-                xmlns="http://www.w3.org/2000/svg"
-                width="24"
-                height="24"
-                fill="none"
-                viewBox="0 0 24 24"
-              >
-                <path stroke="currentColor" d="M5 12h14m-7 7V5" />
-              </svg>
+              <AiOutlinePlus className="h-5 w-5" />
               Add address
             </button>
 
