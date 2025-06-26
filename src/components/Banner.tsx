@@ -10,20 +10,21 @@ interface BannerProps {
 
 const Banner: React.FC<BannerProps> = ({ title, imageBanner }) => {
   return (
-    <div className="relative w-full h-[400px] max-md:h-[200px]">
-      
-        <Image
-          src={imageBanner}
-          alt={title}
-          className="object-cover h-full w-full"
-          fill
-          priority
-          sizes="(max-width: 1920px) 100vw, (max-width: 1200px) 50vw, 33vw"
-          quality={100}
-          placeholder="blur"
-          blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA"
-        />
-        <div
+    <div className="relative w-full aspect-[16/4] max-md:h-[200px]">
+      <Image
+        src={imageBanner}
+        alt={title}
+        className="object-cover"
+        fill
+        priority
+        sizes="(max-width: 768px) 100vw,
+               (max-width: 1280px) 100vw,
+               1280px"
+        quality={75}
+        placeholder="blur"
+        blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA"
+      />
+      <div
         className="
       absolute
       bottom-0
