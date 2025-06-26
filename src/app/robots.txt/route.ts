@@ -1,18 +1,18 @@
-// src/app/sitemap.xml/route.ts
+// src/app/robots.txt/route.ts
 import { NextResponse } from "next/server";
 
+// optional: run on the Edge runtime
 export const runtime = "edge";
 
-export async function GET() {
-  const xml = `<?xml version="1.0" encoding="UTF-8"?>
-<urlset xmlns="http://www.sitemaps.org/schemas/sitemap/0.9">
-  <url>
-    <loc>https://soukelmeuble.tn/</loc>
-    <priority>1.0</priority>
-  </url>
-</urlset>`;
+export function GET() {
+  return new NextResponse(
+    `
+User-agent: *
+Allow: /
 
-  return new NextResponse(xml.trim(), {
-    headers: { "Content-Type": "application/xml; charset=utf-8" },
-  });
+Sitemap: https://soukelmeuble.tn/sitemap.xml
+Host: https://soukelmeuble.tn
+`.trim(),
+    { headers: { "Content-Type": "text/plain; charset=utf-8" } }
+  );
 }
