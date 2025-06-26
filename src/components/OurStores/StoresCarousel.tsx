@@ -40,88 +40,88 @@ interface StoresCardProps {
 
 /* ---------- card ---------- */
 const StoresCard: React.FC<StoresCardProps> = ({ store, itemsPerSlide }) => (
+  /* merged the two .relative wrappers into one */
   <div
     className="relative group cursor-pointer"
     style={{ flex: `0 0 ${90 / itemsPerSlide}%` }}
   >
-    <div className="relative">
-      {store.image && (
-        <Image
-          src={store.image}
-          alt={store.name}
-          width={640}
-          height={540}
-          sizes="(max-width:768px) 100vw, (max-width:1200px) 50vw, 33vw"
-          className="w-full h-[400px] max-sm:h-[200px] object-cover rounded-xl"
-        />
-      )}
+    {store.image && (
+      <Image
+        src={store.image}
+        alt={store.name}
+        width={640}
+        height={540}
+        sizes="(max-width:768px) 100vw, (max-width:1200px) 50vw, 33vw"
+        className="w-full h-[400px] max-sm:h-[200px] object-cover rounded-xl"
+      />
+    )}
 
-      <h2 className="bg-primary absolute top-0 w-full rounded-t-xl h-20 flex items-center justify-center text-2xl font-bold capitalize text-white tracking-wide border-b-8 border-secondary">
-        {store.name}
-      </h2>
+    <h2 className="bg-primary absolute top-0 w-full rounded-t-xl h-20 flex items-center justify-center text-2xl font-bold capitalize text-white tracking-wide border-b-8 border-secondary">
+      {store.name}
+    </h2>
 
-      <div className="absolute top-20 h-72 w-full p-2 bg-black/80 flex flex-col opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-        <div className="mt-4 ml-4 w-[90%]">
-          <h3 className="font-semibold text-xl text-white">TEMPS OUVERT :</h3>
-          <div className="h-[2px] w-full bg-white/40 my-1" />
+    <div className="absolute top-20 h-72 w-full p-2 bg-black/80 flex flex-col opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+      <div className="mt-4 ml-4 w-[90%]">
+        <h3 className="font-semibold text-xl text-white">TEMPS OUVERT :</h3>
+        <div className="h-[2px] w-full bg-white/40 my-1" />
 
-          <ul className="text-sm divide-y divide-white/20">
-            {Object.entries(store.openingHours).map(([day, hours]) => {
-              const ranges =
-                Array.isArray(hours) && hours.length
-                  ? hours
-                      .map(({ open, close }) =>
-                        open || close ? `${open} – ${close}` : ""
-                      )
-                      .filter(Boolean)
-                  : [];
+        <ul className="text-sm divide-y divide-white/20">
+          {Object.entries(store.openingHours).map(([day, hours]) => {
+            const ranges =
+              Array.isArray(hours) && hours.length
+                ? hours
+                    .map(({ open, close }) =>
+                      open || close ? `${open} – ${close}` : ""
+                    )
+                    .filter(Boolean)
+                : [];
 
-              return (
-                <li
-                  key={day}
-                  className="grid grid-cols-[auto_1fr] items-center gap-x-3 py-1 text-white tabular-nums"
-                >
-                  <span className="flex items-center gap-1.5">
-                    <FaRegClock size={12} />
-                    <span className="font-medium">{day}</span>
-                  </span>
+            return (
+              <li
+                key={day}
+                className="grid grid-cols-[auto_1fr] items-center gap-x-3 py-1 text-white tabular-nums"
+              >
+                {/* flattened: removed the inner span */}
+                <span className="flex items-center gap-1.5 font-medium">
+                  <FaRegClock size={12} />
+                  {day}
+                </span>
 
-                  {ranges.length ? (
-                    <div className="flex items-center justify-end gap-x-4 whitespace-nowrap">
+                {ranges.length ? (
+                  <div className="flex items-center justify-end gap-x-4 whitespace-nowrap">
+                    <span className="flex items-center gap-1.5">
+                      <BsSunFill size={12} />
+                      {ranges[0]}
+                    </span>
+                    {ranges[1] && (
                       <span className="flex items-center gap-1.5">
-                        <BsSunFill size={12} />
-                        {ranges[0]}
+                        <BsMoonFill size={12} />
+                        {ranges[1]}
                       </span>
-                      {ranges[1] && (
-                        <span className="flex items-center gap-1.5">
-                          <BsMoonFill size={12} />
-                          {ranges[1]}
-                        </span>
-                      )}
-                    </div>
-                  ) : (
-                    <span className="justify-self-end">Fermé</span>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
+                    )}
+                  </div>
+                ) : (
+                  <span className="justify-self-end">Fermé</span>
+                )}
+              </li>
+            );
+          })}
+        </ul>
 
-          <div className="h-[2px] w-full bg-white/40 my-1" />
-        </div>
+        <div className="h-[2px] w-full bg-white/40 my-1" />
       </div>
+    </div>
 
-      <div className="bg-primary h-12 absolute bottom-0 w-full flex items-center justify-center gap-4 text-xl text-white tracking-wide rounded-b-xl">
-        <FaMapMarkerAlt size={20} />
-        <span className="font-semibold">
-          {store.address}, {store.city}
-        </span>
-      </div>
+    <div className="bg-primary h-12 absolute bottom-0 w-full flex items-center justify-center gap-4 text-xl text-white tracking-wide rounded-b-xl">
+      <FaMapMarkerAlt size={20} />
+      <span className="font-semibold">
+        {store.address}, {store.city}
+      </span>
     </div>
   </div>
 );
 
-/* ---------- indicator with 48 px hit-box ---------- */
+/* ---------- indicator with 48-px hit-box ---------- */
 function Dot({
   active,
   onClick,
@@ -151,6 +151,7 @@ const StoresCarousel: React.FC<StoresProps> = ({ storesData }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [itemsPerSlide, setItemsPerSlide] = useState(3);
 
+  /* responsive break-points */
   useEffect(() => {
     const update = () => {
       const w = window.innerWidth;
@@ -163,6 +164,7 @@ const StoresCarousel: React.FC<StoresProps> = ({ storesData }) => {
     return () => window.removeEventListener("resize", update);
   }, []);
 
+  /* slice stores into logical slides */
   const slides = useMemo(() => {
     const out: StoreType[][] = [];
     for (let i = 0; i < storesData.length; i += itemsPerSlide) {
@@ -190,14 +192,19 @@ const StoresCarousel: React.FC<StoresProps> = ({ storesData }) => {
           style={{ transform: `translateX(-${currentSlide * 100}%)` }}
         >
           {slides.map((slideItems, i) => (
-            <div key={i} className="flex-shrink-0 w-full flex gap-4 justify-center">
-              {slideItems.map((store) => (
-                <StoresCard
-                  key={store._id ?? store.name}
-                  store={store}
-                  itemsPerSlide={itemsPerSlide}
-                />
-              ))}
+            /* ▶ only the active slide is populated to keep the DOM tiny */
+            <div
+              key={i}
+              className="flex-shrink-0 w-full flex gap-4 justify-center"
+            >
+              {i === currentSlide &&
+                slideItems.map((store) => (
+                  <StoresCard
+                    key={store._id ?? store.name}
+                    store={store}
+                    itemsPerSlide={itemsPerSlide}
+                  />
+                ))}
             </div>
           ))}
         </div>

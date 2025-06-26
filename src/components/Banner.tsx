@@ -17,6 +17,8 @@ const Banner: React.FC<BannerProps> = ({ title, imageBanner }) => {
         className="object-cover"
         fill
         priority
+        fetchPriority="high"
+        loading="eager"
         sizes="(max-width: 768px) 100vw,
                (max-width: 1280px) 100vw,
                1280px"
