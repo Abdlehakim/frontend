@@ -1,5 +1,3 @@
-// src/components/homepage/NewProductCollection.tsx
-
 import React from "react";
 import Link from "next/link";
 import ProductCard from "@/components/product/categorie/ProductCard";
@@ -15,22 +13,18 @@ interface ProductDataType {
 export const revalidate = 60;
 
 export default async function NewProductCollection() {
-  // Fetch heading data
   const productData = await fetchData<ProductDataType>(
     "products/ProductCollectionHomePageTitles"
   ).catch(() => ({ HPNewProductTitle: "", HPNewProductSubTitle: "" }));
 
-  // Fetch product list
   const products = await fetchData<Product[]>(
     "products/NewProductsCollectionHomePage"
   ).catch(() => []);
 
+  if (products.length === 0) return null;
 
   return (
-    <>
-      {products.length > 0 && (
-    <div className="desktop max-lg:w-[95%] flex flex-col items-center gap-8 py-8">
-      {/* Heading */}
+    <section className="desktop max-lg:w-[95%] flex flex-col items-center gap-8 py-8">
       <div className="flex w-full flex-col items-center gap-2 relative">
         <h2 className="font-bold text-2xl text-HomePageTitles capitalize">
           {productData.HPNewProductTitle}
@@ -41,20 +35,7 @@ export default async function NewProductCollection() {
         <div className="absolute w-full flex justify-end">
           <Link
             href="/nouveau-product"
-            className="
-        group
-        inline-flex
-        items-center
-        border-2 border-secondary
-        text-secondary
-        font-semibold
-        uppercase
-        tracking-wide
-        px-6 py-2
-        rounded-full
-        transition-colors duration-200 ease-in-out
-        hover:bg-secondary hover:text-white
-      "
+            className="group inline-flex items-center border-2 border-secondary text-secondary font-semibold uppercase tracking-wide px-6 py-2 rounded-full transition-colors duration-200 ease-in-out hover:bg-secondary hover:text-white"
           >
             Voir plus ...
             <FiArrowRight
@@ -65,11 +46,7 @@ export default async function NewProductCollection() {
         </div>
       </div>
 
-      {/* Product grid */}
       <ProductCard products={products} />
-    </div>
-)}
-    </>
-
+    </section>
   );
 }

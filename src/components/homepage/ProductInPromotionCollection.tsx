@@ -1,10 +1,9 @@
-// src/components/homepage/ProductPromotionHomePage.tsx
 import React from "react";
+import Link from "next/link";
 import { fetchData } from "@/lib/fetchData";
 import ProductCard from "@/components/product/categorie/ProductCard";
 import { Product } from "@/types/Product";
 import { FiArrowRight } from "react-icons/fi";
-import Link from "next/link";
 
 interface ProductPromotionHomePageType {
   HPPromotionTitle?: string;
@@ -14,45 +13,29 @@ interface ProductPromotionHomePageType {
 export const revalidate = 60;
 
 export default async function ProductPromotionHomePage() {
-  // Explicitly set fallback default values
   const titleData = await fetchData<ProductPromotionHomePageType>(
     "products/ProductPromotionHomePageTitles"
   ).catch(() => ({ HPPromotionTitle: "", HPPromotionSubTitle: "" }));
 
-  // Fetch products with explicit fallback
   const products = await fetchData<Product[]>(
     "products/productsCollectionPromotion"
   ).catch(() => []);
 
+  if (products.length === 0) return null;
+
   return (
-    <>
-      {products.length > 0 && (
-        <div className="desktop max-lg:w-[95%] flex flex-col items-center gap-8 py-8">
-          {/* Header */}
-          <div className="flex w-full flex-col items-center gap-2 relative">
-            <h2 className="font-bold text-2xl text-HomePageTitles capitalize">
-              {titleData.HPPromotionTitle}
-            </h2>
-            <p className="text-base text-[#525566]">
-              {titleData.HPPromotionSubTitle}
-            </p>
-            <div className="absolute w-full flex justify-end">
+    <section className="desktop max-lg:w-[95%] flex flex-col items-center gap-8 py-8">
+      <div className="flex w-full flex-col items-center gap-2 relative">
+        <h2 className="font-bold text-2xl text-HomePageTitles capitalize">
+          {titleData.HPPromotionTitle}
+        </h2>
+        <p className="text-base text-[#525566]">
+          {titleData.HPPromotionSubTitle}
+        </p>
+        <div className="absolute w-full flex justify-end">
           <Link
             href="/productpromotion"
-            className="
-        group
-        inline-flex
-        items-center
-        border-2 border-secondary
-        text-secondary
-        font-semibold
-        uppercase
-        tracking-wide
-        px-6 py-2
-        rounded-full
-        transition-colors duration-200 ease-in-out
-        hover:bg-secondary hover:text-white
-      "
+            className="group inline-flex items-center border-2 border-secondary text-secondary font-semibold uppercase tracking-wide px-6 py-2 rounded-full transition-colors duration-200 ease-in-out hover:bg-secondary hover:text-white"
           >
             Voir plus ...
             <FiArrowRight
@@ -61,11 +44,9 @@ export default async function ProductPromotionHomePage() {
             />
           </Link>
         </div>
-          </div>
+      </div>
 
-          <ProductCard products={products} />
-        </div>
-      )}
-    </>
+      <ProductCard products={products} />
+    </section>
   );
 }

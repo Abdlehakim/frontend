@@ -1,6 +1,3 @@
-/* --------------------------------------------------------------------------
-   src/components/homepage/Categories.tsx   (Server Component)
-   -------------------------------------------------------------------------- */
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
@@ -34,16 +31,18 @@ interface Categories {
 export const revalidate = 60;
 
 export default async function CategoriesPage() {
-  const categorieTitles = await fetchData<CategorieTitles>("categories/title")
-    .catch(() => ({} as CategorieTitles));
+  const categorieTitles = await fetchData<CategorieTitles>("categories/title").catch(
+    () => ({} as CategorieTitles)
+  );
 
-  const categories = await fetchData<Categories[]>("categories")
-    .catch(() => [] as Categories[]);
+  const categories = await fetchData<Categories[]>("categories").catch(
+    () => [] as Categories[]
+  );
 
   if (categories.length === 0) return null;
 
   return (
-    <div className="desktop max-md:w-[95%] max-md:gap-[10px] flex flex-col gap-[40px] py-8">
+    <section className="desktop max-md:w-[95%] max-md:gap-[10px] flex flex-col gap-[40px] py-8">
       <div className="flex-col flex gap-[8px] items-center w-full max-lg:text-center">
         <h2 className="font-bold text-2xl text-HomePageTitles capitalize">
           {categorieTitles.HPcategorieTitle ?? ""}
@@ -86,6 +85,6 @@ export default async function CategoriesPage() {
           </Link>
         ))}
       </div>
-    </div>
+    </section>
   );
 }

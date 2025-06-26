@@ -32,7 +32,7 @@ export default async function BrandsPage() {
   if (brands.length === 0) return null;
 
   return (
-    <div className="max-md:w-[95%] flex flex-col gap-[40px] max-md:gap-[16px] py-8">
+    <section className="max-md:w-[95%] flex flex-col gap-[40px] max-md:gap-[16px] py-8">
       <div className="flex flex-col gap-[8px] max-md:gap-[4px] text-center w-full">
         <h3 className="font-bold text-2xl text-HomePageTitles capitalize">
           {titles.HPbrandTitle}
@@ -101,6 +101,6 @@ export default async function BrandsPage() {
           </div>
         ))}
       </div>
-    </div>
+    </section>
   );
 }
