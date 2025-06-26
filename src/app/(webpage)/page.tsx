@@ -1,13 +1,11 @@
-// src/app/page.tsx
+/* ------------------------------------------------------------------ */
+/*  src/app/page.tsx                                                  */
+/* ------------------------------------------------------------------ */
+import dynamic from "next/dynamic";
 import Banner from "@/components/Banner";
-import Brands from "@/components/homepage/Brands";
-import BestProductCollection from "@/components/homepage/BestProductCollection";
-import Categories from "@/components/homepage/Categories";
-import NewProductCollection from "@/components/homepage/NewProductCollection";
-import ProductInPromotionCollection from "@/components/homepage/ProductInPromotionCollection";
-import Stores from "@/components/homepage/Stores";
 import { fetchData } from "@/lib/fetchData";
 
+/* ---------- types ---------- */
 export const revalidate = 60;
 
 interface BannerData {
@@ -15,26 +13,35 @@ interface BannerData {
   HPbannerImgUrl: string;
 }
 
+/* ---------- lazy-loaded sections (stream in parallel) ---------- */
+const Categories                = dynamic(() => import("@/components/homepage/Categories"),                { ssr: true });
+const NewProductCollection      = dynamic(() => import("@/components/homepage/NewProductCollection"),      { ssr: true });
+const ProductInPromotion        = dynamic(() => import("@/components/homepage/ProductInPromotionCollection"), { ssr: true });
+const Brands                    = dynamic(() => import("@/components/homepage/Brands"),                    { ssr: true });
+const BestProductCollection     = dynamic(() => import("@/components/homepage/BestProductCollection"),     { ssr: true });
+const Stores                    = dynamic(() => import("@/components/homepage/Stores"),                    { ssr: true });
+
+/* ---------- page ---------- */
 export default async function HomePage() {
-  // Load banner data with safe fallback
-  const bannerData: Partial<BannerData> = await fetchData<BannerData>(
-    "HomePageBanner"
-  ).catch(() => ({} as BannerData));
+  const bannerData = await fetchData<BannerData>("HomePageBanner").catch(
+    () => ({} as BannerData)
+  );
 
   const title = bannerData.HPbannerTitle?.trim() ?? "";
   const image = bannerData.HPbannerImgUrl?.trim() ?? "";
 
   return (
-    <div className="flex flex-col jsutify-start gap-10">
-      {/* Only show banner when both title and image exist */}
+    <main className="homepage flex flex-col justify-start gap-10">
+      {/* Banner appears only if both title and image are available */}
       {title && image && <Banner title={title} imageBanner={image} />}
 
+      {/* Streamed sections */}
       <Categories />
       <NewProductCollection />
-      <ProductInPromotionCollection />
+      <ProductInPromotion />
       <Brands />
       <BestProductCollection />
       <Stores />
-    </div>
+    </main>
   );
 }
