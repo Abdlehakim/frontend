@@ -1,3 +1,6 @@
+/* ------------------------------------------------------------------ */
+/*  app/components/StoresCarousel.tsx                                 */
+/* ------------------------------------------------------------------ */
 "use client";
 
 import React, { useState, useMemo, useCallback, useEffect } from "react";
@@ -10,8 +13,7 @@ import {
 } from "react-icons/fa";
 import { BsSunFill, BsMoonFill } from "react-icons/bs";
 
-// Reuse the same interface from your server component,
-// or define a local copy that matches exactly.
+/* ---------- types ---------- */
 interface OpeningHours {
   [day: string]: { open: string; close: string }[];
 }
@@ -27,190 +29,171 @@ export interface StoreType {
   openingHours: OpeningHours;
 }
 
-// Props for the main Carousel
 interface StoresProps {
   storesData: StoreType[];
 }
 
-// Props for the individual card
 interface StoresCardProps {
   store: StoreType;
   itemsPerSlide: number;
 }
 
-const StoresCard: React.FC<StoresCardProps> = ({ store, itemsPerSlide }) => {
-  return (
-    <div
-      className="relative group cursor-pointer"
-      style={{
-        flex: `0 0 ${90 / itemsPerSlide}%`,
-      }}
-    >
-      {/* Image + overlay container */}
-      <div className="relative">
-        {store.image && (
-          <Image
-            src={store.image}
-            alt={store.name}
-            width={640}
-            height={540}
-            sizes="(max-width: 768px) 100vw, (max-width: 1200px) 50vw, 33vw"
-            className="w-full h-[400px] object-cover max-sm:h-[200px] rounded-xl"
-          />
-        )}
+/* ---------- card ---------- */
+const StoresCard: React.FC<StoresCardProps> = ({ store, itemsPerSlide }) => (
+  <div
+    className="relative group cursor-pointer"
+    style={{ flex: `0 0 ${90 / itemsPerSlide}%` }}
+  >
+    <div className="relative">
+      {store.image && (
+        <Image
+          src={store.image}
+          alt={store.name}
+          width={640}
+          height={540}
+          sizes="(max-width:768px) 100vw, (max-width:1200px) 50vw, 33vw"
+          className="w-full h-[400px] max-sm:h-[200px] object-cover rounded-xl"
+        />
+      )}
 
-        <h2 className="bg-primary absolute top-0 w-full rounded-t-xl h-20 flex justify-center items-center text-2xl font-bold capitalize text-white tracking-wide border-b-8 border-secondary">
-          {store.name}
-        </h2>
+      <h2 className="bg-primary absolute top-0 w-full rounded-t-xl h-20 flex items-center justify-center text-2xl font-bold capitalize text-white tracking-wide border-b-8 border-secondary">
+        {store.name}
+      </h2>
 
-        {/* Overlay Info – hidden until hover */}
-        <div className="absolute top-20 h-72 w-full p-2 bg-black bg-opacity-80 flex flex-col justify-start items-start opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-          {/* <div className="flex flex-col gap-2 text-white">
-            <div className="flex items-center gap-2">
-              <FaPhoneAlt size={20} />
-              <span className="font-semibold">{store.phoneNumber}</span>
-            </div>
-            
-          </div> */}
+      <div className="absolute top-20 h-72 w-full p-2 bg-black/80 flex flex-col opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+        <div className="mt-4 ml-4 w-[90%]">
+          <h3 className="font-semibold text-xl text-white">TEMPS OUVERT :</h3>
+          <div className="h-[2px] w-full bg-white/40 my-1" />
 
-          <div className="mt-4 ml-4 w-[90%]">
-  <h3 className="font-semibold text-xl text-white">
-    TEMPS OUVERT :
-  </h3>
+          <ul className="text-sm divide-y divide-white/20">
+            {Object.entries(store.openingHours).map(([day, hours]) => {
+              const ranges =
+                Array.isArray(hours) && hours.length
+                  ? hours
+                      .map(({ open, close }) =>
+                        open || close ? `${open} – ${close}` : ""
+                      )
+                      .filter(Boolean)
+                  : [];
 
-  {/* thin separator */}
-  <div className="h-[2px] w-full bg-white/40 my-1" />
+              return (
+                <li
+                  key={day}
+                  className="grid grid-cols-[auto_1fr] items-center gap-x-3 py-1 text-white tabular-nums"
+                >
+                  <span className="flex items-center gap-1.5">
+                    <FaRegClock size={12} />
+                    <span className="font-medium">{day}</span>
+                  </span>
 
-<ul className="text-sm divide-y divide-white/20">
-  {Object.entries(store.openingHours).map(([day, hours]) => {
-    // Build an array of non-empty ranges
-    const ranges =
-      Array.isArray(hours) && hours.length
-        ? hours
-            .map(({ open, close }) =>
-              open || close ? `${open} – ${close}` : ""
-            )
-            .filter(Boolean)
-        : [];
+                  {ranges.length ? (
+                    <div className="flex items-center justify-end gap-x-4 whitespace-nowrap">
+                      <span className="flex items-center gap-1.5">
+                        <BsSunFill size={12} />
+                        {ranges[0]}
+                      </span>
+                      {ranges[1] && (
+                        <span className="flex items-center gap-1.5">
+                          <BsMoonFill size={12} />
+                          {ranges[1]}
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <span className="justify-self-end">Fermé</span>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
 
-    return (
-      <li
-        key={day}
-        className="
-          grid grid-cols-[auto_1fr] items-center gap-x-3 py-1
-          text-white tabular-nums
-        "
-      >
-        {/* left column: clock icon + day */}
-        <span className="flex items-center gap-1.5">
-          <FaRegClock size={12} />
-          <span className="font-medium">{day}</span>
-        </span>
-
-        {/* right column: 1-or-2 ranges on ONE line */}
-        {ranges.length ? (
-          <div
-            className="
-              flex items-center justify-end gap-x-4
-              whitespace-nowrap
-            "
-          >
-            {/* first (morning) shift */}
-            <span className="flex items-center gap-1.5">
-              <BsSunFill size={12} />
-              {ranges[0]}
-            </span>
-
-            {/* second (afternoon/evening) shift — render only if it exists */}
-            {ranges[1] && (
-              <span className="flex items-center gap-1.5">
-                <BsMoonFill size={12} />
-                {ranges[1]}
-              </span>
-            )}
-          </div>
-        ) : (
-          <span className="justify-self-end">Fermé</span>
-        )}
-      </li>
-    );
-  })}
-</ul>
-
-
-
-  {/* bottom separator */}
-  <div className="h-[2px] w-full bg-white/40 my-1" />
-</div>
-        </div>
-        <div className='bg-primary h-12 absolute bottom-0 w-full flex justify-center text-xl items-center gap-4 text-white tracking-wide rounded-b-xl'>
-              <FaMapMarkerAlt size={20} />
-              <span className="font-semibold">
-                {store.address}, {store.city}
-              </span>  
+          <div className="h-[2px] w-full bg-white/40 my-1" />
         </div>
       </div>
-    </div>
-  );
-};
 
+      <div className="bg-primary h-12 absolute bottom-0 w-full flex items-center justify-center gap-4 text-xl text-white tracking-wide rounded-b-xl">
+        <FaMapMarkerAlt size={20} />
+        <span className="font-semibold">
+          {store.address}, {store.city}
+        </span>
+      </div>
+    </div>
+  </div>
+);
+
+/* ---------- indicator with 48 px hit-box ---------- */
+function Dot({
+  active,
+  onClick,
+  label,
+}: {
+  active: boolean;
+  onClick: () => void;
+  label: string;
+}) {
+  return (
+    <button
+      onClick={onClick}
+      aria-label={label}
+      className="relative flex items-center justify-center w-12 h-12 focus-visible:outline focus-visible:outline-2 focus-visible:outline-primary"
+    >
+      <span
+        className={`block w-3 h-3 rounded-full ${
+          active ? "bg-primary" : "bg-gray-300"
+        }`}
+      />
+    </button>
+  );
+}
+
+/* ---------- carousel ---------- */
 const StoresCarousel: React.FC<StoresProps> = ({ storesData }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [itemsPerSlide, setItemsPerSlide] = useState(3);
 
-  // Dynamically update itemsPerSlide based on window width
   useEffect(() => {
-    function updateItemsPerSlide() {
-      const width = window.innerWidth;
-      if (width < 1210) {
-        setItemsPerSlide(1);
-      } else if (width < 1620) {
-        setItemsPerSlide(2);
-      } else {
-        setItemsPerSlide(3);
-      }
-    }
-
-    updateItemsPerSlide();
-    window.addEventListener("resize", updateItemsPerSlide);
-    return () => window.removeEventListener("resize", updateItemsPerSlide);
+    const update = () => {
+      const w = window.innerWidth;
+      if (w < 1210) setItemsPerSlide(1);
+      else if (w < 1620) setItemsPerSlide(2);
+      else setItemsPerSlide(3);
+    };
+    update();
+    window.addEventListener("resize", update);
+    return () => window.removeEventListener("resize", update);
   }, []);
 
-  // Chunk storesData into slides
   const slides = useMemo(() => {
-    const chunked: StoreType[][] = [];
+    const out: StoreType[][] = [];
     for (let i = 0; i < storesData.length; i += itemsPerSlide) {
-      chunked.push(storesData.slice(i, i + itemsPerSlide));
+      out.push(storesData.slice(i, i + itemsPerSlide));
     }
-    return chunked;
+    return out;
   }, [storesData, itemsPerSlide]);
 
-  const totalSlides = slides.length;
+  const total = slides.length;
 
-  const nextSlide = useCallback(() => {
-    setCurrentSlide((prev) => (prev + 1) % totalSlides);
-  }, [totalSlides]);
-
-  const prevSlide = useCallback(() => {
-    setCurrentSlide((prev) => (prev - 1 + totalSlides) % totalSlides);
-  }, [totalSlides]);
+  const next = useCallback(
+    () => setCurrentSlide((n) => (n + 1) % total),
+    [total]
+  );
+  const prev = useCallback(
+    () => setCurrentSlide((n) => (n - 1 + total) % total),
+    [total]
+  );
 
   return (
     <div className="py-8 w-full">
       <div className="relative overflow-hidden">
-        {/* Slides Wrapper */}
         <div
           className="flex transition-transform duration-300"
           style={{ transform: `translateX(-${currentSlide * 100}%)` }}
         >
-          {slides.map((slideItems, slideIndex) => (
-            <div
-              key={`slide-${slideIndex}`}
-              className="flex-shrink-0 w-full flex gap-4 justify-center"
-            >
+          {slides.map((slideItems, i) => (
+            <div key={i} className="flex-shrink-0 w-full flex gap-4 justify-center">
               {slideItems.map((store) => (
                 <StoresCard
-                  key={store._id}
+                  key={store._id ?? store.name}
                   store={store}
                   itemsPerSlide={itemsPerSlide}
                 />
@@ -219,33 +202,29 @@ const StoresCarousel: React.FC<StoresProps> = ({ storesData }) => {
           ))}
         </div>
 
-        {/* Navigation Buttons */}
         <button
-          onClick={prevSlide}
-          className="absolute top-1/2 left-4 transform -translate-y-1/2 z-10 p-1 text-primary hover:text-secondary hover:scale-110"
-          aria-label="Previous slide "
+          onClick={prev}
+          aria-label="Previous slide"
+          className="absolute top-1/2 left-4 -translate-y-1/2 z-10 p-1 text-primary hover:text-secondary hover:scale-110"
         >
           <FaRegArrowAltCircleLeft size={40} />
         </button>
         <button
-          onClick={nextSlide}
-          className="absolute top-1/2 right-4 transform -translate-y-1/2 z-10 p-1 text-primary hover:text-secondary hover:scale-110"
+          onClick={next}
           aria-label="Next slide"
+          className="absolute top-1/2 right-4 -translate-y-1/2 z-10 p-1 text-primary hover:text-secondary hover:scale-110"
         >
           <FaRegArrowAltCircleRight size={40} />
         </button>
       </div>
 
-      {/* Indicators */}
       <div className="flex justify-center gap-2 mt-4">
-        {slides.map((_, idx) => (
-          <button
-            key={idx}
-            onClick={() => setCurrentSlide(idx)}
-            className={`w-3 h-3 rounded-full ${
-              idx === currentSlide ? "bg-primary" : "bg-gray-300"
-            }`}
-            aria-label={`Go to slide ${idx + 1}`}
+        {slides.map((_, i) => (
+          <Dot
+            key={i}
+            active={i === currentSlide}
+            label={`Go to slide ${i + 1}`}
+            onClick={() => setCurrentSlide(i)}
           />
         ))}
       </div>

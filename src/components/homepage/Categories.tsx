@@ -45,9 +45,9 @@ export default async function CategoriesPage() {
   return (
     <div className="desktop max-md:w-[95%] max-md:gap-[10px] flex flex-col gap-[40px] py-8">
       <div className="flex-col flex gap-[8px] items-center w-full max-lg:text-center">
-        <h3 className="font-bold text-2xl text-HomePageTitles capitalize">
+        <h2 className="font-bold text-2xl text-HomePageTitles capitalize">
           {categorieTitles.HPcategorieTitle ?? ""}
-        </h3>
+        </h2>
         <p className="text-base text-[#525566]">
           {categorieTitles.HPcategorieSubTitle ?? ""}
         </p>
