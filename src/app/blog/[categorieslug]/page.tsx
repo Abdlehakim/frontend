@@ -19,12 +19,16 @@ interface APIResponse {
   postSubCategorie: { slug: string };
 }
 
-interface CategoryPageProps {
-  params: { categorieslug: string };
-}
+type PageParams = { categorieslug: string };
 
-export default async function CategoryPage({ params }: CategoryPageProps) {
-  const { categorieslug } = params;
+export default async function CategoryPage({
+  params,
+}: {
+  // Next injects params as a thenable
+  params: Promise<PageParams>;
+}) {
+  // await before destructuring
+  const { categorieslug } = await params;
 
   // 1) fetch posts
   const data = await fetchData<APIResponse[]>(
@@ -45,13 +49,13 @@ export default async function CategoryPage({ params }: CategoryPageProps) {
   }));
 
   // 3) pick the first post for the banner
-  const [Post] = posts;
+  const [firstPost] = posts;
 
   return (
     <>
-      {Post?.title && Post?.imageUrl && (
+      {firstPost?.title && firstPost?.imageUrl && (
         <>
-          <Banner title={Post.title} imageBanner={Post.imageUrl} />
+          <Banner title={firstPost.title} imageBanner={firstPost.imageUrl} />
 
           {/* Breadcrumb navigation */}
           <nav

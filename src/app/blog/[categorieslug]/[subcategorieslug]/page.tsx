@@ -20,16 +20,20 @@ interface APIResponse {
   postSubCategorie: { slug: string };
 }
 
-interface SubCategoryPageProps {
-  params: {
-    categorieslug: string;
-    subcategorieslug: string;
-  };
-}
+type PageParams = {
+  categorieslug: string;
+  subcategorieslug: string;
+};
 
 export default async function SubCategoryPage({
-  params: { categorieslug, subcategorieslug },
-}: SubCategoryPageProps) {
+  params,
+}: {
+  // 🚨 Next injects params as a thenable
+  params: Promise<PageParams>;
+}) {
+  // await before destructuring
+  const { categorieslug, subcategorieslug } = await params;
+
   // 1) fetch posts for this sub-category
   const data = await fetchData<APIResponse[]>(
     `/blog/getAllPostCardBySubCategorie/${subcategorieslug}`
@@ -51,13 +55,14 @@ export default async function SubCategoryPage({
     postSubCategorie: { slug: item.postSubCategorie.slug },
   }));
 
-  const [Post] = posts;
+  const [firstPost] = posts;
 
   return (
     <>
-      {Post?.title && Post?.imageUrl && (
+      {firstPost?.title && firstPost?.imageUrl && (
         <>
-          <Banner title={Post.title} imageBanner={Post.imageUrl} />
+          <Banner title={firstPost.title} imageBanner={firstPost.imageUrl} />
+
           {/* Breadcrumb navigation */}
           <nav
             className="px-16 max-md:px-4 py-4 text-sm text-gray-600"

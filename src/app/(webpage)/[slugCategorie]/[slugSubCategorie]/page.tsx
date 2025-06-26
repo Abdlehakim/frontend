@@ -15,15 +15,16 @@ interface SectionData {
   bannerUrl?: string | null;
 }
 
-type PageParams = { slugCategorie: string; slugSubCategorie: string };
+type PageParams = { slugSubCategorie: string };
 
 export const revalidate = 60;
 
 export default async function SubCategoriePage({
   params,
 }: {
-  params: PageParams | Promise<PageParams>;
+  params: Promise<PageParams>;
 }) {
+  // ✅ await the promise before destructuring
   const { slugSubCategorie } = await params;
 
   /* ---------- sub-category meta ---------- */

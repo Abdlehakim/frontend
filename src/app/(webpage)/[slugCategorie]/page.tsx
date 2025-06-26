@@ -1,3 +1,5 @@
+// src/app/(webpage)/[slugCategorie]/page.ts
+
 import Banner from "@/components/Banner";
 import ProductSectionCategoriePage from "@/components/product/categorie/ProductSectionCategoriePage";
 import { fetchData } from "@/lib/fetchData";
@@ -17,10 +19,10 @@ type PageParams = { slugCategorie: string };
 export default async function CategoriePage({
   params,
 }: {
-  params: PageParams | Promise<PageParams>;
+  params: Promise<PageParams>;
 }) {
+  // ⚠️ await the lazy params before destructuring
   const { slugCategorie } = await params;
-
 
   /* -------- catégorie -------- */
   const categorie: CategorieData = await fetchData<CategorieData>(

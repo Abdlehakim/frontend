@@ -12,16 +12,17 @@ const BACKEND_URL =
  */
 export const fetchData = cache(async <T>(
   endpoint: string,
-  options: RequestInit = {}
+  options: RequestInit & { next?: { revalidate: number } } = {}
 ): Promise<T> => {
   // ensure leading slash
   const path = endpoint.startsWith("/") ? endpoint : `/${endpoint}`;
   const url = `${BACKEND_URL}/api${path}`;
 
+  // spread whatever cache/next settings you want
   const res = await fetch(url, {
-    cache: "no-store",
-    ...options,
+    ...options
   });
+
   if (!res.ok) {
     throw new Error(`fetchData failed (${res.status}): ${res.statusText}`);
   }

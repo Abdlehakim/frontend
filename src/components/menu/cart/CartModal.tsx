@@ -1,3 +1,4 @@
+// src/components/checkout/CartModal.tsx
 "use client";
 
 import React, { useMemo, useCallback, useState, useEffect } from "react";
@@ -18,9 +19,10 @@ const CartModal: React.FC<CartModalProps> = ({ items, onClose }) => {
 
   const totalPrice = useMemo(() => {
     return items.reduce((total, item) => {
+      const discount = item.discount ?? 0;
       const finalPrice =
-        item.discount > 0
-          ? item.price - (item.price * item.discount) / 100
+        discount > 0
+          ? item.price - (item.price * discount) / 100
           : item.price;
       return total + finalPrice * item.quantity;
     }, 0);
@@ -56,6 +58,7 @@ const CartModal: React.FC<CartModalProps> = ({ items, onClose }) => {
     [dispatch]
   );
 
+  // Pagination state
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 4;
   const totalPages = useMemo(
@@ -64,11 +67,9 @@ const CartModal: React.FC<CartModalProps> = ({ items, onClose }) => {
   );
 
   const paginatedItems = useMemo(() => {
-    return items.slice(
-      (currentPage - 1) * itemsPerPage,
-      currentPage * itemsPerPage
-    );
-  }, [items, currentPage, itemsPerPage]);
+    const start = (currentPage - 1) * itemsPerPage;
+    return items.slice(start, start + itemsPerPage);
+  }, [items, currentPage]);
 
   useEffect(() => {
     if (currentPage > totalPages) {
@@ -79,11 +80,12 @@ const CartModal: React.FC<CartModalProps> = ({ items, onClose }) => {
   return (
     <div
       className="flex flex-col px-4 w-[400px] max-md:mx-auto max-md:w-[90%] border-[#15335D] border-4 rounded-lg bg-white z-30"
-      onClick={(event) => event.stopPropagation()}
+      onClick={(e) => e.stopPropagation()}
     >
       <h1 className="text-lg font-bold text-black border-b-2 text-center py-2 max-md:text-sm">
         Votre panier ({items.length} articles)
       </h1>
+
       <div className="py-2 text-gray-500 border-b-2">
         <Pagination
           currentPage={currentPage}
@@ -91,82 +93,91 @@ const CartModal: React.FC<CartModalProps> = ({ items, onClose }) => {
           onPageChange={setCurrentPage}
         />
       </div>
-      <div className="flex flex-col ">
+
+      <div className="flex flex-col">
         {items.length === 0 ? (
           <p className="text-center text-black">Your cart is empty.</p>
         ) : (
-          paginatedItems.map((item) => (
-            <div
-              key={item._id}
-              className="flex items-center gap-[8px] justify-between py-2  border-b-2"
-            >
-              <Image
-                className="object-cover"
-                src={item.mainImageUrl || "/path/to/default-image.jpg"}
-                alt={item.name}
-                width={60}
-                height={60}
-              />
-              <div className="text-black flex-col flex gap-[8px]">
-                <p className="text-sm font-bold">{item.name}</p>
-                <p className="text-gray-800 text-xs">
-                  Quantity: {item.quantity}
-                </p>
-                <p className="text-gray-800 text-xs">
-                  Price Unit: TND{" "}
-                  {(
-                    item.price -
-                    (item.discount ? (item.price * item.discount) / 100 : 0)
-                  ).toFixed(2)}
-                </p>
-              </div>
-              <div className="flex flex-col gap-[8px]">
-                <div className="flex items-center gap-[8px] ">
+          paginatedItems.map((item) => {
+            const discount = item.discount ?? 0;
+            const unitPrice =
+              discount > 0
+                ? item.price - (item.price * discount) / 100
+                : item.price;
+
+            return (
+              <div
+                key={item._id}
+                className="flex items-center gap-2 justify-between py-2 border-b-2"
+              >
+                <Image
+                  className="object-cover"
+                  src={item.mainImageUrl || "/path/to/default-image.jpg"}
+                  alt={item.name}
+                  width={60}
+                  height={60}
+                />
+
+                <div className="text-black flex flex-col gap-2">
+                  <p className="text-sm font-bold">{item.name}</p>
+                  <p className="text-gray-800 text-xs">
+                    Quantity: {item.quantity}
+                  </p>
+                  <p className="text-gray-800 text-xs">
+                    Price Unit: TND {unitPrice.toFixed(2)}
+                  </p>
+                </div>
+
+                <div className="flex flex-col gap-2">
+                  <div className="flex items-center gap-2">
+                    <button
+                      className="text-black w-8 h-8 flex items-center justify-center bg-white border-2 border-[#15335E] rounded-lg hover:bg-[#15335E] hover:text-white"
+                      onClick={(e) => decrementHandler(item, e)}
+                    >
+                      –
+                    </button>
+                    <span className="text-black h-8 w-6 flex items-center justify-center bg-white">
+                      {item.quantity}
+                    </span>
+                    <button
+                      className="text-black w-8 h-8 flex items-center justify-center bg-white border-2 border-[#15335E] rounded-lg hover:bg-[#15335E] hover:text-white"
+                      onClick={(e) => incrementHandler(item, e)}
+                    >
+                      +
+                    </button>
+                  </div>
                   <button
-                    className="text-black w-8 h-8 flex items-center justify-center bg-opacity-40 rounded-lg border-2 border-[#15335E] bg-white hover:bg-[#15335E] hover:text-white"
-                    onClick={(event) => decrementHandler(item, event)}
+                    className="flex items-center gap-2 justify-center border-2 border-[#15335E] rounded text-black hover:bg-[#15335E] hover:text-white"
+                    onClick={(e) => removeCartHandler(item._id, e)}
                   >
-                    -
-                  </button>
-                  <span className="text-black h-8 w-6 flex items-center justify-center bg-opacity-40 bg-white">
-                    {item.quantity}
-                  </span>
-                  <button
-                    className="text-black w-8 h-8 flex items-center justify-center bg-opacity-40 rounded-lg border-2 border-[#15335E] bg-white hover:bg-[#15335E] hover:text-white"
-                    onClick={(event) => incrementHandler(item, event)}
-                  >
-                    +
+                    <FaRegTrashAlt size={15} /> Remove
                   </button>
                 </div>
-                <button
-                  className="flex gap-[8px] items-center justify-center hover:bg-[#15335E] border-2 border-[#15335E] rounded text-black hover:text-white cursor-pointer"
-                  onClick={(event) => removeCartHandler(item._id, event)}
-                >
-                  <span>Remove</span>
-                  <FaRegTrashAlt size={15} />
-                </button>
               </div>
-            </div>
-          ))
+            );
+          })
         )}
       </div>
+
       {items.length > 0 && (
         <>
-          <p className="text-black text-lg font-bold flex items-center justify-center flex-col gap-[16px] my-2 max-md:text-lg">
+          <p className="text-black text-lg font-bold text-center my-2">
             Total: TND {totalPrice.toFixed(2)}
           </p>
+
           <Link href="/checkout" passHref>
             <button
-              aria-label="check"
+              aria-label="checkout"
               className="w-full h-10 rounded-lg bg-orange-400 hover:bg-[#15335D] flex items-center justify-center mb-2"
             >
-              <p className="text-xl text-white">Checkout</p>
+              <span className="text-xl text-white">Checkout</span>
             </button>
           </Link>
+
           <button
             className="w-full text-center text-black underline cursor-pointer mb-2"
-            onClick={(event) => {
-              event.stopPropagation();
+            onClick={(e) => {
+              e.stopPropagation();
               onClose();
             }}
           >
