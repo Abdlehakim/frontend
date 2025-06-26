@@ -1,139 +1,110 @@
+/* ------------------------------------------------------------------ */
+/*  src/styles/globals.css                                            */
+/* ------------------------------------------------------------------ */
 
 @tailwind base;
 @tailwind components;
 @tailwind utilities;
 
+/* ---------- CSS variables ---------- */
 :root {
-  --color-primary: #15335E;
-  --color-secondary: #CC4400;
-  --color-accent: #FF5733;
-  --color-background: #FFFFFF;
-  --color-text: rgb(204, 204, 204);
-  --color-starsCard: #FFEB3B ;
+  --color-primary: #15335e;
+  --color-secondary: #cc4400;
+  --color-accent: #ff5733;
+  --color-background: #ffffff;
+  --color-text: rgb(204 204 204);
+  --color-starsCard: #ffeb3b;
   --color-productNameCard: rgb(55 65 81);
   --color-HomePageTitles: rgb(31 41 55);
 }
 
-
-
+/* ---------- element resets ---------- */
 body {
   margin: 0;
-  background-color:#ffffff;
-  ;
+  background-color: var(--color-background);
   transition-property: opacity, background, transform, filter, z-index;
   transition-timing-function: ease-in-out;
   transition-duration: 300ms;
-  
 }
 
+/* ---------- layout helpers ---------- */
+.desktop { @apply w-[80%] mx-auto; }
+.mobile  { @apply w-[95%]; }
 
-
-@layer utilities {
-  .text-balance {
-    text-wrap: balance;
-  }
-}
-@keyframes slide-left {
-  from {
-    transform: translateX(100%);
-  }
-  to {
-    transform: translateX(0);
-  }
+.homepage {               /* wrapper used in src/app/page.tsx */
+  @apply flex flex-col justify-start gap-10;
 }
 
-@keyframes slide-right {
-  from {
-    transform: translateX(-100%);
-  }
-  to {
-    transform: translateX(0);
-  }
-}
-
-.slide-left {
-  animation: slide-left 0.5s ease-in-out;
-}
-
-.slide-right {
-  animation: slide-right 0.5s ease-in-out;
-}
-.desktop{
-  width: 80%;
-  margin-left: auto;
-  margin-right: auto;
-}
-.mobile {
-  width: 95%;
-}
+/* ---------- transitions / animations ---------- */
 .page-transition {
   opacity: 0;
   background: #d1d5db;
   transform: translateY(40px);
   filter: blur(5px);
   z-index: 10;
-  
-}
-/* In your global CSS or a relevant CSS file */
-.hide-placeholder::placeholder {
-  opacity: 0;
 }
 
-.hide-placeholder:focus::placeholder {
-  opacity: 1;
-}
-.hide {
-  display:none;
+@keyframes slide-left {
+  from { transform: translateX(100%); }
+  to   { transform: translateX(0); }
 }
 
+@keyframes slide-right {
+  from { transform: translateX(-100%); }
+  to   { transform: translateX(0); }
+}
+
+.slide-left  { animation: slide-left  .5s ease-in-out; }
+.slide-right { animation: slide-right .5s ease-in-out; }
+
+/* ---------- utilities ---------- */
+@layer utilities {
+  .text-balance { text-wrap: balance; }
+}
+
+/* ---------- form tweaks ---------- */
+.hide-placeholder::placeholder        { opacity: 0; }
+.hide-placeholder:focus::placeholder  { opacity: 1; }
+.hide { display: none; }
+
+/* ---------- range slider ---------- */
 .slider {
   width: 100%;
   height: 2px;
   background-color: #cdd9ed;
-  margin-top: 20px;
-  margin-bottom: 20px;
+  margin: 20px 0;
 }
 .slider .thumb {
   width: 20px;
   height: 20px;
   cursor: pointer;
-  background: #863F04;
+  background: #863f04;
+  border: 2px solid #863f04;
   border-radius: 50%;
-  border: 2px solid #863F04;
   top: -9px;
 }
 .track-1 {
-  background-color: #863F04;
+  background-color: #863f04;
   height: 100%;
 }
 
-
-.AddtoCart {  
-  border-radius: 2px ;
-  padding-top: 1.25rem; 
-  padding-bottom: 1.25rem;
-  align-items: center;  
-  display:flex;
-  position: relative;
-  justify-content: center;
-  overflow: hidden;
-  transition-property: color, background-color, border-color, text-decoration-color, fill, stroke, opacity, box-shadow, transform, filter, backdrop-filter;
-  transition-timing-function: cubic-bezier(0.4, 0, 0.2, 1);
-  transition-duration: 150ms;  
+/* ---------- buttons ---------- */
+.AddtoCart {
+  @apply flex items-center justify-center relative overflow-hidden
+         pt-5 pb-5 rounded-sm;
+  transition-property: color, background-color, border-color,
+                       text-decoration-color, fill, stroke,
+                       opacity, box-shadow, transform,
+                       filter, backdrop-filter;
   transition-duration: 300ms;
-  transition-timing-function: cubic-bezier(0, 0, 0.2, 1);  
-
-
+  transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
 }
-th,td {
-  border: 1px solid #ffffff; /* White lines for separation */
+
+/* ---------- tables ---------- */
+th, td {
+  border: 1px solid #ffffff;
   padding: 3px;
   text-align: left;
-
   font-weight: 400;
 }
-
-th {
-
-  color: #ffffff;
-}
+th { color: #ffffff; }
