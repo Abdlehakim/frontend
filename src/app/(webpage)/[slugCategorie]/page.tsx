@@ -1,4 +1,4 @@
-// src/app/(webpage)/[slugCategorie]/page.ts
+// src/app/(webpage)/[slugCategorie]/page.tsx
 
 import Banner from "@/components/Banner";
 import ProductSectionCategoriePage from "@/components/product/categorie/ProductSectionCategoriePage";
@@ -37,9 +37,10 @@ export default async function CategoriePage({
     ).catch(() => []);
   }
 
-  /* -------- produits -------- */
+  /* -------- produits (initial 8 seulement) -------- */
   const initialProducts: Product[] = await fetchData<Product[]>(
-    `NavMenu/categorieSubCategoriePage/products/${slugCategorie}`
+    // pass limit=8&skip=0 to load only the first 8
+    `NavMenu/categorieSubCategoriePage/products/${slugCategorie}?limit=8&skip=0`
   ).catch(() => []);
 
   return (

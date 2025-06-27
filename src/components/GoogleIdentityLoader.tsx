@@ -8,9 +8,7 @@ export default function GoogleIdentityLoader() {
     <Script
       src="https://accounts.google.com/gsi/client"
       strategy="lazyOnload"
-      onLoad={() => {
-        console.log("✅ Google Identity SDK loaded");
-      }}
+      onLoad={() => {}}
     />
   );
 }
