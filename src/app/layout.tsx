@@ -1,10 +1,11 @@
 // src/app/layout.tsx
 import { ReactNode } from "react";
-import Script from "next/script";
 import { Poppins } from "next/font/google";
 import type { Metadata } from "next";
 import "@/app/globals.css";
 import Providers from "@/components/Providers";
+import GoogleIdentityLoader from "@/components/GoogleIdentityLoader";
+
 
 const poppins = Poppins({
   subsets: ["latin", "latin-ext"],
@@ -36,24 +37,14 @@ export const metadata: Metadata = {
   },
 };
 
-interface RootLayoutProps {
-  children: ReactNode;
-}
 
-export default function RootLayout({ children }: RootLayoutProps) {
+
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="fr" className={`${poppins.className} !scroll-smooth font-sans`}>
       <body>
         <Providers>{children}</Providers>
-
-        {/* Lazy-load Google Identity Services only after the page is interactive */}
-        <Script
-          src="https://accounts.google.com/gsi/client"
-          strategy="lazyOnload"
-          onLoad={() => {
-            console.log("✅ Google Identity SDK loaded");
-          }}
-        />
+        <GoogleIdentityLoader />
       </body>
     </html>
   );
