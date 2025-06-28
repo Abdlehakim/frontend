@@ -44,10 +44,6 @@ export default async function CategoriePage({
 
   return (
     <div className="flex flex-col gap-[24px]">
-      {categorie.name && categorie.bannerUrl && (
-        <Banner title={categorie.name} imageBanner={categorie.bannerUrl} />
-      )}
-
       <ProductSectionCategoriePage
         slugCategorie={slugCategorie}
         initialProducts={initialProducts}
