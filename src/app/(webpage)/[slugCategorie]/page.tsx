@@ -1,18 +1,13 @@
 // src/app/(webpage)/[slugCategorie]/page.tsx
 
-import Banner from "@/components/Banner";
+
 import ProductSectionCategoriePage from "@/components/product/categorie/ProductSectionCategoriePage";
 import { fetchData } from "@/lib/fetchData";
 import { Product, SubCategorie } from "@/types/Product";
 
 export const revalidate = 60;
 
-interface CategorieData {
-  _id?: string;
-  name?: string | null;
-  slug?: string | null;
-  bannerUrl?: string | null;
-}
+
 
 type PageParams = { slugCategorie: string };
 
@@ -25,17 +20,14 @@ export default async function CategoriePage({
   const { slugCategorie } = await params;
 
   /* -------- catégorie -------- */
-  const categorie: CategorieData = await fetchData<CategorieData>(
-    `NavMenu/categorieSubCategoriePage/${slugCategorie}`
-  ).catch(() => ({} as CategorieData));
+
 
   /* -------- sous-catégories approuvées -------- */
   let subcategories: SubCategorie[] = [];
-  if (categorie._id) {
+
     subcategories = await fetchData<SubCategorie[]>(
-      `NavMenu/categorieSubCategoriePage/categorie/${categorie._id}`
+      `NavMenu/categorieSubCategoriePage/categorie/${slugCategorie}`
     ).catch(() => []);
-  }
 
   /* -------- produits (initial 8 seulement) -------- */
   const initialProducts: Product[] = await fetchData<Product[]>(
