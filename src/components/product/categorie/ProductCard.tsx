@@ -63,13 +63,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
           >
             {/* ---------- product image ---------- */}
             <Link href={productUrl}>
-            <div className="relative aspect-[16/14]">
-              <Image
-                src={product.mainImageUrl ?? "/placeholder.png"}
-                alt={product.name}
-                fill
-                className="object-cover"
-              /></div>
+              <div className="relative aspect-[16/14]">
+                <Image
+                  src={product.mainImageUrl ?? "/placeholder.png"}
+                  alt={product.name}
+                  fill
+                  className="object-cover"
+                />
+              </div>
             </Link>
 
             {/* ---------- product info ---------- */}
@@ -77,8 +78,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
               <Link href={productUrl}>
                 <div className="flex justify-between h-[65px] max-sm:h-16 max-md:h-20">
                   <div className="flex flex-col gap-[4px]">
-                    <p className="text-xl font-bold capitalize">
-                      {product.name}
+                    <p className="text-lg font-bold capitalize">
+                      {product.name?.length > 8
+                        ? product.name.slice(0, 8) + "..."
+                        : product.name}
                     </p>
                     <ReviewClient productId={product._id} summary />
                   </div>
