@@ -2,7 +2,6 @@
 import Banner from "@/components/Banner";
 import ProductSectionCategoriePage from "@/components/product/categorie/ProductSectionCategoriePage";
 import { fetchData } from "@/lib/fetchData";
-import { SubCategorie } from "@/types/Product";
 
 export const revalidate = 60;
 
@@ -29,11 +28,6 @@ export default async function CategoriePage({
     `NavMenu/categorieSubCategoriePage/${slugCategorie}`
   ).catch(() => ({} as CategorieData));
 
-
-  const initialSubcategories: SubCategorie[] = await fetchData<SubCategorie[]>(
-    `NavMenu/categorieSubCategoriePage/categorie/${slugCategorie}`
-  ).catch(() => []);
-
   return (
     <div className="flex flex-col gap-6">
       {categorie.name && categorie.bannerUrl && (
@@ -42,7 +36,6 @@ export default async function CategoriePage({
 
       <ProductSectionCategoriePage
         slugCategorie={slugCategorie}
-        initialSubcategories={initialSubcategories}
       />
     </div>
   );
