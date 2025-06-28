@@ -1,18 +1,9 @@
-/* ------------------------------------------------------------------ */
-/*  src/components/product/categorie/ProductCard.tsx                  */
-/*  (keeps original visuals & Tailwind classes)                       */
-/* ------------------------------------------------------------------ */
 "use client";
 
 import React from "react";
 import Image from "next/image";
 import Link from "next/link";
-import {
-  FaEye,
-  FaRegHeart,
-  FaHeart,
-  FaCartShopping,
-} from "react-icons/fa6";
+import { FaEye, FaRegHeart, FaHeart, FaCartShopping } from "react-icons/fa6";
 import { useDispatch, useSelector } from "react-redux";
 import { addItem, type CartItem } from "@/store/cartSlice";
 import { addToWishlist } from "@/store/wishlistSlice";
@@ -25,16 +16,17 @@ interface ProductCardProps {
 }
 
 const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
-  const dispatch       = useDispatch();
-  const wishlistItems  = useSelector((state: RootState) => state.wishlist.items);
-  const isInWishlist   = (slug: string) => wishlistItems.some((w) => w.slug === slug);
+  const dispatch = useDispatch();
+  const wishlistItems = useSelector((state: RootState) => state.wishlist.items);
+  const isInWishlist = (slug: string) =>
+    wishlistItems.some((w) => w.slug === slug);
 
   const handleWishlistClick = (product: Product) => {
     if (!product.categorie) return;
 
     dispatch(
       addToWishlist({
-        name:  product.name,
+        name: product.name,
         mainImageUrl: product.mainImageUrl,
         price: product.price,
         categorie: {
@@ -42,12 +34,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
           slug: product.categorie.slug,
         },
         slug: product.slug,
-      }),
+      })
     );
   };
 
   return (
-    <div className="group w-full h-fit grid grid-cols-4 gap-[40px] max-2xl:grid-cols-3 max-xl:grid-cols-2 max-md:grid-cols-1 max-md:gap-[12px] align-top">
+    <div className="group w-fit max-md:h-fit h-fit min-h-[900px] grid grid-cols-4 gap-[40px] max-2xl:grid-cols-3 max-xl:grid-cols-2 max-md:grid-cols-1 max-md:gap-[12px] align-top">
       {products.map((product) => {
         /** price helpers */
         const discountedPrice = product.discount
@@ -59,34 +51,33 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
           product.stockStatus === "out of stock" || product.stock === 0;
 
         /** url helpers  */
-        const categorieSlug    = product.categorie?.slug    ?? "categorie";
+        const categorieSlug = product.categorie?.slug ?? "categorie";
         const subcategorieSlug = product.subcategorie?.slug ?? "sous-categorie";
-        const productUrl       = `/${categorieSlug}/${subcategorieSlug}/${product.slug}`;
+        const productUrl = `/${categorieSlug}/${subcategorieSlug}/${product.slug}`;
 
         /** ---------- single card ---------- */
         return (
           <div
             key={product._id}
-            className="h-[520px] flex flex-col gap-[10px] transform duration-200 ease-in-out
-                       group-hover:scale-[0.9] hover:!scale-[1.1]"
+            className="h-fit w-[280px] flex flex-col gap-[10px] transform duration-200 ease-in-out group-hover:scale-[0.9] hover:!scale-[1.1]"
           >
             {/* ---------- product image ---------- */}
             <Link href={productUrl}>
+            <div className="relative aspect-[16/14]">
               <Image
                 src={product.mainImageUrl ?? "/placeholder.png"}
                 alt={product.name}
-                width={300}
-                height={300}
-                className="w-full h-[380px] object-cover mx-auto top-5"
-              />
+                fill
+                className="object-cover"
+              /></div>
             </Link>
 
             {/* ---------- product info ---------- */}
-            <div className="flex flex-col px-2 w-full h-[200px]">
+            <div className="flex flex-col w-full h-[80px]">
               <Link href={productUrl}>
                 <div className="flex justify-between h-[65px] max-sm:h-16 max-md:h-20">
                   <div className="flex flex-col gap-[4px]">
-                    <p className="text-2xl max-md:text-lg font-bold capitalize">
+                    <p className="text-xl font-bold capitalize">
                       {product.name}
                     </p>
                     <ReviewClient productId={product._id} summary />
@@ -98,7 +89,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
                         <p className="text-xl max-md:text-lg font-bold text-primary">
                           {discountedPrice.toFixed(1)} TND
                         </p>
-                        <p className="text-xl max-md:text-sm font-bold text-gray-500 line-through">
+                        <p className="text-lg max-md:text-sm font-bold text-gray-500 line-through">
                           {product.price.toFixed(1)} TND
                         </p>
                       </>
@@ -146,9 +137,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
                   dispatch(addItem({ item: cartItem, quantity: 1 }));
                 }}
                 className={`AddtoCart relative w-[50%] max-lg:w-[60%] max-md:rounded-[3px] group/box
-                            ${isOutOfStock
-                              ? "bg-gray-400 cursor-not-allowed"
-                              : "bg-primary text-white hover:bg-[#15335D]"}`}
+                            ${
+                              isOutOfStock
+                                ? "bg-gray-400 cursor-not-allowed"
+                                : "bg-primary text-white hover:bg-[#15335D]"
+                            }`}
               >
                 <p className="absolute inset-0 flex items-center justify-center transition-transform duration-300 lg:group-hover/box:translate-x-[10%] max-md:text-xs">
                   {isOutOfStock ? "Rupture de stock" : "A. au panier"}

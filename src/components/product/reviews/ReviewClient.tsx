@@ -122,7 +122,7 @@ const ReviewClient: React.FC<ReviewsProps> = ({ productId, summary = false }) =>
   if (summary) {
     return (
       <div className="reviews-summary flex items-center gap-[8px]">
-        <div className="stars flex text-secondary text-xl">
+        <div className="stars flex text-secondary text-sm">
           {renderStars(averageRating)}
         </div>
         <p className="text-sm">

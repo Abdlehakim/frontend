@@ -84,7 +84,7 @@ const FilterProducts: React.FC<FilterProductsProps> = ({
   return (
     <>
       {/* ===== mobile toggle ===== */}
-      <div className="xl:hidden flex justify-end">
+      <div className="hidden">
         <button
           className="py-2 rounded w-60 border"
           onClick={() => setShowMobileFilters(true)}

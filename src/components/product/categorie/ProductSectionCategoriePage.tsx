@@ -111,7 +111,7 @@ export default function ProductSectionCategoriePage({
         <FilterPriceOrder sortOrder={sortOrder} setSortOrder={setSortOrder} />
       </div>
 
-      <div className="flex flex-col xl:flex-row w-full gap-16">
+      <div className="flex w-full gap-4">
         <FilterProducts
           selectedBrand={selectedBrand}
           setSelectedBrand={setSelectedBrand}
@@ -132,10 +132,8 @@ export default function ProductSectionCategoriePage({
 
         <div className="flex flex-col items-center w-full gap-16">
           {currentProducts.length ? (
-            <>
-              <div className="w-full my-8">
-                <ProductCard products={currentProducts} />
-              </div>
+            <>        
+              <ProductCard products={currentProducts} />          
               <Pagination
                 currentPage={currentPage}
                 totalPages={totalPages}
