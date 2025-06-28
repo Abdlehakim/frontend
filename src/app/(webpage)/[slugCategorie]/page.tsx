@@ -8,7 +8,7 @@ import { Product, SubCategorie } from "@/types/Product";
 export const revalidate = 60;
 
 interface CategorieData {
-  _id?: string;        
+  _id?: string;
   name?: string | null;
   slug?: string | null;
   bannerUrl?: string | null;
@@ -21,7 +21,7 @@ export default async function CategoriePage({
 }: {
   params: Promise<PageParams>;
 }) {
-  // ⚠️ await the lazy params before destructuring
+
   const { slugCategorie } = await params;
 
   /* -------- catégorie -------- */
@@ -39,7 +39,6 @@ export default async function CategoriePage({
 
   /* -------- produits (initial 8 seulement) -------- */
   const initialProducts: Product[] = await fetchData<Product[]>(
-    // pass limit=8&skip=0 to load only the first 8
     `NavMenu/categorieSubCategoriePage/products/${slugCategorie}?limit=8&skip=0`
   ).catch(() => []);
 
@@ -48,6 +47,7 @@ export default async function CategoriePage({
       {categorie.name && categorie.bannerUrl && (
         <Banner title={categorie.name} imageBanner={categorie.bannerUrl} />
       )}
+
       <ProductSectionCategoriePage
         slugCategorie={slugCategorie}
         initialProducts={initialProducts}
