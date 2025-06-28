@@ -1,12 +1,7 @@
+// src/components/product/categorie/ProductSectionCategoriePage.tsx
 "use client";
 
-import React, {
-  useState,
-  useEffect,
-  useMemo,
-  useRef,
-  useCallback,
-} from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Product, SubCategorie } from "@/types/Product";
 import ProductCard from "@/components/product/categorie/ProductCard";
 import FilterProducts from "@/components/product/filter/FilterProducts";
@@ -14,123 +9,99 @@ import FilterPriceOrder from "@/components/product/filter/FilterPriceOrder";
 import LoadingDots from "@/components/LoadingDots";
 import { fetchData } from "@/lib/fetchData";
 
-export const revalidate = 60;
-
 interface Props {
   slugCategorie: string;
-  initialProducts: Product[];
   initialSubcategories: SubCategorie[];
 }
 
 export default function ProductSectionCategoriePage({
   slugCategorie,
-  initialProducts,
   initialSubcategories,
 }: Props) {
-  /* ---------- filter state ---------- */
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
   const [selectedBoutique, setSelectedBoutique] = useState<string | null>(null);
-  const [selectedSubCategorie, setSelectedSubCategorie] = useState<string | null>(null);
+  const [selectedSubCategorie, setSelectedSubCategorie] =
+    useState<string | null>(null);
   const [minPrice, setMinPrice] = useState<number | null>(null);
   const [maxPrice, setMaxPrice] = useState<number | null>(null);
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
-  /* ---------- infinite scroll state ---------- */
   const itemsPerBatch = 8;
-  const [allProducts, setAllProducts] = useState<Product[]>(initialProducts);
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>(() => {
-    // initial sort
-    const temp = [...initialProducts];
-    temp.sort((a, b) => (sortOrder === "asc" ? a.price - b.price : b.price - a.price));
-    return temp;
-  });
-  const [loading, setLoading] = useState(false);
-  const [hasMore, setHasMore] = useState(initialProducts.length === itemsPerBatch);
+  const [filteredProducts, setFilteredProducts] = useState<Product[]>([]);
+  const [loadingInitial, setLoadingInitial] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
 
   const loaderRef = useRef<HTMLDivElement | null>(null);
+  const allProductsRef = useRef<Product[]>([]);
 
-  /* ---------- option lists ---------- */
-  const brands = useMemo(
-    () =>
-      Array.from(
-        allProducts.reduce((map, p) => {
-          if (p.brand?._id) map.set(p.brand._id, p.brand.name);
-          return map;
-        }, new Map<string, string>())
-      ).map(([id, name]) => ({ _id: id, name })),
-    [allProducts]
-  );
-
-  const boutiques = useMemo(
-    () =>
-      Array.from(
-        allProducts.reduce((map, p) => {
-          if (p.boutique?._id) map.set(p.boutique._id, p.boutique.name);
-          return map;
-        }, new Map<string, string>())
-      ).map(([id, name]) => ({ _id: id, name })),
-    [allProducts]
-  );
-
-  const subcategories = useMemo(
-    () => initialSubcategories.map((s) => ({ _id: s._id, name: s.name })),
-    [initialSubcategories]
-  );
-
-  /* ---------- apply filters & sorting (only on filter change) ---------- */
-  useEffect(() => {
-    let temp = [...allProducts];
-
-    if (selectedBrand) temp = temp.filter((p) => p.brand?._id === selectedBrand);
-    if (selectedBoutique) temp = temp.filter((p) => p.boutique?._id === selectedBoutique);
-    if (selectedSubCategorie) temp = temp.filter((p) => p.subcategorie?._id === selectedSubCategorie);
-    if (minPrice != null) temp = temp.filter((p) => p.price >= minPrice);
-    if (maxPrice != null) temp = temp.filter((p) => p.price <= maxPrice);
-
-    temp.sort((a, b) =>
-      sortOrder === "asc" ? a.price - b.price : b.price - a.price
-    );
-
-    setFilteredProducts(temp);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [selectedBrand, selectedBoutique, selectedSubCategorie, minPrice, maxPrice, sortOrder]);
-
-  /* ---------- load more handler (memoized) ---------- */
-  const loadMore = useCallback(async () => {
-    if (loading || !hasMore) return;
-    setLoading(true);
-
-    try {
-      const newBatch = await fetchData<Product[]>(
-        `NavMenu/categorieSubCategoriePage/products/${slugCategorie}` +
-          `?limit=${itemsPerBatch}&skip=${allProducts.length}`
-      );
-
-      setAllProducts((prev) => [...prev, ...newBatch]);
-
-      const toAppend = newBatch
-        .filter((p) =>
+  const applyFiltersAndSort = useCallback(
+    (source: Product[]): Product[] => {
+      const base = source.filter(
+        (p) =>
           (!selectedBrand || p.brand?._id === selectedBrand) &&
           (!selectedBoutique || p.boutique?._id === selectedBoutique) &&
-          (!selectedSubCategorie || p.subcategorie?._id === selectedSubCategorie) &&
+          (!selectedSubCategorie ||
+            p.subcategorie?._id === selectedSubCategorie) &&
           (minPrice == null || p.price >= minPrice) &&
           (maxPrice == null || p.price <= maxPrice)
-        )
-        .sort((a, b) =>
-          sortOrder === "asc" ? a.price - b.price : b.price - a.price
-        );
+      );
+      return sortOrder === "asc"
+        ? [...base].sort((a, b) => a.price - b.price)
+        : [...base].sort((a, b) => b.price - a.price);
+    },
+    [selectedBrand, selectedBoutique, selectedSubCategorie, minPrice, maxPrice, sortOrder]
+  );
 
-      setFilteredProducts((prev) => [...prev, ...toAppend]);
-      setHasMore(newBatch.length === itemsPerBatch);
+  useEffect(() => {
+    (async () => {
+      try {
+        const firstBatch = await fetchData<Product[]>(
+          `NavMenu/categorieSubCategoriePage/products/${slugCategorie}?limit=${itemsPerBatch}&skip=0`
+        );
+        allProductsRef.current = firstBatch;
+        setHasMore(firstBatch.length === itemsPerBatch);
+        setFilteredProducts(applyFiltersAndSort(firstBatch));
+      } catch (err) {
+        console.error(err);
+      } finally {
+        setLoadingInitial(false);
+      }
+    })();
+  }, [slugCategorie, applyFiltersAndSort]);
+
+  useEffect(() => {
+    setFilteredProducts(applyFiltersAndSort(allProductsRef.current));
+  }, [applyFiltersAndSort]);
+
+  const loadMore = useCallback(async () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    try {
+      const nextBatch = await fetchData<Product[]>(
+        `NavMenu/categorieSubCategoriePage/products/${slugCategorie}?limit=${itemsPerBatch}&skip=${allProductsRef.current.length}`
+      );
+      allProductsRef.current = [...allProductsRef.current, ...nextBatch];
+
+      const filteredNew = nextBatch.filter(
+        (p) =>
+          (!selectedBrand || p.brand?._id === selectedBrand) &&
+          (!selectedBoutique || p.boutique?._id === selectedBoutique) &&
+          (!selectedSubCategorie ||
+            p.subcategorie?._id === selectedSubCategorie) &&
+          (minPrice == null || p.price >= minPrice) &&
+          (maxPrice == null || p.price <= maxPrice)
+      );
+      setFilteredProducts((prev) => [...prev, ...filteredNew]);
+      setHasMore(nextBatch.length === itemsPerBatch);
     } catch (err) {
-      console.error("Load more error:", err);
+      console.error(err);
     } finally {
-      setLoading(false);
+      setLoadingMore(false);
     }
   }, [
-    allProducts.length,
+    loadingMore,
     hasMore,
-    loading,
     slugCategorie,
     itemsPerBatch,
     selectedBrand,
@@ -138,31 +109,44 @@ export default function ProductSectionCategoriePage({
     selectedSubCategorie,
     minPrice,
     maxPrice,
-    sortOrder,
   ]);
 
-  /* ---------- infinite scroll observer ---------- */
+  const sentinelKey = filteredProducts.length;
+
   useEffect(() => {
     const node = loaderRef.current;
     if (!node) return;
-
     const observer = new IntersectionObserver(
       (entries) => {
-        if (entries[0].isIntersecting) {
-          loadMore();
-        }
+        if (entries[0].isIntersecting) loadMore();
       },
       { rootMargin: "200px" }
     );
-
     observer.observe(node);
     return () => observer.disconnect();
-  }, [loadMore]);
+  }, [loadMore, sentinelKey]);
 
-  /* ---------- render ---------- */
+  const brands = Array.from(
+    allProductsRef.current.reduce((m, p) => {
+      if (p.brand?._id) m.set(p.brand._id, p.brand.name);
+      return m;
+    }, new Map<string, string>())
+  ).map(([id, name]) => ({ _id: id, name }));
+
+  const boutiques = Array.from(
+    allProductsRef.current.reduce((m, p) => {
+      if (p.boutique?._id) m.set(p.boutique._id, p.boutique.name);
+      return m;
+    }, new Map<string, string>())
+  ).map(([id, name]) => ({ _id: id, name }));
+
+  const subcategories = initialSubcategories.map((s) => ({
+    _id: s._id,
+    name: s.name,
+  }));
+
   return (
     <div className="flex flex-col w-[90%] mx-auto gap-6">
-      {/* sort dropdown */}
       <div className="flex justify-end">
         <FilterPriceOrder sortOrder={sortOrder} setSortOrder={setSortOrder} />
       </div>
@@ -187,13 +171,22 @@ export default function ProductSectionCategoriePage({
         />
 
         <div className="flex flex-col items-center w-full gap-6">
-          {filteredProducts.length > 0 ? (
+          {loadingInitial ? (
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 w-full">
+              {Array(itemsPerBatch)
+                .fill(0)
+                .map((_, i) => (
+                  <div
+                    key={i}
+                    className="h-64 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"
+                  />
+                ))}
+            </div>
+          ) : filteredProducts.length > 0 ? (
             <>
               <ProductCard products={filteredProducts} />
-
-              {/* loader sentinel */}
-              <div ref={loaderRef} className="h-6">
-                {loading && <LoadingDots />}
+              <div ref={loaderRef} key={sentinelKey} className="h-6 w-full">
+                {loadingMore && <LoadingDots />}
               </div>
             </>
           ) : (
