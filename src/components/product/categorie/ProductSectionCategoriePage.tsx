@@ -1,54 +1,123 @@
-// src/components/product/categorie/ProductSectionCategoriePage.tsx
+/* ------------------------------------------------------------------ */
+/*  src/components/product/categorie/ProductSectionCategoriePage.tsx  */
+/* ------------------------------------------------------------------ */
 "use client";
 
-import React, { useState, useEffect, useRef, useCallback } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+} from "react";
 import { Product } from "@/types/Product";
-import ProductCard from "@/components/product/categorie/ProductCard";
-import LoadingDots from "@/components/LoadingDots";
-import { fetchData } from "@/lib/fetchData";
+import ProductCard    from "@/components/product/categorie/ProductCard";
+import FilterProducts from "@/components/product/filter/FilterProducts";
+import LoadingDots    from "@/components/LoadingDots";
+import { fetchData }  from "@/lib/fetchData";
 
+/* ---------- types ---------- */
 interface Props {
   slugCategorie: string;
 }
 
+interface OptionItem {
+  _id: string;
+  name: string;
+}
+
+/* ---------- component ---------- */
 export default function ProductSectionCategoriePage({ slugCategorie }: Props) {
-  /* ---------- pagination settings ---------- */
+  /* ---------- constants ---------- */
   const itemsPerBatch = 8;
 
-  /* ---------- state ---------- */
+  /* ---------- filter state ---------- */
+  const [selectedBrand,        setSelectedBrand]        = useState<string | null>(null);
+  const [selectedBoutique,     setSelectedBoutique]     = useState<string | null>(null);
+  const [selectedSubCategorie, setSelectedSubCategorie] = useState<string | null>(null);
+  const [minPrice, setMinPrice]   = useState<number | null>(null);
+  const [maxPrice, setMaxPrice]   = useState<number | null>(null);
+  const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
+
+  /* ---------- product data ---------- */
   const [products, setProducts] = useState<Product[]>([]);
   const [loadingInitial, setLoadingInitial] = useState(true);
-  const [loadingMore, setLoadingMore] = useState(false);
-  const [hasMore, setHasMore] = useState(true);
+  const [loadingMore,   setLoadingMore]   = useState(false);
+  const [hasMore,       setHasMore]       = useState(true);
+
+  /* ---------- option lists ---------- */
+  const [brands,        setBrands]        = useState<OptionItem[]>([]);
+  const [boutiques,     setBoutiques]     = useState<OptionItem[]>([]);
+  const [subcategories, setSubcategories] = useState<OptionItem[]>([]);
 
   /* ---------- refs ---------- */
   const loaderRef = useRef<HTMLDivElement | null>(null);
 
-  /* ---------- fetch first batch ---------- */
+  /* =================================================================
+     BUILD QUERY STRING
+  ================================================================== */
+  const buildQuery = useCallback(
+    (skip: number) => {
+      const qs = new URLSearchParams();
+      qs.set("limit", itemsPerBatch.toString());
+      qs.set("skip",  skip.toString());
+
+      if (selectedBrand)        qs.set("brand",    selectedBrand);
+      if (selectedBoutique)     qs.set("boutique", selectedBoutique);
+      if (selectedSubCategorie) qs.set("subCat",   selectedSubCategorie);
+      if (minPrice !== null)    qs.set("priceMin", minPrice.toString());
+      if (maxPrice !== null)    qs.set("priceMax", maxPrice.toString());
+      qs.set("sort", sortOrder);
+
+      return qs.toString();
+    },
+    [
+      itemsPerBatch,
+      selectedBrand,
+      selectedBoutique,
+      selectedSubCategorie,
+      minPrice,
+      maxPrice,
+      sortOrder,
+    ]
+  );
+
+  /* =================================================================
+     FETCH FIRST PRODUCT PAGE WHENEVER FILTERS CHANGE
+  ================================================================== */
   useEffect(() => {
+    let ignore = false;
     (async () => {
+      setLoadingInitial(true);
       try {
         const firstBatch = await fetchData<Product[]>(
-          `NavMenu/categorieSubCategoriePage/products/${slugCategorie}?limit=${itemsPerBatch}&skip=0`
+          `NavMenu/categorieSubCategoriePage/products/${slugCategorie}?${buildQuery(0)}`
         );
-        setProducts(firstBatch);
-        setHasMore(firstBatch.length === itemsPerBatch);
+        if (!ignore) {
+          setProducts(firstBatch);
+          setHasMore(firstBatch.length === itemsPerBatch);
+        }
       } catch (err) {
-        console.error(err);
+        if (!ignore) console.error(err);
       } finally {
-        setLoadingInitial(false);
+        if (!ignore) setLoadingInitial(false);
       }
     })();
-  }, [slugCategorie, itemsPerBatch]);
+    return () => { ignore = true; };
 
-  /* ---------- load more on scroll ---------- */
+  }, [
+    slugCategorie,
+    buildQuery, // captures selectedBrand, selectedBoutique, etc.
+  ]);
+
+  /* =================================================================
+     INFINITE SCROLL – LOAD MORE
+  ================================================================== */
   const loadMore = useCallback(async () => {
     if (loadingMore || !hasMore) return;
     setLoadingMore(true);
-
     try {
       const nextBatch = await fetchData<Product[]>(
-        `NavMenu/categorieSubCategoriePage/products/${slugCategorie}?limit=${itemsPerBatch}&skip=${products.length}`
+        `NavMenu/categorieSubCategoriePage/products/${slugCategorie}?${buildQuery(products.length)}`
       );
       setProducts((prev) => [...prev, ...nextBatch]);
       setHasMore(nextBatch.length === itemsPerBatch);
@@ -57,47 +126,82 @@ export default function ProductSectionCategoriePage({ slugCategorie }: Props) {
     } finally {
       setLoadingMore(false);
     }
-  }, [loadingMore, hasMore, slugCategorie, itemsPerBatch, products.length]);
+  }, [loadingMore, hasMore, slugCategorie, buildQuery, products.length]);
 
-  /* ---------- intersection observer ---------- */
-  const sentinelKey = products.length;
-
+  /* observe sentinel */
   useEffect(() => {
     const node = loaderRef.current;
     if (!node) return;
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        if (entries[0].isIntersecting) loadMore();
-      },
+    const obs = new IntersectionObserver(
+      (entries) => entries[0].isIntersecting && loadMore(),
       { rootMargin: "200px" }
     );
+    obs.observe(node);
+    return () => obs.disconnect();
+  }, [loadMore, products.length]);
 
-    observer.observe(node);
-    return () => observer.disconnect();
-  }, [loadMore, sentinelKey]);
+  /* =================================================================
+     FETCH OPTION LISTS (once per slugCategorie)
+  ================================================================== */
+  useEffect(() => {
+    let ignore = false;
+    (async () => {
+      try {
+        const { brands, boutiques, subcategories } =
+          await fetchData<{
+            brands: OptionItem[];
+            boutiques: OptionItem[];
+            subcategories: OptionItem[];
+          }>(
+            `NavMenu/categorieSubCategoriePage/products/${slugCategorie}/options`
+          );
+        if (!ignore) {
+          setBrands(brands);
+          setBoutiques(boutiques);
+          setSubcategories(subcategories);
+        }
+      } catch (err) {
+        if (!ignore) console.error(err);
+      }
+    })();
+    return () => { ignore = true; };
+  }, [slugCategorie]);
 
-  /* ---------- render ---------- */
+  /* =================================================================
+     RENDER
+  ================================================================== */
   return (
-    <div className="flex flex-col w-[90%] mx-auto gap-6">
-      <div className="flex flex-col items-center w-full gap-6">
+    <div className="flex flex-col lg:flex-row gap-6 w-[90%] mx-auto">
+      {/* ---------- sidebar / mobile sheet ---------- */}
+      <FilterProducts
+        selectedBrand={selectedBrand}        setSelectedBrand={setSelectedBrand}
+        selectedBoutique={selectedBoutique}  setSelectedBoutique={setSelectedBoutique}
+        selectedSubCategorie={selectedSubCategorie} setSelectedSubCategorie={setSelectedSubCategorie}
+        minPrice={minPrice} setMinPrice={setMinPrice}
+        maxPrice={maxPrice} setMaxPrice={setMaxPrice}
+        brands={brands}
+        boutiques={boutiques}
+        subcategories={subcategories}
+        sortOrder={sortOrder} setSortOrder={setSortOrder}
+      />
+
+      {/* ---------- product grid ---------- */}
+      <div className="flex flex-col flex-1 items-center gap-6">
         {loadingInitial ? (
-          <div className="grid grid-cols-4 gap-[40px] w-fit">
-            {Array(itemsPerBatch)
-              .fill(0)
-              .map((_, i) => (
-                <div
-                  key={i}
-                  className="h-[400px] w-[280px] bg-gray-200 rounded animate-pulse"
-                />
-              ))}
+          <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-10">
+            {Array.from({ length: itemsPerBatch }).map((_, i) => (
+              <div
+                key={i}
+                className="h-[400px] w-[280px] bg-gray-200 rounded animate-pulse"
+              />
+            ))}
           </div>
-        ) : products.length > 0 ? (
+        ) : products.length ? (
           <>
             <ProductCard products={products} />
-            <div ref={loaderRef} key={sentinelKey}>
-              {loadingMore && <LoadingDots />}
-            </div>
+            <div ref={loaderRef} key={products.length} />
+            {loadingMore && <LoadingDots />}
           </>
         ) : (
           <p className="w-full text-center py-10">Aucun produit trouvé.</p>
