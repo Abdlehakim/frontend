@@ -172,7 +172,7 @@ export default function ProductSectionCategoriePage({
 
         <div className="flex flex-col items-center w-full gap-6">
           {loadingInitial ? (
-            <div className="grid grid-cols-4 gap-[40px] w-full">
+            <div className="grid grid-cols-4 gap-[40px] w-fit">
               {Array(itemsPerBatch)
                 .fill(0)
                 .map((_, i) => (
