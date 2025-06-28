@@ -172,20 +172,20 @@ export default function ProductSectionCategoriePage({
 
         <div className="flex flex-col items-center w-full gap-6">
           {loadingInitial ? (
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-6 w-full">
+            <div className="grid grid-cols-4 gap-[40px] w-full">
               {Array(itemsPerBatch)
                 .fill(0)
                 .map((_, i) => (
                   <div
                     key={i}
-                    className="h-64 bg-gray-200 dark:bg-gray-700 rounded animate-pulse"
+                    className="h-[400px] w-[280px] bg-gray-200 rounded animate-pulse"
                   />
                 ))}
             </div>
           ) : filteredProducts.length > 0 ? (
             <>
               <ProductCard products={filteredProducts} />
-              <div ref={loaderRef} key={sentinelKey} className="h-6 w-full">
+              <div ref={loaderRef} key={sentinelKey}>
                 {loadingMore && <LoadingDots />}
               </div>
             </>
