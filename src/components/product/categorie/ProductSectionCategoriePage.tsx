@@ -19,15 +19,10 @@ import { fetchData }  from "@/lib/fetchData";
 interface Props {
   slugCategorie: string;
 }
-
-interface OptionItem {
-  _id: string;
-  name: string;
-}
+interface OptionItem { _id: string; name: string; }
 
 /* ---------- component ---------- */
 export default function ProductSectionCategoriePage({ slugCategorie }: Props) {
-  /* ---------- constants ---------- */
   const itemsPerBatch = 8;
 
   /* ---------- filter state ---------- */
@@ -39,10 +34,10 @@ export default function ProductSectionCategoriePage({ slugCategorie }: Props) {
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
   /* ---------- product data ---------- */
-  const [products, setProducts] = useState<Product[]>([]);
+  const [products, setProducts]     = useState<Product[]>([]);
   const [loadingInitial, setLoadingInitial] = useState(true);
-  const [loadingMore,   setLoadingMore]   = useState(false);
-  const [hasMore,       setHasMore]       = useState(true);
+  const [loadingMore,   setLoadingMore]     = useState(false);
+  const [hasMore,       setHasMore]         = useState(true);
 
   /* ---------- option lists ---------- */
   const [brands,        setBrands]        = useState<OptionItem[]>([]);
@@ -71,6 +66,7 @@ export default function ProductSectionCategoriePage({ slugCategorie }: Props) {
       return qs.toString();
     },
     [
+      /* ➌  EVERY PIECE OF STATE that affects the query must be here */
       itemsPerBatch,
       selectedBrand,
       selectedBoutique,
@@ -103,10 +99,9 @@ export default function ProductSectionCategoriePage({ slugCategorie }: Props) {
       }
     })();
     return () => { ignore = true; };
-
   }, [
     slugCategorie,
-    buildQuery, // captures selectedBrand, selectedBoutique, etc.
+    buildQuery,            // captures all filter state via dependencies ➌
   ]);
 
   /* =================================================================
@@ -128,7 +123,6 @@ export default function ProductSectionCategoriePage({ slugCategorie }: Props) {
     }
   }, [loadingMore, hasMore, slugCategorie, buildQuery, products.length]);
 
-  /* observe sentinel */
   useEffect(() => {
     const node = loaderRef.current;
     if (!node) return;
@@ -153,9 +147,8 @@ export default function ProductSectionCategoriePage({ slugCategorie }: Props) {
             brands: OptionItem[];
             boutiques: OptionItem[];
             subcategories: OptionItem[];
-          }>(
-            `NavMenu/categorieSubCategoriePage/products/${slugCategorie}/options`
-          );
+          }>(`NavMenu/categorieSubCategoriePage/products/${slugCategorie}/options`);
+
         if (!ignore) {
           setBrands(brands);
           setBoutiques(boutiques);
@@ -173,7 +166,6 @@ export default function ProductSectionCategoriePage({ slugCategorie }: Props) {
   ================================================================== */
   return (
     <div className="flex flex-col lg:flex-row gap-6 w-[90%] mx-auto">
-      {/* ---------- sidebar / mobile sheet ---------- */}
       <FilterProducts
         selectedBrand={selectedBrand}        setSelectedBrand={setSelectedBrand}
         selectedBoutique={selectedBoutique}  setSelectedBoutique={setSelectedBoutique}
@@ -186,7 +178,6 @@ export default function ProductSectionCategoriePage({ slugCategorie }: Props) {
         sortOrder={sortOrder} setSortOrder={setSortOrder}
       />
 
-      {/* ---------- product grid ---------- */}
       <div className="flex flex-col flex-1 items-center gap-6">
         {loadingInitial ? (
           <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-10">
