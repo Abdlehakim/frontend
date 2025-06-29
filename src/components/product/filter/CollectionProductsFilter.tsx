@@ -1,10 +1,15 @@
+/* ------------------------------------------------------------------ */
+/*  src/components/product/filter/CollectionProductsFilter.tsx        */
+/*  (now uses draft state + “Appliquer” button, like other filters)   */
+/* ------------------------------------------------------------------ */
 "use client";
 
 import React, {
+  useState,
+  useEffect,
   ReactElement,
   HTMLAttributes,
   cloneElement,
-  useState,
 } from "react";
 import Slider from "rc-slider";
 import "rc-slider/assets/index.css";
@@ -18,13 +23,13 @@ interface RenderProps {
 function handleRender(
   origin: ReactElement<HTMLAttributes<HTMLDivElement>>,
   { index, value }: RenderProps
-): ReactElement<HTMLAttributes<HTMLDivElement>> {
+) {
   const ariaLabel = index === 0 ? "Minimum price" : "Maximum price";
   return cloneElement(origin, {
     role: "slider",
     "aria-label": ariaLabel,
     "aria-valuemin": 1,
-    "aria-valuemax": 200000,
+    "aria-valuemax": 100000,
     "aria-valuenow": value,
     style: {
       ...origin.props.style,
@@ -34,14 +39,12 @@ function handleRender(
   });
 }
 
-/* ---------- prop types ---------- */
+/* ---------- types ---------- */
 interface OptionItem {
   _id: string;
   name: string;
 }
-
 interface Props {
-  /* selections */
   selectedCategorie: string | null;
   setSelectedCategorie: (id: string | null) => void;
   selectedSubCategorie: string | null;
@@ -51,43 +54,55 @@ interface Props {
   selectedBoutique: string | null;
   setSelectedBoutique: (id: string | null) => void;
 
-  /* price */
   minPrice: number | null;
   setMinPrice: (v: number | null) => void;
   maxPrice: number | null;
   setMaxPrice: (v: number | null) => void;
 
-  /* option lists */
   categories: OptionItem[];
   subcategories: OptionItem[];
   brands: OptionItem[];
   boutiques: OptionItem[];
 
-  /* sort */
   sortOrder: "asc" | "desc";
   setSortOrder: (o: "asc" | "desc") => void;
 }
 
-const CollectionProductsFilter: React.FC<Props> = ({
-  selectedCategorie,
-  setSelectedCategorie,
-  selectedSubCategorie,
-  setSelectedSubCategorie,
-  selectedBrand,
-  setSelectedBrand,
-  selectedBoutique,
-  setSelectedBoutique,
-  minPrice,
-  setMinPrice,
-  maxPrice,
-  setMaxPrice,
-  categories,
-  subcategories,
-  brands,
-  boutiques,
-  sortOrder,
-  setSortOrder,
-}) => {
+/* ------------------------------------------------------------------ */
+/*  Component                                                          */
+/* ------------------------------------------------------------------ */
+const CollectionProductsFilter: React.FC<Props> = (props) => {
+  /* ---------- local draft state ---------- */
+  const [categDraft,   setCategDraft]   = useState(props.selectedCategorie);
+  const [subDraft,     setSubDraft]     = useState(props.selectedSubCategorie);
+  const [brandDraft,   setBrandDraft]   = useState(props.selectedBrand);
+  const [boutiqueDraft,setBoutiqueDraft]= useState(props.selectedBoutique);
+  const [minDraft,     setMinDraft]     = useState(props.minPrice);
+  const [maxDraft,     setMaxDraft]     = useState(props.maxPrice);
+  const [sortDraft,    setSortDraft]    = useState<"asc" | "desc">(props.sortOrder);
+
+  /* keep drafts in sync when parent resets */
+  useEffect(() => setCategDraft(props.selectedCategorie),    [props.selectedCategorie]);
+  useEffect(() => setSubDraft(props.selectedSubCategorie),   [props.selectedSubCategorie]);
+  useEffect(() => setBrandDraft(props.selectedBrand),        [props.selectedBrand]);
+  useEffect(() => setBoutiqueDraft(props.selectedBoutique),  [props.selectedBoutique]);
+  useEffect(() => setMinDraft(props.minPrice),               [props.minPrice]);
+  useEffect(() => setMaxDraft(props.maxPrice),               [props.maxPrice]);
+  useEffect(() => setSortDraft(props.sortOrder),             [props.sortOrder]);
+
+  /* commit drafts */
+  function applyFilters() {
+    props.setSelectedCategorie(categDraft);
+    props.setSelectedSubCategorie(subDraft);
+    props.setSelectedBrand(brandDraft);
+    props.setSelectedBoutique(boutiqueDraft);
+    props.setMinPrice(minDraft);
+    props.setMaxPrice(maxDraft);
+    props.setSortOrder(sortDraft);
+    setOpenMobile(false);
+  }
+
+  /* UI state */
   const [openMobile, setOpenMobile] = useState(false);
 
   return (
@@ -112,6 +127,12 @@ const CollectionProductsFilter: React.FC<Props> = ({
               Fermer ✕
             </button>
             <div className="flex flex-col gap-4">{renderFilters()}</div>
+            <button
+              className="mt-6 w-full bg-primary text-white py-2 rounded"
+              onClick={applyFilters}
+            >
+              Appliquer
+            </button>
           </div>
         </div>
       )}
@@ -119,53 +140,59 @@ const CollectionProductsFilter: React.FC<Props> = ({
       {/* desktop sidebar */}
       <div
         className="hidden xl:flex flex-col
-    2xl:w-[20%] xl:w-[20%]
-    h-fit overflow-y-auto
-    px-4 my-8 border-2 border-primary rounded-md py-4 mx-4
-sticky top-8"
+                    2xl:w-[20%] xl:w-[20%]
+                    h-fit overflow-y-auto
+                    px-4 my-8 border-2 border-primary rounded-md py-4 mx-4
+                    sticky top-8"
       >
         {renderFilters()}
+        <button
+          className="mt-6 w-full bg-primary text-white py-2 rounded"
+          onClick={applyFilters}
+        >
+          Appliquer
+        </button>
       </div>
     </>
   );
 
-  /* ---------- helpers ---------- */
+  /* ---------- render filters ---------- */
   function renderFilters() {
     return (
-        <div className="flex flex-col gap-4">
+      <div className="flex flex-col gap-4">
         <Select
           id="categorie"
           label="Catégorie"
-          value={selectedCategorie}
-          onChange={setSelectedCategorie}
-          options={categories}
+          value={categDraft}
+          onChange={setCategDraft}
+          options={props.categories}
           placeholder="Toutes les catégories"
         />
 
         <Select
           id="subcategorie"
           label="Sous-catégorie"
-          value={selectedSubCategorie}
-          onChange={setSelectedSubCategorie}
-          options={subcategories}
+          value={subDraft}
+          onChange={setSubDraft}
+          options={props.subcategories}
           placeholder="Toutes les sous-catégories"
         />
 
         <Select
           id="brand"
           label="Marque"
-          value={selectedBrand}
-          onChange={setSelectedBrand}
-          options={brands}
+          value={brandDraft}
+          onChange={setBrandDraft}
+          options={props.brands}
           placeholder="Toutes les marques"
         />
 
         <Select
           id="boutique"
           label="Boutique"
-          value={selectedBoutique}
-          onChange={setSelectedBoutique}
-          options={boutiques}
+          value={boutiqueDraft}
+          onChange={setBoutiqueDraft}
+          options={props.boutiques}
           placeholder="Toutes les boutiques"
         />
 
@@ -177,31 +204,31 @@ sticky top-8"
               type="number"
               placeholder="Min"
               className="w-1/2 border rounded p-2"
-              value={minPrice ?? ""}
+              value={minDraft ?? ""}
               onChange={(e) =>
-                setMinPrice(e.target.value ? Number(e.target.value) : null)
+                setMinDraft(e.target.value ? Number(e.target.value) : null)
               }
             />
             <input
               type="number"
               placeholder="Max"
               className="w-1/2 border rounded p-2"
-              value={maxPrice ?? ""}
+              value={maxDraft ?? ""}
               onChange={(e) =>
-                setMaxPrice(e.target.value ? Number(e.target.value) : null)
+                setMaxDraft(e.target.value ? Number(e.target.value) : null)
               }
             />
           </div>
           <Slider
             range
             min={1}
-            max={10000}
-            value={[minPrice ?? 1, maxPrice ?? 10000]}
+            max={100000}
+            value={[minDraft ?? 1, maxDraft ?? 100000]}
             allowCross={false}
             onChange={(vals) => {
               const [min, max] = vals as number[];
-              setMinPrice(min);
-              setMaxPrice(max);
+              setMinDraft(min);
+              setMaxDraft(max);
             }}
             handleRender={handleRender}
           />
@@ -215,8 +242,8 @@ sticky top-8"
           <select
             id="sort"
             className="w-full border rounded p-2"
-            value={sortOrder}
-            onChange={(e) => setSortOrder(e.target.value as "asc" | "desc")}
+            value={sortDraft}
+            onChange={(e) => setSortDraft(e.target.value as "asc" | "desc")}
           >
             <option value="asc">Du moins cher</option>
             <option value="desc">Du plus cher</option>
@@ -227,7 +254,7 @@ sticky top-8"
   }
 };
 
-/* ---------- tiny reusable select ---------- */
+/* ---------- reusable select ---------- */
 interface SelectProps {
   id: string;
   label: string;

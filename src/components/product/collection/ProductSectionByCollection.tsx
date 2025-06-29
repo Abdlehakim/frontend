@@ -1,140 +1,178 @@
+/* ------------------------------------------------------------------ */
+/*  ProductSectionByCollection (client-side, lazy load)               */
+/* ------------------------------------------------------------------ */
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import ProductCard from "@/components/product/categorie/ProductCard";
 import CollectionProductsFilter from "@/components/product/filter/CollectionProductsFilter";
-import Pagination from "@/components/PaginationClient";
-import FilterPriceOrder from "@/components/product/filter/FilterPriceOrder";
+import LoadingDots from "@/components/LoadingDots";
+import { fetchData } from "@/lib/fetchData";
 import type { Product } from "@/types/Product";
 
-interface Props {
-  products: Product[];
-}
+interface OptionItem { _id: string; name: string; }
 
-export default function ProductSectionByCollection({ products }: Props) {
-  /* ---------- filter state ---------- */
-  const [selectedCategorie, setSelectedCategorie] = useState<string | null>(null);
-  const [selectedSubCategorie, setSelectedSubCategorie] = useState<string | null>(
-    null
-  );
-  const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
-  const [selectedBoutique, setSelectedBoutique] = useState<string | null>(null);
+export default function ProductSectionByCollection() {
+  const itemsPerBatch = 8;
+
+  /* -------- live filter state -------- */
+  const [selectedCategorie,    setSelectedCategorie]    = useState<string | null>(null);
+  const [selectedSubCategorie, setSelectedSubCategorie] = useState<string | null>(null);
+  const [selectedBrand,        setSelectedBrand]        = useState<string | null>(null);
+  const [selectedBoutique,     setSelectedBoutique]     = useState<string | null>(null);
   const [minPrice, setMinPrice] = useState<number | null>(null);
   const [maxPrice, setMaxPrice] = useState<number | null>(null);
-
-  /* ---------- sort & pagination ---------- */
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 8;
 
-  /* ---------- option lists ---------- */
-  const categories = Array.from(
-    new Set(products.map((p) => p.categorie?.name || p.categorie?.name).filter(Boolean))
-  ).map((name) => ({ _id: name!, name: name! }));
+  /* -------- data -------- */
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loadingInit, setLoadingInit] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore,     setHasMore]     = useState(true);
 
-  const subcategories = Array.from(
-    new Set(products.map((p) => p.subcategorie?.name).filter(Boolean))
-  ).map((name) => ({ _id: name!, name: name! }));
+  /* -------- option lists -------- */
+  const [categories,    setCategories]    = useState<OptionItem[]>([]);
+  const [subcategories, setSubcategories] = useState<OptionItem[]>([]);
+  const [brands,        setBrands]        = useState<OptionItem[]>([]);
+  const [boutiques,     setBoutiques]     = useState<OptionItem[]>([]);
 
-  const brands = Array.from(
-    new Set(products.map((p) => p.brand?.name).filter(Boolean))
-  ).map((name) => ({ _id: name!, name: name! }));
+  /* -------- sentinel -------- */
+  const loaderRef = useRef<HTMLDivElement | null>(null);
 
-  const boutiques = Array.from(
-    new Set(products.map((p) => p.boutique?.name).filter(Boolean))
-  ).map((name) => ({ _id: name!, name: name! }));
+  /* -------- query builder -------- */
+  const buildQuery = useCallback(
+    (skip: number) => {
+      const qs = new URLSearchParams();
+      qs.set("limit", itemsPerBatch.toString());
+      qs.set("skip",  skip.toString());
 
-  /* ---------- filtered list ---------- */
-  const [filteredProducts, setFilteredProducts] = useState<Product[]>(products);
+      if (selectedCategorie)    qs.set("categorie", selectedCategorie);
+      if (selectedSubCategorie) qs.set("subCat",     selectedSubCategorie);
+      if (selectedBrand)        qs.set("brand",      selectedBrand);
+      if (selectedBoutique)     qs.set("boutique",   selectedBoutique);
+      if (minPrice !== null)    qs.set("priceMin",   minPrice.toString());
+      if (maxPrice !== null)    qs.set("priceMax",   maxPrice.toString());
+      qs.set("sort", sortOrder);
 
-  useEffect(() => {
-    let list = [...products];
-
-    if (selectedCategorie)
-      list = list.filter(
-        (p) =>
-          p.categorie?.name === selectedCategorie ||
-          p.categorie?.name === selectedCategorie
-      );
-
-    if (selectedSubCategorie)
-      list = list.filter((p) => p.subcategorie?.name === selectedSubCategorie);
-
-    if (selectedBrand) list = list.filter((p) => p.brand?.name === selectedBrand);
-
-    if (selectedBoutique)
-      list = list.filter((p) => p.boutique?.name === selectedBoutique);
-
-    if (minPrice !== null) list = list.filter((p) => p.price >= minPrice);
-    if (maxPrice !== null) list = list.filter((p) => p.price <= maxPrice);
-
-    list.sort((a, b) =>
-      sortOrder === "asc" ? a.price - b.price : b.price - a.price
-    );
-
-    setFilteredProducts(list);
-    setCurrentPage(1);
-  }, [
-    products,
-    selectedCategorie,
-    selectedSubCategorie,
-    selectedBrand,
-    selectedBoutique,
-    minPrice,
-    maxPrice,
-    sortOrder,
-  ]);
-
-  /* ---------- pagination ---------- */
-  const totalPages = Math.ceil(filteredProducts.length / itemsPerPage);
-  const currentProducts = filteredProducts.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
+      return qs.toString();
+    },
+    [
+      itemsPerBatch,
+      selectedCategorie,
+      selectedSubCategorie,
+      selectedBrand,
+      selectedBoutique,
+      minPrice,
+      maxPrice,
+      sortOrder,
+    ]
   );
 
-  /* ---------- render ---------- */
+  /* -------- fetch first batch & on filter change -------- */
+  useEffect(() => {
+    let ignore = false;
+    (async () => {
+      setLoadingInit(true);
+      try {
+        const batch = await fetchData<Product[]>(
+          `NavMenu/ProductPromotion/products?${buildQuery(0)}`
+        );
+        if (!ignore) {
+          setProducts(batch);
+          setHasMore(batch.length === itemsPerBatch);
+        }
+      } catch (err) {
+        if (!ignore) console.error(err);
+      } finally {
+        if (!ignore) setLoadingInit(false);
+      }
+    })();
+    return () => { ignore = true; };
+  }, [buildQuery]);
+
+  /* -------- infinite scroll -------- */
+  const loadMore = useCallback(async () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    try {
+      const next = await fetchData<Product[]>(
+        `NavMenu/ProductPromotion/products?${buildQuery(products.length)}`
+      );
+      setProducts((prev) => [...prev, ...next]);
+      setHasMore(next.length === itemsPerBatch);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [loadingMore, hasMore, buildQuery, products.length]);
+
+  useEffect(() => {
+    const node = loaderRef.current;
+    if (!node) return;
+    const obs = new IntersectionObserver(
+      (entries) => entries[0].isIntersecting && loadMore(),
+      { rootMargin: "200px" }
+    );
+    obs.observe(node);
+    return () => obs.disconnect();
+  }, [loadMore, products.length]);
+
+  /* -------- option lists -------- */
+  useEffect(() => {
+    (async () => {
+      try {
+        const { categories, subcategories, brands, boutiques } =
+          await fetchData<{
+            categories: OptionItem[];
+            subcategories: OptionItem[];
+            brands: OptionItem[];
+            boutiques: OptionItem[];
+          }>("NavMenu/ProductPromotion/products/options");
+
+        setCategories(categories);
+        setSubcategories(subcategories);
+        setBrands(brands);
+        setBoutiques(boutiques);
+      } catch (err) {
+        console.error(err);
+      }
+    })();
+  }, []);
+
+  /* -------- render -------- */
   return (
-    <div className="flex flex-col gap-4 w-[90%] mx-auto pt-6">
-      {/* sort dropdown */}
-      <div className="flex justify-end">
-        <FilterPriceOrder sortOrder={sortOrder} setSortOrder={setSortOrder} />
-      </div>
+    <div className="flex flex-col xl:flex-row gap-16 w-[90%] mx-auto pt-8">
+      <CollectionProductsFilter
+        selectedCategorie={selectedCategorie}    setSelectedCategorie={setSelectedCategorie}
+        selectedSubCategorie={selectedSubCategorie} setSelectedSubCategorie={setSelectedSubCategorie}
+        selectedBrand={selectedBrand}            setSelectedBrand={setSelectedBrand}
+        selectedBoutique={selectedBoutique}      setSelectedBoutique={setSelectedBoutique}
+        minPrice={minPrice} setMinPrice={setMinPrice}
+        maxPrice={maxPrice} setMaxPrice={setMaxPrice}
+        categories={categories}
+        subcategories={subcategories}
+        brands={brands}
+        boutiques={boutiques}
+        sortOrder={sortOrder} setSortOrder={setSortOrder}
+      />
 
-      <div className="flex flex-col xl:flex-row gap-16">
-        {/* sidebar filters */}
-        <CollectionProductsFilter
-          selectedCategorie={selectedCategorie}
-          setSelectedCategorie={setSelectedCategorie}
-          selectedSubCategorie={selectedSubCategorie}
-          setSelectedSubCategorie={setSelectedSubCategorie}
-          selectedBrand={selectedBrand}
-          setSelectedBrand={setSelectedBrand}
-          selectedBoutique={selectedBoutique}
-          setSelectedBoutique={setSelectedBoutique}
-          minPrice={minPrice}
-          setMinPrice={setMinPrice}
-          maxPrice={maxPrice}
-          setMaxPrice={setMaxPrice}
-          categories={categories}
-          subcategories={subcategories}
-          brands={brands}
-          boutiques={boutiques}
-          sortOrder={sortOrder}
-          setSortOrder={setSortOrder}
-        />
-
-        {/* products + pagination */}
-        <div className="flex flex-col gap-16">
-          <ProductCard products={currentProducts} />
-
-          {filteredProducts.length > 0 && (
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={setCurrentPage}
-            />
-          )}
-        </div>
+      <div className="flex flex-col flex-1 items-center gap-16">
+        {loadingInit ? (
+          <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-10">
+            {Array.from({ length: itemsPerBatch }).map((_, i) => (
+              <div key={i} className="w-[280px] h-[400px] bg-gray-200 rounded animate-pulse" />
+            ))}
+          </div>
+        ) : products.length ? (
+          <>
+            <ProductCard products={products} />
+            <div ref={loaderRef} key={products.length} />
+            {loadingMore && <LoadingDots />}
+          </>
+        ) : (
+          <p className="w-full text-center py-10">Aucun produit trouvé.</p>
+        )}
       </div>
     </div>
   );

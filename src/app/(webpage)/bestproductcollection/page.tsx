@@ -1,40 +1,40 @@
-// src/app/bestproductcollection/page.tsx
-
+/* ------------------------------------------------------------------ */
+/*  src/app/bestproductcollection/page.tsx                            */
+/*  (Server component – banner only; product list lazy-loads in the   */
+/*   client via <ProductSectionByCollection />)                       */
+/* ------------------------------------------------------------------ */
 import Banner from "@/components/Banner";
-import ProductSectionByCollection from "@/components/product/collection/ProductSectionByCollection";
+import ProductSectionByCollection
+  from "@/components/product/collection/ProductSectionByCollection";
 import { fetchData } from "@/lib/fetchData";
-import type { Product } from "@/types/Product";
 
 export const revalidate = 60;
 
+/* shape returned by /getBestProductBannerData */
 interface BestProductBanner {
   BCbannerTitle?: string | null;
   BCbannerImgUrl?: string | null;
 }
 
 export default async function BestProductCollectionPage() {
-  // fetch banner
-  const bannerData = await fetchData<BestProductBanner>(
+  /* -------- banner (server-side) -------- */
+  const banner = await fetchData<BestProductBanner>(
     "NavMenu/BestProductCollection/getBestProductBannerData"
   ).catch(() => ({} as BestProductBanner));
 
-  // fetch products (using imported Product type)
-  const products = await fetchData<Product[]>(
-    "NavMenu/BestProductCollection/getBestProductCollection"
-  ).catch(() => [] as Product[]);
-
   return (
     <>
-      {bannerData.BCbannerTitle && bannerData.BCbannerImgUrl && (
+      {banner.BCbannerTitle && banner.BCbannerImgUrl && (
         <Banner
-          title={bannerData.BCbannerTitle}
-          imageBanner={bannerData.BCbannerImgUrl}
+          title={banner.BCbannerTitle}
+          imageBanner={banner.BCbannerImgUrl}
         />
       )}
 
-      {products.length > 0 && (
-        <ProductSectionByCollection products={products} />
-      )}
+      {/* client component will fetch
+          /NavMenu/BestProductCollection/products?limit=8&skip=0
+          and stream in further batches */}
+      <ProductSectionByCollection />
     </>
   );
 }
