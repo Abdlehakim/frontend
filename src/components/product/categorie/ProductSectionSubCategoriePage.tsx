@@ -1,95 +1,170 @@
+/* ------------------------------------------------------------------ */
+/*  src/components/product/categorie/ProductSectionSubCategoriePage.tsx
+/*  (Client component – *without* the top-right sort dropdown)        */
+/* ------------------------------------------------------------------ */
 "use client";
 
-import React, { useState, useEffect, useMemo } from "react";
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  useCallback,
+} from "react";
 import { Product } from "@/types/Product";
-import ProductCard from "@/components/product/categorie/ProductCard";
-import Pagination from "@/components/PaginationClient";
-import SubCategorieFilterProducts from "@/components/product/filter/SubCategorieFilterProducts";
-import FilterPriceOrder from "@/components/product/filter/FilterPriceOrder";
+import ProductCard     from "@/components/product/categorie/ProductCard";
+import SubCategorieFilterProducts
+  from "@/components/product/filter/SubCategorieFilterProducts";
+import LoadingDots     from "@/components/LoadingDots";
+import { fetchData }   from "@/lib/fetchData";
 
-export const revalidate = 60;
-
+/* ---------- props ---------- */
 interface Props {
   slugSubCategorie: string;
-  initialProducts: Product[];
 }
+interface OptionItem { _id: string; name: string; }
 
-export default function ProductSectionSubCategoriePage({
-  initialProducts,
-}: Props) {
-  /* ---------- filter & pagination state ---------- */
-  const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
+/* ------------------------------------------------------------------ */
+/*  Component                                                          */
+/* ------------------------------------------------------------------ */
+export default function ProductSectionSubCategoriePage({ slugSubCategorie }: Props) {
+  const itemsPerBatch = 8;
+
+  /* ----- filter state ----- */
+  const [selectedBrand,    setSelectedBrand]    = useState<string | null>(null);
   const [selectedBoutique, setSelectedBoutique] = useState<string | null>(null);
-  const [minPrice, setMinPrice] = useState<number | null>(null);
-  const [maxPrice, setMaxPrice] = useState<number | null>(null);
+  const [minPrice, setMinPrice]   = useState<number | null>(null);
+  const [maxPrice, setMaxPrice]   = useState<number | null>(null);
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
-  const [currentPage, setCurrentPage] = useState(1);
-  const itemsPerPage = 8;
 
-  /* ---------- option lists ---------- */
-  const brands = useMemo(
-    () =>
-      Array.from(
-        initialProducts.reduce((m, p) => {
-          if (p.brand?._id) m.set(p.brand._id, p.brand.name);
-          return m;
-        }, new Map<string, string>())
-      ).map(([id, name]) => ({ _id: id, name })),
-    [initialProducts]
+  /* ----- data state ----- */
+  const [products,    setProducts]    = useState<Product[]>([]);
+  const [loadingInit, setLoadingInit] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore,     setHasMore]     = useState(true);
+
+  /* ----- option lists ----- */
+  const [brands,    setBrands]    = useState<OptionItem[]>([]);
+  const [boutiques, setBoutiques] = useState<OptionItem[]>([]);
+
+  /* ----- sentinel ref ----- */
+  const loaderRef = useRef<HTMLDivElement | null>(null);
+
+  /* =================================================================
+     BUILD QUERY STRING
+  ================================================================== */
+  const buildQuery = useCallback(
+    (skip: number) => {
+      const qs = new URLSearchParams();
+      qs.set("limit", itemsPerBatch.toString());
+      qs.set("skip",  skip.toString());
+
+      if (selectedBrand)    qs.set("brand",    selectedBrand);
+      if (selectedBoutique) qs.set("boutique", selectedBoutique);
+      if (minPrice !== null) qs.set("priceMin", minPrice.toString());
+      if (maxPrice !== null) qs.set("priceMax", maxPrice.toString());
+      qs.set("sort", sortOrder);
+
+      return qs.toString();
+    },
+    [
+      itemsPerBatch,
+      selectedBrand,
+      selectedBoutique,
+      minPrice,
+      maxPrice,
+      sortOrder,
+    ]
   );
 
-  const boutiques = useMemo(
-    () =>
-      Array.from(
-        initialProducts.reduce((m, p) => {
-          if (p.boutique?._id) m.set(p.boutique._id, p.boutique.name);
-          return m;
-        }, new Map<string, string>())
-      ).map(([id, name]) => ({ _id: id, name })),
-    [initialProducts]
-  );
-
-  /* ---------- filtered list ---------- */
-  const [products, setProducts] = useState<Product[]>(initialProducts);
-
+  /* =================================================================
+     FETCH FIRST PAGE WHEN FILTERS CHANGE
+  ================================================================== */
   useEffect(() => {
-    let filtered = [...initialProducts];
-
-    if (selectedBrand)    filtered = filtered.filter((p) => p.brand?._id === selectedBrand);
-    if (selectedBoutique) filtered = filtered.filter((p) => p.boutique?._id === selectedBoutique);
-    if (minPrice !== null) filtered = filtered.filter((p) => p.price >= minPrice);
-    if (maxPrice !== null) filtered = filtered.filter((p) => p.price <= maxPrice);
-
-    filtered.sort((a, b) =>
-      sortOrder === "asc" ? a.price - b.price : b.price - a.price
-    );
-
-    setProducts(filtered);
-    setCurrentPage(1);
+    let ignore = false;
+    (async () => {
+      setLoadingInit(true);
+      try {
+        const batch = await fetchData<Product[]>(
+          `NavMenu/categorieSubCategoriePage/products/${slugSubCategorie}?${buildQuery(0)}`
+        );
+        if (!ignore) {
+          setProducts(batch);
+          setHasMore(batch.length === itemsPerBatch);
+        }
+      } catch (err) {
+        if (!ignore) console.error(err);
+      } finally {
+        if (!ignore) setLoadingInit(false);
+      }
+    })();
+    return () => { ignore = true; };
   }, [
-    initialProducts,
-    selectedBrand,
-    selectedBoutique,
-    minPrice,
-    maxPrice,
-    sortOrder,
+    slugSubCategorie,
+    buildQuery,
   ]);
 
-  /* ---------- pagination ---------- */
-  const totalPages = Math.ceil(products.length / itemsPerPage);
-  const currentProducts = products.slice(
-    (currentPage - 1) * itemsPerPage,
-    currentPage * itemsPerPage
-  );
+  /* =================================================================
+     INFINITE SCROLL
+  ================================================================== */
+  const loadMore = useCallback(async () => {
+    if (loadingMore || !hasMore) return;
+    setLoadingMore(true);
+    try {
+      const next = await fetchData<Product[]>(
+        `NavMenu/categorieSubCategoriePage/products/${slugSubCategorie}?${buildQuery(products.length)}`
+      );
+      setProducts((prev) => [...prev, ...next]);
+      setHasMore(next.length === itemsPerBatch);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setLoadingMore(false);
+    }
+  }, [loadingMore, hasMore, slugSubCategorie, buildQuery, products.length]);
 
-  /* ---------- render ---------- */
+  /* observe sentinel */
+  useEffect(() => {
+    const node = loaderRef.current;
+    if (!node) return;
+    const obs = new IntersectionObserver(
+      (entries) => entries[0].isIntersecting && loadMore(),
+      { rootMargin: "200px" }
+    );
+    obs.observe(node);
+    return () => obs.disconnect();
+  }, [loadMore, products.length]);
+
+  /* =================================================================
+     OPTION LISTS (once per slug)
+  ================================================================== */
+  useEffect(() => {
+    let ignore = false;
+    (async () => {
+      try {
+        const { brands, boutiques } = await fetchData<{
+          brands:    OptionItem[];
+          boutiques: OptionItem[];
+          subcategories: OptionItem[];
+        }>(
+          `NavMenu/categorieSubCategoriePage/products/${slugSubCategorie}/options`
+        );
+        if (!ignore) {
+          setBrands(brands);
+          setBoutiques(boutiques);
+        }
+      } catch (err) {
+        if (!ignore) console.error(err);
+      }
+    })();
+    return () => { ignore = true; };
+  }, [slugSubCategorie]);
+
+  /* =================================================================
+     RENDER
+  ================================================================== */
   return (
     <div className="flex flex-col gap-16 w-[90%] mx-auto">
-      {/* sort dropdown */}
-      <div className="flex justify-end">
-        <FilterPriceOrder sortOrder={sortOrder} setSortOrder={setSortOrder} />
-      </div>
-
+      {/* filters + grid */}
       <div className="flex flex-col xl:flex-row gap-16 w-full">
         <SubCategorieFilterProducts
           selectedBrand={selectedBrand}
@@ -107,16 +182,22 @@ export default function ProductSectionSubCategoriePage({
         />
 
         <div className="flex flex-col items-center w-full gap-16">
-          {currentProducts.length ? (
+          {loadingInit ? (
+            <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-10">
+              {Array.from({ length: itemsPerBatch }).map((_, i) => (
+                <div
+                  key={i}
+                  className="h-[400px] w-[280px] bg-gray-200 rounded animate-pulse"
+                />
+              ))}
+            </div>
+          ) : products.length ? (
             <>
               <div className="w-full">
-                <ProductCard products={currentProducts} />
+                <ProductCard products={products} />
               </div>
-              <Pagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={setCurrentPage}
-              />
+              <div ref={loaderRef} key={products.length} />
+              {loadingMore && <LoadingDots />}
             </>
           ) : (
             <p className="w-full text-center py-10">Aucun produit trouvé.</p>
