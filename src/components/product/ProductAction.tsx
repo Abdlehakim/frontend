@@ -184,7 +184,7 @@ const ProductAction: React.FC<ProductActionProps> = ({
                   <button
                     key={`${g.id}-${idx}`}
                     onClick={() => choose(g.id, v.label)}
-                    className={`px-3 py-1 border rounded-md transition text-sm flex items-center gap-1
+                    className={`px-3 border rounded-md transition text-sm flex items-center gap-1
                       ${active ? 'bg-primary text-white' : 'bg-gray-100 text-gray-800'}`}
                   >
                     {v.image && (
