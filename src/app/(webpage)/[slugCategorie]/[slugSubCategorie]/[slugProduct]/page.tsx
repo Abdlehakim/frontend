@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------ */
-/*  src/app/(webpage)/[slugCategorie]/[slugProduct]/page.tsx          */
+/*  Product page (Server Component)                                   */
 /* ------------------------------------------------------------------ */
 import { notFound } from "next/navigation";
 import MainProductSection from "@/components/product/MainProductSection";
@@ -8,13 +8,13 @@ import type { Product } from "@/types/Product";
 
 export const revalidate = 60;
 
-/* ---------- params ---------- */
+/* ---------- route params ---------- */
 type PageParams = {
   slugCategorie: string;
   slugProduct: string;
 };
 
-/* ---------- stub shape passed to MainProductSection ---------- */
+/* ---------- stub shape for the client ---------- */
 type ProductStub = Pick<
   Product,
   | "slug"
@@ -27,20 +27,21 @@ type ProductStub = Pick<
 >;
 
 /* ------------------------------------------------------------------ */
-/*  Pre-generate paths                                                */
+/*  Static paths (build-time)                                         */
 /* ------------------------------------------------------------------ */
 export async function generateStaticParams(): Promise<PageParams[]> {
-  /* 1️⃣  fetch the flat slug list (strings) */
+  /* 1️⃣  list of product slugs (strings) */
   const slugs = await fetchData<string[]>(
     "products/MainProductSection/allProductSlugs"
   ).catch(() => []);
 
-  /* 2️⃣  for each slug, look up its category once (build-time cost) */
+  /* 2️⃣  look up each product once to get its category slug */
   const paths = await Promise.all(
     slugs.map(async (slugProduct) => {
       const prod = await fetchData<Product>(
         `products/MainProductSection/${slugProduct}`
       ).catch(() => null);
+
       if (!prod?.categorie?.slug) return null;
 
       return {
@@ -62,27 +63,16 @@ export default async function ProductPage(
 ) {
   const { slugProduct } = await params;
 
-  /* fetch just THIS product */
-  const prod = await fetchData<Product>(
-    `products/MainProductSection/${slugProduct}`
+  /* fetch ONLY this product’s stub (fast) */
+  const lite = await fetchData<ProductStub>(
+    `products/MainProductSection/lite/${slugProduct}`
   ).catch(() => null);
 
-  if (!prod) return notFound();
-
-  /* build the lightweight stub expected by the client component */
-  const initialProduct: ProductStub = {
-    slug:         prod.slug,
-    name:         prod.name,
-    reference:    prod.reference,
-    price:        prod.price,
-    discount:     prod.discount,
-    stock:        prod.stock,
-    mainImageUrl: prod.mainImageUrl,
-  };
+  if (!lite) return notFound();
 
   return (
     <div className="flex flex-col w-[90%] gap-4 mx-auto">
-      <MainProductSection initialProduct={initialProduct} />
+      <MainProductSection initialProduct={lite} />
     </div>
   );
 }
