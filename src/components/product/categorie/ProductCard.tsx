@@ -63,14 +63,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
           >
             {/* ---------- product image ---------- */}
             <Link href={productUrl}>
-              <div className="relative aspect-[16/14]">
-                <Image
-                  src={product.mainImageUrl ?? "/placeholder.png"}
+              <div className="relative aspect-[16/14] bg-gray-200">
+                 <Image
+                  src={product.mainImageUrl ?? ""}
                   alt={product.name}
                   fill
                   sizes="(max-width: 600px) 100vw, 600px"
                   className="object-cover"
-                  placeholder="blur"
+                  placeholder="empty"
                   priority
                   quality={75}
                 />

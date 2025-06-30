@@ -149,9 +149,9 @@ const ProductAction: React.FC<ProductActionProps> = ({
             <div key={g.id} className="flex flex-col gap-4 h-28">
               <p className="flex gap-4"><span className="font-bold" > {g.label} :</span>
               {isColor && (
-                <span className="text-gray-700 mb-2"> {selected[g.id]}</span>
+                <span className="text-gray-700"> {selected[g.id]}</span>
               )}</p>
-              <div className="flex gap-3">
+              <div className="flex gap-3 h-20 items-center">
                 {g.values.map((v, idx) => {
                   if (isColor) {
                     const active = selected[g.id] === v.label;
