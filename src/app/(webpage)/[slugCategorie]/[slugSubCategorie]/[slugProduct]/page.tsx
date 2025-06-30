@@ -14,7 +14,7 @@ type PageParams = {
   slugProduct: string;
 };
 
-/* ---------- stub shape for the client ---------- */
+/* ---------- stub delivered to the client ---------- */
 type ProductStub = Pick<
   Product,
   | "slug"
@@ -27,15 +27,13 @@ type ProductStub = Pick<
 >;
 
 /* ------------------------------------------------------------------ */
-/*  Static paths (build-time)                                         */
+/*  Static paths                                                      */
 /* ------------------------------------------------------------------ */
 export async function generateStaticParams(): Promise<PageParams[]> {
-  /* 1️⃣  list of product slugs (strings) */
   const slugs = await fetchData<string[]>(
     "products/MainProductSection/allProductSlugs"
   ).catch(() => []);
 
-  /* 2️⃣  look up each product once to get its category slug */
   const paths = await Promise.all(
     slugs.map(async (slugProduct) => {
       const prod = await fetchData<Product>(
@@ -51,7 +49,6 @@ export async function generateStaticParams(): Promise<PageParams[]> {
     })
   );
 
-  /* 3️⃣  drop nulls */
   return paths.filter((p): p is PageParams => p !== null);
 }
 
@@ -63,16 +60,27 @@ export default async function ProductPage(
 ) {
   const { slugProduct } = await params;
 
-  /* fetch ONLY this product’s stub (fast) */
-  const lite = await fetchData<ProductStub>(
-    `products/MainProductSection/lite/${slugProduct}`
+  /* fetch the heavy doc once (we no longer have /lite) */
+  const prod = await fetchData<Product>(
+    `products/MainProductSection/${slugProduct}`
   ).catch(() => null);
 
-  if (!lite) return notFound();
+  if (!prod) return notFound();
+
+  /* derive the stub for initial render */
+  const initialProduct: ProductStub = {
+    slug:         prod.slug,
+    name:         prod.name,
+    reference:    prod.reference,
+    price:        prod.price,
+    discount:     prod.discount,
+    stock:        prod.stock,
+    mainImageUrl: prod.mainImageUrl,
+  };
 
   return (
     <div className="flex flex-col w-[90%] gap-4 mx-auto">
-      <MainProductSection initialProduct={lite} />
+      <MainProductSection initialProduct={initialProduct} />
     </div>
   );
 }

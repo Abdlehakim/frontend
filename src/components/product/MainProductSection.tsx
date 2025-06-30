@@ -15,7 +15,7 @@ import { fetchData } from "@/lib/fetchData";
 import type { Product } from "@/types/Product";
 
 /* ---------- tiny skeleton helper ---------- */
-const Skel = ({ className }: { className?: string }) => (
+const Skel = ({ className = "" }: { className?: string }) => (
   <div className={`animate-pulse bg-gray-200 rounded ${className}`} />
 );
 
@@ -46,7 +46,8 @@ const MainProductSection: React.FC<Props> = ({ initialProduct }) => {
     let cancelled = false;
     (async () => {
       const full = await fetchData<Product>(
-        `/products/MainProductSection/${initialProduct.slug}`
+        /* removed leading “/” ↓↓↓ */
+        `products/MainProductSection/${initialProduct.slug}`
       ).catch(() => null);
 
       if (!cancelled && full) {
@@ -56,7 +57,6 @@ const MainProductSection: React.FC<Props> = ({ initialProduct }) => {
         );
       }
     })();
-
     return () => {
       cancelled = true;
     };
@@ -83,15 +83,15 @@ const MainProductSection: React.FC<Props> = ({ initialProduct }) => {
 
   /* ---------- derived ---------- */
   const loading = !("_id" in product);
-  const thumbs = product.extraImagesUrl ?? [];
+  const thumbs  = product.extraImagesUrl ?? [];
 
   /* ---------- render ---------- */
   return (
-    <div className="flex gap-8 justify-center my-8 w-full max-w-7xl">
+    <div className="flex gap-8 justify-center my-8 w-[90%] mx-auto">
       {/* -------- images -------- */}
-      <div className="flex flex-col w-1/2 gap-4">
-        {/* main image */}
-        <div className="relative aspect-[16/10]">
+      <div className="flex flex-col w-[45%] gap-4">
+        {/* hero */}
+        <div className="relative aspect-[16/12]">
           {selectedImage ? (
             <Image
               src={selectedImage}
@@ -115,8 +115,8 @@ const MainProductSection: React.FC<Props> = ({ initialProduct }) => {
                 <button
                   key={idx}
                   type="button"
-                  className="relative w-24 h-16 overflow-hidden"
                   onClick={() => handleImageClick(img)}
+                  className="relative w-24 h-16 overflow-hidden"
                 >
                   <Image src={img} alt="" fill className="object-cover" />
                 </button>
@@ -138,7 +138,9 @@ const MainProductSection: React.FC<Props> = ({ initialProduct }) => {
           <div className="flex flex-wrap gap-4 text-sm">
             <p className="font-bold">
               REF:&nbsp;
-              <span className="text-gray-600 uppercase">{product.reference}</span>
+              <span className="text-gray-600 uppercase">
+                {product.reference}
+              </span>
             </p>
             <p className="font-bold flex items-center gap-2 text-gray-600">
               <IoCheckboxOutline size={18} />
@@ -147,42 +149,41 @@ const MainProductSection: React.FC<Props> = ({ initialProduct }) => {
           </div>
         ) : (
           <div className="flex gap-4">
-            <Skel className="h-4 w-24" />
-            <Skel className="h-4 w-20" />
+            <Skel className="h-4" />
           </div>
         )}
 
         {/* rating */}
-        {product._id ? (
           <div className="flex items-center gap-2 text-sm">
-            <ReviewClient productId={product._id} summary />
-            <span className="text-gray-700">
-              ({product.nbreview ?? 0} avis clients)
-            </span>
+            <ReviewClient productId={product._id!} summary />        
           </div>
-        ) : (
-          <Skel className="h-4 w-28" />
-        )}
+
 
         {/* info */}
         {product.info ? (
-          <>
-            <p className="text-lg text-gray-700">{product.info}</p>
-            <hr className="border-gray-300" />
-          </>
+          <p className="text-lg text-gray-700 h-8">{product.info}</p>
         ) : (
-          <Skel className="h-20 w-full" />
+          <Skel className="h-8" />
         )}
 
-        {/* actions */}
-        {loading ? (
-          <Skel className="h-12 w-full" />
+        {/* disponibilité */}
+        {loading ? (        
+            <Skel className="h-8" />      
         ) : (
+          <div className="flex items-center gap-2">
+            <p className="font-bold">Disponibilité&nbsp;:</p>
+            <span className="font-semibold">
+              {product.boutique?.name ?? "Disponible en magasin"}
+            </span>
+          </div>
+        )}
+        {/* actions */}
           <ProductAction
             product={product as Product}
             addToCartHandler={addToCartHandler}
+             onImageSelect={(img) => img && setSelectedImage(img)}
           />
-        )}
+    
       </div>
     </div>
   );
