@@ -68,7 +68,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
                   src={product.mainImageUrl ?? "/placeholder.png"}
                   alt={product.name}
                   fill
+                  sizes="(max-width: 600px) 100vw, 600px"
                   className="object-cover"
+                  placeholder="blur"
+                  priority
                 />
               </div>
             </Link>
