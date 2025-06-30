@@ -28,6 +28,71 @@ export interface SubCategorie {
 interface HeaderbottomleftProps {
   categories: Categorie[];
 }
+interface InlineOrImgProps {
+  url: string;
+  className?: string;
+  alt?: string;
+}
+
+const InlineOrImg: React.FC<InlineOrImgProps> = ({
+  url,
+  className,
+  alt,
+}) => {
+  const [svg, setSvg] = useState<string | null>(null);
+  const isSvg = /\.svg($|\?)/i.test(url);
+
+  useEffect(() => {
+    if (!isSvg) return;
+    let canceled = false;
+
+    fetch(url)
+      .then((r) => r.text())
+      .then((txt) => {
+        if (canceled) return;
+        // remove any hard-coded fill, stroke, width or height
+        const cleaned = txt
+          .replace(/(fill|stroke)="[^"]*"/gi, "")
+          .replace(/(width|height)="[^"]*"/gi, "")
+          // inject Tailwind classes to drive both fill & stroke from currentColor
+          .replace(
+            /<svg([^>]*)>/i,
+            `<svg$1 class="fill-current stroke-current w-full h-full">`
+          );
+        setSvg(cleaned);
+      })
+      .catch(() => {
+        /* ignore fetch errors */
+      });
+
+    return () => {
+      canceled = true;
+    };
+  }, [url, isSvg]);
+
+  if (isSvg && svg) {
+    return (
+      <span
+        className={className}
+        role="img"
+        aria-label={alt}
+        dangerouslySetInnerHTML={{ __html: svg }}
+      />
+    );
+  }
+
+  // fallback for PNG/JPG/etc.
+  return (
+    <Image
+      src={url}
+      alt={alt || ""}
+      width={20}
+      height={20}
+      unoptimized
+      className={className}
+    />
+  );
+};
 
 const Headerbottomleft: React.FC<HeaderbottomleftProps> = ({ categories }) => {
   const [subcategories, setSubcategories] = useState<Record<string, SubCategorie[]>>({});
@@ -117,15 +182,13 @@ const Headerbottomleft: React.FC<HeaderbottomleftProps> = ({ categories }) => {
                 <Link
                   href={`/${categorie.slug}`}
                   onClick={closeMenu}
-                  className="flex items-center gap-[12px] duration-300 hover:bg-primary hover:text-white p-4"
+                 className="group flex items-center gap-[12px] p-4 duration-300 hover:bg-primary hover:text-white"
                 >
                   {categorie.iconUrl && (
-                    <Image
-                      src={categorie.iconUrl}
+                   <InlineOrImg
+                      url={categorie.iconUrl}
                       alt={categorie.name}
-                      width={20}
-                      height={20}
-                      className="w-[20px] h-[20px]"
+                    className="w-[20px] h-[20px] group-hover:text-white"
                     />
                   )}
                   <span className="font-bold text-base">{categorie.name}</span>
@@ -137,17 +200,15 @@ const Headerbottomleft: React.FC<HeaderbottomleftProps> = ({ categories }) => {
                       {subcategories[categorie._id].map(subCat => (
                         <Link
                           key={subCat._id}
-                          href={`/${subCat.slug}`}
+                          href={`/${categorie.slug}/${subCat.slug}`}
                          onClick={closeMenu}
                           className="flex bg-white items-center gap-[12px] duration-300 hover:bg-primary hover:text-white p-4"
                         >
                           {subCat.iconUrl && (
-                            <Image
-                              src={subCat.iconUrl}
+                           <InlineOrImg
+                              url={subCat.iconUrl}
                               alt={subCat.name}
-                              width={20}
-                              height={20}
-                              className="w-[20px] h-[20px]"
+                              className="w-[20px] h-[20px] group-hover:text-white"
                             />
                           )}
                           <span className="font-bold text-base">{subCat.name}</span>
