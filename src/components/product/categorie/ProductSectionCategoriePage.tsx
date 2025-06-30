@@ -18,11 +18,16 @@ import { fetchData }  from "@/lib/fetchData";
 /* ---------- types ---------- */
 interface Props {
   slugCategorie: string;
+  /** when true we’re on a sub-categorie page, so hide the subcategorie filter */
+  hideSubcategorie?: boolean;
 }
 interface OptionItem { _id: string; name: string; }
 
 /* ---------- component ---------- */
-export default function ProductSectionCategoriePage({ slugCategorie }: Props) {
+export default function ProductSectionCategoriePage({
+  slugCategorie,
+  hideSubcategorie = false,
+}: Props) {
   const itemsPerBatch = 8;
 
   /* ---------- filter state ---------- */
@@ -66,7 +71,6 @@ export default function ProductSectionCategoriePage({ slugCategorie }: Props) {
       return qs.toString();
     },
     [
-      /* ➌  EVERY PIECE OF STATE that affects the query must be here */
       itemsPerBatch,
       selectedBrand,
       selectedBoutique,
@@ -101,7 +105,7 @@ export default function ProductSectionCategoriePage({ slugCategorie }: Props) {
     return () => { ignore = true; };
   }, [
     slugCategorie,
-    buildQuery,            // captures all filter state via dependencies ➌
+    buildQuery,
   ]);
 
   /* =================================================================
@@ -176,11 +180,12 @@ export default function ProductSectionCategoriePage({ slugCategorie }: Props) {
         boutiques={boutiques}
         subcategories={subcategories}
         sortOrder={sortOrder} setSortOrder={setSortOrder}
+        hideSubcategorie={hideSubcategorie}
       />
 
       <div className="flex flex-col flex-1 items-center gap-6">
         {loadingInitial ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-10">
+          <div className="grid grid-cols-4 gap-10 max-md:grid-cols-1">
             {Array.from({ length: itemsPerBatch }).map((_, i) => (
               <div
                 key={i}
@@ -195,7 +200,7 @@ export default function ProductSectionCategoriePage({ slugCategorie }: Props) {
             {loadingMore && <LoadingDots />}
           </>
         ) : (
-          <p className="w-full text-center py-10">Aucun produit trouvé.</p>
+          <p className="w-full text-center min-h-screen py-10">Aucun produit trouvé.</p>
         )}
       </div>
     </div>

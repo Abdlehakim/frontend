@@ -137,7 +137,7 @@ const Headerbottomleft: React.FC<HeaderbottomleftProps> = ({ categories }) => {
                       {subcategories[categorie._id].map(subCat => (
                         <Link
                           key={subCat._id}
-                          href={`/${categorie.slug}/${subCat.slug}`}
+                          href={`/${subCat.slug}`}
                          onClick={closeMenu}
                           className="flex bg-white items-center gap-[12px] duration-300 hover:bg-primary hover:text-white p-4"
                         >

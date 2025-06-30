@@ -39,7 +39,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
   };
 
   return (
-    <div className="group w-fit max-md:h-fit h-fit grid grid-cols-4 gap-[40px] max-2xl:grid-cols-3 max-xl:grid-cols-2 max-md:grid-cols-1 max-md:gap-[12px] align-top">
+    <div className="group w-fit min-h-screen max-md:h-fit h-fit grid grid-cols-4 gap-[40px] max-2xl:grid-cols-3 max-xl:grid-cols-2 max-md:grid-cols-1 max-md:gap-[12px] align-top">
       {products.map((product) => {
         /** price helpers */
         const discountedPrice = product.discount
@@ -50,10 +50,13 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
         const isOutOfStock =
           product.stockStatus === "out of stock" || product.stock === 0;
 
-        /** url helpers  */
-        const categorieSlug = product.categorie?.slug ?? "categorie";
-        const subcategorieSlug = product.subcategorie?.slug ?? "sous-categorie";
-        const productUrl = `/${categorieSlug}/${subcategorieSlug}/${product.slug}`;
+      
+        // url helper — use sub-category if present, else category
+        const parentSlug =
+          product.subcategorie?.slug ??
+          product.categorie?.slug ??
+          "categorie";
+        const productUrl = `/${parentSlug}/${product.slug}`;
 
         /** ---------- single card ---------- */
         return (

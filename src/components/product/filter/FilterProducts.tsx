@@ -1,6 +1,3 @@
-/* ------------------------------------------------------------------ */
-/*  src/components/product/filter/FilterProducts.tsx                  */
-/* ------------------------------------------------------------------ */
 "use client";
 
 import React, {
@@ -64,6 +61,9 @@ interface Props {
 
   sortOrder: "asc" | "desc";
   setSortOrder: (o: "asc" | "desc") => void;
+
+  /** when true the sub-categorie picker is hidden */
+  hideSubcategorie?: boolean;
 }
 
 /* ------------------------------------------------------------------ */
@@ -161,7 +161,6 @@ const FilterProducts: React.FC<Props> = (props) => {
   /* ---------- helpers ---------- */
   function renderFilters() {
     return (
-      
       <div className="flex flex-col gap-4">
         {/* sort */}
         <div className="flex flex-col gap-2">
@@ -198,10 +197,10 @@ const FilterProducts: React.FC<Props> = (props) => {
           placeholder="Toutes les boutiques"
         />
 
-        {/* sub-category (only on catégorie page) */}
-        {props.subcategories.length > 0 && (
+        {/* sub-categorie (only if not hidden AND there are any) */}
+        {!props.hideSubcategorie && props.subcategories.length > 0 && (
           <Select
-            id="subcategory-filter"
+            id="subcategorie-filter"
             label="Sous-catégorie"
             value={draftSubCategorie}
             onChange={setDraftSubCategorie}
@@ -247,8 +246,6 @@ const FilterProducts: React.FC<Props> = (props) => {
             handleRender={handleRender}
           />
         </div>
-
-        
       </div>
     );
   }
