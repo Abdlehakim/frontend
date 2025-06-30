@@ -141,12 +141,12 @@ const ProductAction: React.FC<ProductActionProps> = ({
     <>
       {/* ---------- ATTRIBUTE PICKERS ---------- */}
       {loading ? (
-        <Skel className="h-24 w-full" />
+        <Skel className="h-26 w-full" />
       ) : (
         groups.map((g) => {
           const isColor = g.type === "color";
           return (
-            <div key={g.id} className="flex flex-col gap-4 h-24">
+            <div key={g.id} className="flex flex-col gap-4 h-26">
               <p className="flex gap-4"><span className="font-bold" > {g.label} :</span>
               {isColor && (
                 <span className="text-gray-700 mb-2"> {selected[g.id]}</span>
