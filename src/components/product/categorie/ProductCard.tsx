@@ -72,6 +72,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
                   className="object-cover"
                   placeholder="blur"
                   priority
+                  quality={75}
                 />
               </div>
             </Link>
