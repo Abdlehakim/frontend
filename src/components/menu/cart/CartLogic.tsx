@@ -45,6 +45,7 @@ const CartLogic = () => {
   const closeCartModalOnscroll = () => setIsCartModalOnscrollOpen(false);
 
   // Handle clicks outside of the cart modal
+
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -78,7 +79,7 @@ const CartLogic = () => {
   // Handle scroll events
   useEffect(() => {
     const handleScroll = () => {
-      setIsScrolling(window.scrollY > 200);
+      setIsScrolling(window.scrollY > 120);
       if (isCartOpen) {
         closeCartModal();
       }
