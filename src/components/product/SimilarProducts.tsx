@@ -8,10 +8,10 @@ import ProductCard   from "@/components/product/categorie/ProductCard";
 import type { Product } from "@/types/Product";
 
 interface SimilarProductsProps {
-  categorieId:      string;
-  subcategorieId?:  string | null;
+  categorieId:     string;
+  subcategorieId?: string | null;
   /** slug of the current PDP — will be excluded from the results */
-  excludeSlug:      string;
+  excludeSlug:     string;
 }
 
 export default function SimilarProducts({
@@ -19,14 +19,14 @@ export default function SimilarProducts({
   subcategorieId,
   excludeSlug,
 }: SimilarProductsProps) {
-  const key      = subcategorieId ?? categorieId;
-  const perPage  = 4;
+  const key     = subcategorieId ?? categorieId;
+  const perPage = 4;
 
-  const [products, setProducts]   = useState<Product[]>([]);
-  const [loading,  setLoading]    = useState(true);
-  const [refresh,  setRefresh]    = useState(0);      // increment → refetch
+  const [products, setProducts] = useState<Product[]>([]);
+  const [loading,  setLoading]  = useState(true);
+  const [refresh,  setRefresh]  = useState(0);     // increment → refetch
 
-  /* ------------------ fetch on mount / refresh ------------------- */
+  /* ---------------- fetch on mount / refresh ------------------- */
   useEffect(() => {
     setLoading(true);
 
@@ -40,38 +40,41 @@ export default function SimilarProducts({
       .finally(() => setLoading(false));
   }, [key, excludeSlug, refresh]);
 
-  /* ------------------ skeleton ----------------------------------- */
-  if (loading) {
-    return (
-      <div className="flex w-full h-[500px] justify-between items-center relative py-8">
-        {Array.from({ length: perPage }).map((_, i) => (
-          <div
-            key={i}
-            className="grid grid-cols-4 gap-[40px]"
-          />
-        ))}
-      </div>
-    );
-  }
-
-  /* ------------------ nothing found ------------------------------ */
-  if (!products.length) {
+  /* ---------------- nothing found ------------------------------ */
+  if (!loading && !products.length) {
     return <p className="w-full text-center py-10">No similar product.</p>;
   }
 
-  /* ------------------ render ------------------------------------- */
+  /* ---------------- render ------------------------------------- */
   return (
-    <section className="flex w-full h-[500px] justify-between items-center relative py-8">
+    <section className="flex w-full h-[500px] justify-between items-center gap-4 py-8">
+      {/* refresh / prev */}
       <button
         onClick={() => setRefresh(Date.now())}
-        className="p-4 bg-white border border-gray-300 rounded-full shadow-md hover:bg-secondary hover:text-white transition duration-200"
+        className="p-4 bg-white border border-gray-300 rounded-full shadow-md
+                   hover:bg-secondary hover:text-white transition duration-200"
       >
         <FiChevronLeft className="w-6 h-6" />
-      </button>  
-        <ProductCard products={products} />
+      </button>
+
+          {loading ? (
+            <div className="grid grid-cols-4 gap-[40px]">
+              {Array.from({ length: perPage }).map((_, i) => (
+                <div
+                  key={i}
+                  className="h-[390px] w-[280px] bg-gray-200 rounded animate-pulse"
+                />
+              ))}
+            </div>
+          ) : (
+            <ProductCard products={products} />
+          )}
+
+      {/* refresh / next */}
       <button
         onClick={() => setRefresh(Date.now())}
-        className="p-4 bg-white border border-gray-300 rounded-full shadow-md hover:bg-secondary hover:text-white transition duration-200"
+        className="p-4 bg-white border border-gray-300 rounded-full shadow-md
+                   hover:bg-secondary hover:text-white transition duration-200"
       >
         <FiChevronRight className="w-6 h-6" />
       </button>
