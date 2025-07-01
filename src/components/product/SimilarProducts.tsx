@@ -47,7 +47,16 @@ export default function SimilarProducts({
 
   /* ---------------- render ------------------------------------- */
   return (
-    <section className="flex w-full h-[500px] justify-between items-center gap-4 py-8">
+    <section className="flex flex-col gap-4 w-full">
+      <div className="flex-col flex gap-[8px] items-center w-full max-lg:text-center">
+        <h2 className="font-bold text-2xl text-HomePageTitles capitalize">
+          Similar Products
+        </h2>
+        <p className="text-base text-[#525566]">
+            Similar Products
+        </p>
+      </div>
+    <div className="flex w-full h-[450px] justify-between items-center gap-4">
       {/* refresh / prev */}
       <button
         onClick={() => setRefresh(Date.now())}
@@ -78,6 +87,7 @@ export default function SimilarProducts({
       >
         <FiChevronRight className="w-6 h-6" />
       </button>
+    </div>
     </section>
   );
 }
