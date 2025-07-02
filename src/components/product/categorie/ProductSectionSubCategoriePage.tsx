@@ -1,19 +1,10 @@
-/* ------------------------------------------------------------------ */
-/*  src/components/product/categorie/ProductSectionSubCategoriePage.tsx
-/*  (Client component – *without* the top-right sort dropdown)        */
-/* ------------------------------------------------------------------ */
+// src/components/product/categorie/ProductSectionSubCategoriePage.tsx
 "use client";
 
-import React, {
-  useState,
-  useEffect,
-  useRef,
-  useCallback,
-} from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Product } from "@/types/Product";
+import ProductsFilter from "@/components/product/filter/FilterProducts";
 import ProductCard     from "@/components/product/categorie/ProductCard";
-import SubCategorieFilterProducts
-  from "@/components/product/filter/SubCategorieFilterProducts";
 import LoadingDots     from "@/components/LoadingDots";
 import { fetchData }   from "@/lib/fetchData";
 
@@ -66,14 +57,7 @@ export default function ProductSectionSubCategoriePage({ slugSubCategorie }: Pro
 
       return qs.toString();
     },
-    [
-      itemsPerBatch,
-      selectedBrand,
-      selectedBoutique,
-      minPrice,
-      maxPrice,
-      sortOrder,
-    ]
+    [itemsPerBatch, selectedBrand, selectedBoutique, minPrice, maxPrice, sortOrder]
   );
 
   /* =================================================================
@@ -98,10 +82,7 @@ export default function ProductSectionSubCategoriePage({ slugSubCategorie }: Pro
       }
     })();
     return () => { ignore = true; };
-  }, [
-    slugSubCategorie,
-    buildQuery,
-  ]);
+  }, [slugSubCategorie, buildQuery]);
 
   /* =================================================================
      INFINITE SCROLL
@@ -113,7 +94,7 @@ export default function ProductSectionSubCategoriePage({ slugSubCategorie }: Pro
       const next = await fetchData<Product[]>(
         `NavMenu/categorieSubCategoriePage/products/${slugSubCategorie}?${buildQuery(products.length)}`
       );
-      setProducts((prev) => [...prev, ...next]);
+      setProducts(prev => [...prev, ...next]);
       setHasMore(next.length === itemsPerBatch);
     } catch (err) {
       console.error(err);
@@ -127,7 +108,7 @@ export default function ProductSectionSubCategoriePage({ slugSubCategorie }: Pro
     const node = loaderRef.current;
     if (!node) return;
     const obs = new IntersectionObserver(
-      (entries) => entries[0].isIntersecting && loadMore(),
+      entries => entries[0].isIntersecting && loadMore(),
       { rootMargin: "200px" }
     );
     obs.observe(node);
@@ -141,11 +122,7 @@ export default function ProductSectionSubCategoriePage({ slugSubCategorie }: Pro
     let ignore = false;
     (async () => {
       try {
-        const { brands, boutiques } = await fetchData<{
-          brands:    OptionItem[];
-          boutiques: OptionItem[];
-          subcategories: OptionItem[];
-        }>(
+        const { brands, boutiques } = await fetchData<{ brands: OptionItem[]; boutiques: OptionItem[] }>(
           `NavMenu/categorieSubCategoriePage/products/${slugSubCategorie}/options`
         );
         if (!ignore) {
@@ -164,9 +141,13 @@ export default function ProductSectionSubCategoriePage({ slugSubCategorie }: Pro
   ================================================================== */
   return (
     <div className="flex flex-col gap-16 w-[90%] mx-auto">
-      {/* filters + grid */}
       <div className="flex flex-col xl:flex-row gap-16 w-full">
-        <SubCategorieFilterProducts
+        <ProductsFilter
+          hideCategorie
+          hideSubcategorie
+          selectedSubCategorie={null}
+          setSelectedSubCategorie={() => {}}
+          subcategories={[]}
           selectedBrand={selectedBrand}
           setSelectedBrand={setSelectedBrand}
           selectedBoutique={selectedBoutique}
@@ -175,6 +156,7 @@ export default function ProductSectionSubCategoriePage({ slugSubCategorie }: Pro
           setMinPrice={setMinPrice}
           maxPrice={maxPrice}
           setMaxPrice={setMaxPrice}
+          categories={[]}
           brands={brands}
           boutiques={boutiques}
           sortOrder={sortOrder}
@@ -185,10 +167,7 @@ export default function ProductSectionSubCategoriePage({ slugSubCategorie }: Pro
           {loadingInit ? (
             <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-10">
               {Array.from({ length: itemsPerBatch }).map((_, i) => (
-                <div
-                  key={i}
-                  className="h-[400px] w-[280px] bg-gray-200 rounded animate-pulse"
-                />
+                <div key={i} className="h-[400px] w-[280px] bg-gray-200 rounded animate-pulse" />
               ))}
             </div>
           ) : products.length ? (
