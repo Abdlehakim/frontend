@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------ */
-/*  src/components/product/filter/CollectionProductsFilter.tsx        */
+/*  src/components/product/filter/ProductsFilter.tsx        */
 /*  (now uses draft state + “Appliquer” button, like other filters)   */
 /* ------------------------------------------------------------------ */
 "use client";
@@ -71,7 +71,7 @@ interface Props {
 /* ------------------------------------------------------------------ */
 /*  Component                                                          */
 /* ------------------------------------------------------------------ */
-const CollectionProductsFilter: React.FC<Props> = (props) => {
+const ProductsFilter: React.FC<Props> = (props) => {
   /* ---------- local draft state ---------- */
   const [categDraft,   setCategDraft]   = useState(props.selectedCategorie);
   const [subDraft,     setSubDraft]     = useState(props.selectedSubCategorie);
@@ -108,9 +108,9 @@ const CollectionProductsFilter: React.FC<Props> = (props) => {
   return (
     <>
       {/* mobile toggle */}
-      <div className="xl:hidden flex justify-end">
+      <div className="xl:hidden flex w-full justify-end">
         <button
-          className="border rounded w-60 py-2"
+          className="py-2 rounded w-60 border"
           onClick={() => setOpenMobile(true)}
         >
           Filtres
@@ -118,8 +118,8 @@ const CollectionProductsFilter: React.FC<Props> = (props) => {
       </div>
 
       {openMobile && (
-        <div className="fixed inset-0 bg-black/50 xl:hidden flex items-end z-40">
-          <div className="bg-white w-[90%] mx-auto p-8 rounded-2xl mb-60">
+        <div className="fixed inset-0 bg-black/50 flex items-end xl:hidden z-50">
+          <div className="bg-white absolute top-8 left-1/2 transform -translate-x-1/2 w-[90%] p-8 rounded-2xl">
             <button
               className="text-blue-600 font-bold w-full text-right mb-4"
               onClick={() => setOpenMobile(false)}
@@ -291,4 +291,4 @@ const Select: React.FC<SelectProps> = ({
   </div>
 );
 
-export default CollectionProductsFilter;
+export default ProductsFilter;

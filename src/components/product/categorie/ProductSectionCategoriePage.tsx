@@ -3,17 +3,12 @@
 /* ------------------------------------------------------------------ */
 "use client";
 
-import React, {
-  useState,
-  useEffect,
-  useRef,
-  useCallback,
-} from "react";
+import React, { useState, useEffect, useRef, useCallback } from "react";
 import { Product } from "@/types/Product";
-import ProductCard    from "@/components/product/categorie/ProductCard";
+import ProductCard from "@/components/product/categorie/ProductCard";
 import FilterProducts from "@/components/product/filter/FilterProducts";
-import LoadingDots    from "@/components/LoadingDots";
-import { fetchData }  from "@/lib/fetchData";
+import LoadingDots from "@/components/LoadingDots";
+import { fetchData } from "@/lib/fetchData";
 
 /* ---------- types ---------- */
 interface Props {
@@ -21,7 +16,10 @@ interface Props {
   /** when true we’re on a sub-categorie page, so hide the subcategorie filter */
   hideSubcategorie?: boolean;
 }
-interface OptionItem { _id: string; name: string; }
+interface OptionItem {
+  _id: string;
+  name: string;
+}
 
 /* ---------- component ---------- */
 export default function ProductSectionCategoriePage({
@@ -31,22 +29,24 @@ export default function ProductSectionCategoriePage({
   const itemsPerBatch = 8;
 
   /* ---------- filter state ---------- */
-  const [selectedBrand,        setSelectedBrand]        = useState<string | null>(null);
-  const [selectedBoutique,     setSelectedBoutique]     = useState<string | null>(null);
-  const [selectedSubCategorie, setSelectedSubCategorie] = useState<string | null>(null);
-  const [minPrice, setMinPrice]   = useState<number | null>(null);
-  const [maxPrice, setMaxPrice]   = useState<number | null>(null);
+  const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
+  const [selectedBoutique, setSelectedBoutique] = useState<string | null>(null);
+  const [selectedSubCategorie, setSelectedSubCategorie] = useState<
+    string | null
+  >(null);
+  const [minPrice, setMinPrice] = useState<number | null>(null);
+  const [maxPrice, setMaxPrice] = useState<number | null>(null);
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
 
   /* ---------- product data ---------- */
-  const [products, setProducts]     = useState<Product[]>([]);
+  const [products, setProducts] = useState<Product[]>([]);
   const [loadingInitial, setLoadingInitial] = useState(true);
-  const [loadingMore,   setLoadingMore]     = useState(false);
-  const [hasMore,       setHasMore]         = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
+  const [hasMore, setHasMore] = useState(true);
 
   /* ---------- option lists ---------- */
-  const [brands,        setBrands]        = useState<OptionItem[]>([]);
-  const [boutiques,     setBoutiques]     = useState<OptionItem[]>([]);
+  const [brands, setBrands] = useState<OptionItem[]>([]);
+  const [boutiques, setBoutiques] = useState<OptionItem[]>([]);
   const [subcategories, setSubcategories] = useState<OptionItem[]>([]);
 
   /* ---------- refs ---------- */
@@ -59,13 +59,13 @@ export default function ProductSectionCategoriePage({
     (skip: number) => {
       const qs = new URLSearchParams();
       qs.set("limit", itemsPerBatch.toString());
-      qs.set("skip",  skip.toString());
+      qs.set("skip", skip.toString());
 
-      if (selectedBrand)        qs.set("brand",    selectedBrand);
-      if (selectedBoutique)     qs.set("boutique", selectedBoutique);
-      if (selectedSubCategorie) qs.set("subCat",   selectedSubCategorie);
-      if (minPrice !== null)    qs.set("priceMin", minPrice.toString());
-      if (maxPrice !== null)    qs.set("priceMax", maxPrice.toString());
+      if (selectedBrand) qs.set("brand", selectedBrand);
+      if (selectedBoutique) qs.set("boutique", selectedBoutique);
+      if (selectedSubCategorie) qs.set("subCat", selectedSubCategorie);
+      if (minPrice !== null) qs.set("priceMin", minPrice.toString());
+      if (maxPrice !== null) qs.set("priceMax", maxPrice.toString());
       qs.set("sort", sortOrder);
 
       return qs.toString();
@@ -90,7 +90,9 @@ export default function ProductSectionCategoriePage({
       setLoadingInitial(true);
       try {
         const firstBatch = await fetchData<Product[]>(
-          `NavMenu/categorieSubCategoriePage/products/${slugCategorie}?${buildQuery(0)}`
+          `NavMenu/categorieSubCategoriePage/products/${slugCategorie}?${buildQuery(
+            0
+          )}`
         );
         if (!ignore) {
           setProducts(firstBatch);
@@ -102,11 +104,10 @@ export default function ProductSectionCategoriePage({
         if (!ignore) setLoadingInitial(false);
       }
     })();
-    return () => { ignore = true; };
-  }, [
-    slugCategorie,
-    buildQuery,
-  ]);
+    return () => {
+      ignore = true;
+    };
+  }, [slugCategorie, buildQuery]);
 
   /* =================================================================
      INFINITE SCROLL – LOAD MORE
@@ -116,7 +117,9 @@ export default function ProductSectionCategoriePage({
     setLoadingMore(true);
     try {
       const nextBatch = await fetchData<Product[]>(
-        `NavMenu/categorieSubCategoriePage/products/${slugCategorie}?${buildQuery(products.length)}`
+        `NavMenu/categorieSubCategoriePage/products/${slugCategorie}?${buildQuery(
+          products.length
+        )}`
       );
       setProducts((prev) => [...prev, ...nextBatch]);
       setHasMore(nextBatch.length === itemsPerBatch);
@@ -146,12 +149,13 @@ export default function ProductSectionCategoriePage({
     let ignore = false;
     (async () => {
       try {
-        const { brands, boutiques, subcategories } =
-          await fetchData<{
-            brands: OptionItem[];
-            boutiques: OptionItem[];
-            subcategories: OptionItem[];
-          }>(`NavMenu/categorieSubCategoriePage/products/${slugCategorie}/options`);
+        const { brands, boutiques, subcategories } = await fetchData<{
+          brands: OptionItem[];
+          boutiques: OptionItem[];
+          subcategories: OptionItem[];
+        }>(
+          `NavMenu/categorieSubCategoriePage/products/${slugCategorie}/options`
+        );
 
         if (!ignore) {
           setBrands(brands);
@@ -162,28 +166,37 @@ export default function ProductSectionCategoriePage({
         if (!ignore) console.error(err);
       }
     })();
-    return () => { ignore = true; };
+    return () => {
+      ignore = true;
+    };
   }, [slugCategorie]);
 
   /* =================================================================
      RENDER
   ================================================================== */
   return (
-    <div className="flex flex-col lg:flex-row gap-6 w-[90%] mx-auto">
+    <div className="flex flex-row justify-center max-xl:flex-col gap-6 w-[95%] mx-auto">
       <FilterProducts
-        selectedBrand={selectedBrand}        setSelectedBrand={setSelectedBrand}
-        selectedBoutique={selectedBoutique}  setSelectedBoutique={setSelectedBoutique}
-        selectedSubCategorie={selectedSubCategorie} setSelectedSubCategorie={setSelectedSubCategorie}
-        minPrice={minPrice} setMinPrice={setMinPrice}
-        maxPrice={maxPrice} setMaxPrice={setMaxPrice}
+        selectedBrand={selectedBrand}
+        setSelectedBrand={setSelectedBrand}
+        selectedBoutique={selectedBoutique}
+        setSelectedBoutique={setSelectedBoutique}
+        selectedSubCategorie={selectedSubCategorie}
+        setSelectedSubCategorie={setSelectedSubCategorie}
+        minPrice={minPrice}
+        setMinPrice={setMinPrice}
+        maxPrice={maxPrice}
+        setMaxPrice={setMaxPrice}
         brands={brands}
         boutiques={boutiques}
         subcategories={subcategories}
-        sortOrder={sortOrder} setSortOrder={setSortOrder}
+        sortOrder={sortOrder}
+        setSortOrder={setSortOrder}
         hideSubcategorie={hideSubcategorie}
+        hideCategorie={true}
       />
 
-      <div className="flex flex-col flex-1 items-center gap-6">
+      <div className="flex flex-col items-center gap-6">
         {loadingInitial ? (
           <div className="grid grid-cols-4 gap-10 max-md:grid-cols-1">
             {Array.from({ length: itemsPerBatch }).map((_, i) => (
@@ -200,7 +213,9 @@ export default function ProductSectionCategoriePage({
             {loadingMore && <LoadingDots />}
           </>
         ) : (
-          <p className="w-full text-center min-h-screen py-10">Aucun produit trouvé.</p>
+          <p className="w-full text-center min-h-screen py-10">
+            Aucun produit trouvé.
+          </p>
         )}
       </div>
     </div>

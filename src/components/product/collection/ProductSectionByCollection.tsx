@@ -5,7 +5,7 @@
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import ProductCard from "@/components/product/categorie/ProductCard";
-import CollectionProductsFilter from "@/components/product/filter/CollectionProductsFilter";
+import FilterProducts from "@/components/product/filter/FilterProducts";
 import LoadingDots from "@/components/LoadingDots";
 import { fetchData } from "@/lib/fetchData";
 import type { Product } from "@/types/Product";
@@ -143,7 +143,7 @@ export default function ProductSectionByCollection() {
   /* -------- render -------- */
   return (
     <div className="flex flex-col xl:flex-row gap-16 w-[90%] mx-auto pt-8">
-      <CollectionProductsFilter
+      <FilterProducts
         selectedCategorie={selectedCategorie}    setSelectedCategorie={setSelectedCategorie}
         selectedSubCategorie={selectedSubCategorie} setSelectedSubCategorie={setSelectedSubCategorie}
         selectedBrand={selectedBrand}            setSelectedBrand={setSelectedBrand}
