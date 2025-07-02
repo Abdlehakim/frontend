@@ -39,7 +39,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
   };
 
   return (
-    <div className="group w-fit max-md:h-fit h-fit grid grid-cols-4 gap-[40px] ">
+    <div className="group w-fit max-md:h-fit h-fit grid grid-cols-4 max-2xl:grid-cols-3 max-lg:grid-cols-2 max-sm:grid-cols-1 gap-[40px] ">
       {products.map((product) => {
         /** price helpers */
         const discountedPrice = product.discount

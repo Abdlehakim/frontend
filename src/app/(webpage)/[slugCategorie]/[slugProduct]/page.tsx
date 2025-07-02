@@ -10,6 +10,11 @@ import type { Product }    from "@/types/Product";
 
 export const revalidate = 60;
 
+interface ProductTitleDataType {
+  SPTitle?: string;
+  SPSubTitle?: string;
+}
+
 /* ---------- dynamic params ---------------------------------------- */
 type PageParams = {
   slugCategorie: string;
@@ -82,16 +87,22 @@ export default async function ProductPage({
     mainImageUrl: prod.mainImageUrl,
   };
 
+     const { SPTitle = "Produits similaires", SPSubTitle = "" }  = await fetchData<ProductTitleDataType>(
+      "products/MainProductSection/productPageTitlesData"
+    ).catch(() => ({ SPTitle: "", SPSubTitle: "" }));
+
   /* ----- render --------------------------------------------------- */
   return (
     <div className="flex flex-col w-[90%] gap-16 mx-auto">
       <MainProductSection initialProduct={initialProduct} />
 
       {/* -------- Similar products -------- */}
-      <SimilarProducts
+     <SimilarProducts
         categorieId={prod.categorie._id}
         subcategorieId={prod.subcategorie?._id}
-        excludeSlug={prod.slug}            
+        excludeSlug={prod.slug}
+        SPTitle={SPTitle}
+        SPSubTitle={SPSubTitle}
       />
     </div>
   );

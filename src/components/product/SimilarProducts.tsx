@@ -12,12 +12,19 @@ interface SimilarProductsProps {
   subcategorieId?: string | null;
   /** slug of the current PDP — will be excluded from the results */
   excludeSlug:     string;
+
+  /** Titles for this section */
+  SPTitle:    string;
+  SPSubTitle: string;
 }
+
 
 export default function SimilarProducts({
   categorieId,
   subcategorieId,
   excludeSlug,
+   SPTitle,
+  SPSubTitle,
 }: SimilarProductsProps) {
   const key     = subcategorieId ?? categorieId;
   const perPage = 4;
@@ -49,11 +56,11 @@ export default function SimilarProducts({
   return (
     <section className="flex flex-col gap-4 w-full">
       <div className="flex-col flex gap-[8px] items-center w-full max-lg:text-center">
-        <h2 className="font-bold text-2xl text-HomePageTitles capitalize">
-          Similar Products
+      <h2 className="font-bold text-2xl text-HomePageTitles capitalize">
+          {SPTitle}
         </h2>
         <p className="text-base text-[#525566]">
-            Similar Products
+          {SPSubTitle}
         </p>
       </div>
     <div className="flex w-full h-[450px] justify-between items-center gap-4">
