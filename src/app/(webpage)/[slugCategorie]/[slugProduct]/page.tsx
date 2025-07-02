@@ -3,10 +3,10 @@
 /* ------------------------------------------------------------------ */
 import { notFound } from "next/navigation";
 
-import MainProductSection  from "@/components/product/MainProductSection";
-import SimilarProducts     from "@/components/product/SimilarProducts";
-import { fetchData }       from "@/lib/fetchData";
-import type { Product }    from "@/types/Product";
+import MainProductSection from "@/components/product/MainProductSection";
+import SimilarProducts from "@/components/product/SimilarProducts";
+import { fetchData } from "@/lib/fetchData";
+import type { Product } from "@/types/Product";
 
 export const revalidate = 60;
 
@@ -18,7 +18,7 @@ interface ProductTitleDataType {
 /* ---------- dynamic params ---------------------------------------- */
 type PageParams = {
   slugCategorie: string;
-  slugProduct:   string;
+  slugProduct: string;
 };
 
 /* ---------- “light” Product type sent to MainProductSection ------- */
@@ -78,18 +78,20 @@ export default async function ProductPage({
 
   /* ----- slim payload for the hero section ------------------------ */
   const initialProduct: ProductStub = {
-    slug:         prod.slug,
-    name:         prod.name,
-    reference:    prod.reference,
-    price:        prod.price,
-    discount:     prod.discount,
-    stock:        prod.stock,
+    slug: prod.slug,
+    name: prod.name,
+    reference: prod.reference,
+    price: prod.price,
+    discount: prod.discount,
+    stock: prod.stock,
     mainImageUrl: prod.mainImageUrl,
   };
 
-     const { SPTitle = "Produits similaires", SPSubTitle = "" }  = await fetchData<ProductTitleDataType>(
-      "products/MainProductSection/productPageTitlesData"
-    ).catch(() => ({ SPTitle: "", SPSubTitle: "" }));
+  const titleData = await fetchData<ProductTitleDataType>(
+    "products/MainProductSection/productPageTitlesData"
+  ).catch(() => null);
+
+  const { SPTitle = "Produits similaires", SPSubTitle = "" } = titleData ?? {};
 
   /* ----- render --------------------------------------------------- */
   return (
@@ -97,7 +99,7 @@ export default async function ProductPage({
       <MainProductSection initialProduct={initialProduct} />
 
       {/* -------- Similar products -------- */}
-     <SimilarProducts
+      <SimilarProducts
         categorieId={prod.categorie._id}
         subcategorieId={prod.subcategorie?._id}
         excludeSlug={prod.slug}
