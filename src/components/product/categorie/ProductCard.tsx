@@ -62,7 +62,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
         return (
           <div
             key={product._id}
-            className="h-fit w-[280px] flex flex-col gap-[10px] transform duration-200 ease-in-out group-hover:scale-[0.9] hover:!scale-[1.1]  max-md:hover:!scale-[0.9]"
+            className="h-fit w-[280px] flex flex-col gap-[10px] transform duration-200 ease-in-out group-hover:scale-[0.9] hover:!scale-[1.1]  max-md:group-hover:scale-[1] max-md:hover:!scale-[1]"
           >
             {/* ---------- product image ---------- */}
             <Link href={productUrl}>

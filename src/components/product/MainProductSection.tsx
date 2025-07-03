@@ -107,7 +107,7 @@ const MainProductSection: React.FC<Props> = ({ initialProduct }) => {
       {/* -------- images -------- */}
       <div className="flex flex-col w-[45%] max-md:w-full gap-4">
         {/* hero */}
-        <div className="relative aspect-[16/12]">
+        <div className="relative aspect-[16/14]">
           {selectedImage ? (
             <Image
               src={selectedImage}

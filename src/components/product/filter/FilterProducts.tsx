@@ -221,7 +221,7 @@ const ProductsFilter: React.FC<Props> = ({
   return (
     <>
       {/* mobile toggle */}
-      <div className="xl:hidden flex w-full justify-end">
+      <div className="xl:hidden flex w-full justify-end max-lg:justify-center">
         <button className="py-2 rounded w-60 border" onClick={() => setOpenMobile(true)}>Filtres</button>
       </div>
 
