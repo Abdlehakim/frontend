@@ -219,7 +219,7 @@ const ProductAction: React.FC<ProductActionProps> = ({
       {loading ? (
         <Skel className="h-8 w-32 mx-auto" />
       ) : (
-        <div className="flex items-center justify-center gap-4">
+        <div className="flex items-center justify-center gap-4 max-lg:flex-col">
           <p className="text-primary text-2xl font-bold">
             {finalPrice.toFixed(2)} TND
           </p>
@@ -242,7 +242,7 @@ const ProductAction: React.FC<ProductActionProps> = ({
             <>
               {/* qty picker + add / buy */}
               <div className="flex justify-between w-full gap-4 max-md:flex-col">
-                <div className="flex items-center gap-2">
+                <div className="flex items-center max-lg:justify-center gap-2">
                   <button
                     onClick={dec}
                     disabled={quantity === 1}
@@ -272,7 +272,7 @@ const ProductAction: React.FC<ProductActionProps> = ({
                     onClick={() =>
                       addToCartHandler(product, quantity, selected)
                     }
-                    className="flex-1 bg-primary text-white h-10 font-bold rounded-md"
+                    className="flex-1 bg-primary text-white h-10 font-bold rounded-md max-lg:text-sm"
                   >
                     Ajouter au panier
                   </button>
@@ -281,7 +281,7 @@ const ProductAction: React.FC<ProductActionProps> = ({
                       onClick={() =>
                         addToCartHandler(product, quantity, selected)
                       }
-                      className="w-full bg-black text-white h-10 font-bold rounded-md"
+                      className="w-full bg-black text-white h-10 font-bold rounded-md max-lg:text-sm"
                     >
                       Acheter
                     </button>
