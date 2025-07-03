@@ -78,22 +78,28 @@ export default function SimilarProducts({
   /* ---------------- render ------------------------------------- */
   return (
     <section className="flex flex-col gap-4 w-full">
-      <div className="flex-col flex gap-[8px] items-center w-full max-lg:text-center">
+      <div className="flex-col flex gap-[8px] items-center w-full max-lg:text-center ">
         <h2 className="font-bold text-2xl text-HomePageTitles capitalize">
           {SPTitle}
         </h2>
         <p className="text-base text-[#525566]">{SPSubTitle}</p>
       </div>
-      <div className="flex w-full h-[450px] justify-between items-center gap-4">
+      <div className="flex w-full max-lg:flex-col h-[450px] max-lg:h-fit justify-center items-center gap-4">
         {/* prev */}
+        <div className="flex gap-4">
         <button
           onClick={() => setRefresh(Date.now())}
-          className="p-4 bg-white border border-gray-300 rounded-full shadow-md
-                     hover:bg-secondary hover:text-white transition duration-200"
+          className="max-lg:p-2 p-4 bg-white border border-gray-300 rounded-full shadow-md hover:bg-secondary hover:text-white transition duration-200 z-40 "
         >
           <FiChevronLeft className="w-6 h-6" />
         </button>
-
+        <button
+          onClick={() => setRefresh(Date.now())}
+          className="max-lg:p-2 p-4 bg-white border border-gray-300 rounded-full shadow-md hover:bg-secondary hover:text-white transition duration-200 z-40"
+        >
+          <FiChevronRight className="w-6 h-6" />
+        </button>
+</div>
         {loading ? (
           <div className={`grid grid-cols-${perPage} gap-[40px]`}>
             {Array.from({ length: perPage }).map((_, i) => (
@@ -110,8 +116,7 @@ export default function SimilarProducts({
         {/* next */}
         <button
           onClick={() => setRefresh(Date.now())}
-          className="p-4 bg-white border border-gray-300 rounded-full shadow-md
-                     hover:bg-secondary hover:text-white transition duration-200"
+          className="max-lg:hidden p-4 bg-white border border-gray-300 rounded-full shadow-md hover:bg-secondary hover:text-white transition duration-200 z-40"
         >
           <FiChevronRight className="w-6 h-6" />
         </button>
