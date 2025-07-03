@@ -145,9 +145,9 @@ export default async function Footer() {
       </div>
 
       {/* Bottom */}
-      <div className="w-[85%] text-[20px] items-center justify-between text-[#525566] font-bold max-lg:w-[95%] max-md:text-[16px] py-2 flex max-md:flex-col gap-[8px]">
-        <p>© {name} - All rights reserved</p>
-        <div className="flex items-center gap-[32px] mx-4 text-[16px]">
+      <div className="w-[85%] text-[20px] items-center justify-between text-[#525566]  py-2 flex max-md:flex-col gap-[8px]">
+        <p className='text-bold'>© {name} - All rights reserved</p>
+        <div className="flex items-center max-md:text-xs gap-[32px] text-[16px]">
           <p>Terms and conditions</p>
           <p>Privacy Policy</p>
           <p>Disclaimer</p>

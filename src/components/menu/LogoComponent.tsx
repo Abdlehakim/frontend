@@ -18,17 +18,16 @@ export default async function LogoComponent() {
       .catch(() => ({ name: "", logoImageUrl: "" } as LogoData));
 
   return (
-    <div className="flex  items-center w-[300px] h-[70px] justify-around z-40">
+    <div className="relative w-full aspect-[16/15] max-h-[80px] max-w-[350px] max-md:max-h-[40px] max-md:max-w-[160px] z-40">
       <Link href="/" aria-label="Home page">
         <Image
           src={logoImageUrl || "/fallback-image.jpg"}
           alt={`${name} logo`}
-          width={300}
-          height={70}
+        fill
           placeholder="blur"
           blurDataURL={logoImageUrl || "/fallback-image.jpg"}
           sizes="(max-width: 1920px) 100vw, (max-width: 1200px) 100vw"
-          className="object-cover max-md:h-fit h-[70px]"
+          className="object-cover"
         />
       </Link>
     </div>

@@ -4,34 +4,57 @@ import React, { useEffect, useState } from "react";
 import { FiChevronLeft, FiChevronRight } from "react-icons/fi";
 
 import { fetchData } from "@/lib/fetchData";
-import ProductCard   from "@/components/product/categorie/ProductCard";
+import ProductCard from "@/components/product/categorie/ProductCard";
 import type { Product } from "@/types/Product";
 
 interface SimilarProductsProps {
-  categorieId:     string;
+  categorieId: string;
   subcategorieId?: string | null;
   /** slug of the current PDP — will be excluded from the results */
-  excludeSlug:     string;
+  excludeSlug: string;
 
   /** Titles for this section */
-  SPTitle:    string;
+  SPTitle: string;
   SPSubTitle: string;
 }
-
 
 export default function SimilarProducts({
   categorieId,
   subcategorieId,
   excludeSlug,
-   SPTitle,
+  SPTitle,
   SPSubTitle,
 }: SimilarProductsProps) {
-  const key     = subcategorieId ?? categorieId;
-  const perPage = 4;
+  const key = subcategorieId ?? categorieId;
+
+  // perPage is 4 by default,
+  // 3 on screens <= max-2xl (1535px),
+  // 1 on screens <= max-md (767px)
+  const [perPage, setPerPage] = useState(4);
 
   const [products, setProducts] = useState<Product[]>([]);
-  const [loading,  setLoading]  = useState(true);
-  const [refresh,  setRefresh]  = useState(0);     // increment → refetch
+  const [loading, setLoading] = useState(true);
+  const [refresh, setRefresh] = useState(0); // increment → refetch
+
+  // update perPage based on viewport width
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+
+    const updatePerPage = () => {
+      const width = window.innerWidth;
+      if (width <= 767) setPerPage(1);
+      else if (width <= 1535) setPerPage(3);
+      else setPerPage(4);
+    };
+
+    // initial check
+    updatePerPage();
+    // listen for resize events
+    window.addEventListener("resize", updatePerPage);
+    return () => {
+      window.removeEventListener("resize", updatePerPage);
+    };
+  }, []);
 
   /* ---------------- fetch on mount / refresh ------------------- */
   useEffect(() => {
@@ -43,9 +66,9 @@ export default function SimilarProducts({
 
     fetchData<Product[]>(url)
       .then((data) => setProducts(data))
-      .catch(()   => setProducts([]))
+      .catch(() => setProducts([]))
       .finally(() => setLoading(false));
-  }, [key, excludeSlug, refresh]);
+  }, [key, excludeSlug, refresh, perPage]);
 
   /* ---------------- nothing found ------------------------------ */
   if (!loading && !products.length) {
@@ -56,45 +79,43 @@ export default function SimilarProducts({
   return (
     <section className="flex flex-col gap-4 w-full">
       <div className="flex-col flex gap-[8px] items-center w-full max-lg:text-center">
-      <h2 className="font-bold text-2xl text-HomePageTitles capitalize">
+        <h2 className="font-bold text-2xl text-HomePageTitles capitalize">
           {SPTitle}
         </h2>
-        <p className="text-base text-[#525566]">
-          {SPSubTitle}
-        </p>
+        <p className="text-base text-[#525566]">{SPSubTitle}</p>
       </div>
-    <div className="flex w-full h-[450px] justify-between items-center gap-4">
-      {/* refresh / prev */}
-      <button
-        onClick={() => setRefresh(Date.now())}
-        className="p-4 bg-white border border-gray-300 rounded-full shadow-md
-                   hover:bg-secondary hover:text-white transition duration-200"
-      >
-        <FiChevronLeft className="w-6 h-6" />
-      </button>
+      <div className="flex w-full h-[450px] justify-between items-center gap-4">
+        {/* prev */}
+        <button
+          onClick={() => setRefresh(Date.now())}
+          className="p-4 bg-white border border-gray-300 rounded-full shadow-md
+                     hover:bg-secondary hover:text-white transition duration-200"
+        >
+          <FiChevronLeft className="w-6 h-6" />
+        </button>
 
-          {loading ? (
-            <div className="grid grid-cols-4 gap-[40px]">
-              {Array.from({ length: perPage }).map((_, i) => (
-                <div
-                  key={i}
-                  className="h-[390px] w-[280px] bg-gray-200 rounded animate-pulse"
-                />
-              ))}
-            </div>
-          ) : (
-            <ProductCard products={products} />
-          )}
+        {loading ? (
+          <div className={`grid grid-cols-${perPage} gap-[40px]`}>
+            {Array.from({ length: perPage }).map((_, i) => (
+              <div
+                key={i}
+                className="h-[390px] w-[280px] bg-gray-200 rounded animate-pulse"
+              />
+            ))}
+          </div>
+        ) : (
+          <ProductCard products={products} />
+        )}
 
-      {/* refresh / next */}
-      <button
-        onClick={() => setRefresh(Date.now())}
-        className="p-4 bg-white border border-gray-300 rounded-full shadow-md
-                   hover:bg-secondary hover:text-white transition duration-200"
-      >
-        <FiChevronRight className="w-6 h-6" />
-      </button>
-    </div>
+        {/* next */}
+        <button
+          onClick={() => setRefresh(Date.now())}
+          className="p-4 bg-white border border-gray-300 rounded-full shadow-md
+                     hover:bg-secondary hover:text-white transition duration-200"
+        >
+          <FiChevronRight className="w-6 h-6" />
+        </button>
+      </div>
     </section>
   );
 }

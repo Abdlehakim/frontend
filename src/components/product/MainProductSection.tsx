@@ -103,9 +103,9 @@ const MainProductSection: React.FC<Props> = ({ initialProduct }) => {
 
   /* ---------- render ---------- */
   return (
-    <div className="flex gap-8 justify-center my-8 w-[90%] mx-auto">
+    <div className="flex gap-8 justify-center my-8 w-[90%] mx-auto max-md:flex-col max-md:w-full">
       {/* -------- images -------- */}
-      <div className="flex flex-col w-[45%] gap-4">
+      <div className="flex flex-col w-[45%] max-md:w-full gap-4">
         {/* hero */}
         <div className="relative aspect-[16/12]">
           {selectedImage ? (
@@ -165,7 +165,7 @@ const MainProductSection: React.FC<Props> = ({ initialProduct }) => {
       </div>
 
       {/* -------- details -------- */}
-      <div className="w-1/2 flex flex-col gap-4 px-4">
+      <div className="w-1/2 max-md:w-full flex flex-col gap-4 px-4 ">
         {/* name */}
         {product.name ? (
           <h1 className="text-3xl font-bold uppercase">{product.name}</h1>
