@@ -61,8 +61,10 @@ export default async function CategoriesPage() {
           >
             <div className="relative rounded-full group overflow-hidden justify-center items-center aspect-square">
               <div className="absolute inset-0 bg-black/60 rounded-full opacity-0 lg:group-hover:opacity-80 transition-opacity" />
-              <p className="absolute top-1/2 left-1/2 w-[85%] -translate-x-1/2 -translate-y-1/2 bg-white text-black text-lg rounded-3xl text-center py-1 max-xl:px-3 transition-all">
-                {categorie.name}
+              <p className="absolute top-1/2 left-1/2 w-[85%] -translate-x-1/2 -translate-y-1/2 bg-white text-black text-lg max-lg:text-sm rounded-3xl text-center py-1 max-xl:px-3 transition-all">
+                {categorie.name.length > 8
+    ? `${categorie.name.slice(0, 8)}…`
+    : categorie.name}
               </p>
               <p className="absolute top-[80%] left-1/2 -translate-x-1/2 -translate-y-1/2 text-white text-lg opacity-0 lg:group-hover:opacity-100 transition-opacity pt-2 max-xl:text-xs">
                 {categorie.numberproduct}
