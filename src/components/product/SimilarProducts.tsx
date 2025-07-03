@@ -95,7 +95,7 @@ export default function SimilarProducts({
         </button>
         <button
           onClick={() => setRefresh(Date.now())}
-          className="max-lg:p-2 p-4 bg-white border border-gray-300 rounded-full shadow-md hover:bg-secondary hover:text-white transition duration-200 z-40"
+          className="hidden p-4 bg-white border border-gray-300 rounded-full shadow-md hover:bg-secondary hover:text-white transition duration-200 z-40"
         >
           <FiChevronRight className="w-6 h-6" />
         </button>

@@ -175,7 +175,7 @@ export default function ProductSectionCategoriePage({
      RENDER
   ================================================================== */
   return (
-    <div className="flex flex-row justify-center max-xl:flex-col gap-6 w-[95%] mx-auto">
+    <div className="flex flex-row justify-around max-xl:flex-col gap-6 w-[95%] min-h-screen mx-auto my-4">
       <FilterProducts
         selectedBrand={selectedBrand}
         setSelectedBrand={setSelectedBrand}
@@ -196,7 +196,7 @@ export default function ProductSectionCategoriePage({
         hideCategorie={true}
       />
 
-      <div className="flex flex-col items-center gap-6">
+      <div className="flex flex-col items-center gap-6 w-full">
         {loadingInitial ? (
           <div className="grid grid-cols-4 gap-10 max-md:grid-cols-1">
             {Array.from({ length: itemsPerBatch }).map((_, i) => (
