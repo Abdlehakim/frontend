@@ -24,7 +24,13 @@ export default function SimilarProducts({
 }: SimilarProductsProps) {
   const key = subcategorieId ?? categorieId;
 
-  // dynamic fetch limit: 1 on <=767px, otherwise 4
+  /* ----------------------------------------------------------------
+     Limite dynamique :
+       –  1   ≤  767 px   (max-sm)
+       –  2   ≤ 1023 px   (max-lg)
+       –  3   < 1536 px   (max-2xl)
+       –  4   ≥ 1536 px   (2xl et +)
+  ---------------------------------------------------------------- */
   const [limit, setLimit] = useState(4);
 
   const [products, setProducts] = useState<Product[]>([]);
@@ -34,9 +40,8 @@ export default function SimilarProducts({
   useEffect(() => {
     setLoading(true);
 
-    // figure out how many to fetch
     const w = typeof window !== "undefined" ? window.innerWidth : 1024;
-    const fetchLimit = w <= 767 ? 1 : 4;
+    const fetchLimit = w <= 767 ? 1 : w < 1024 ? 2 : w < 1536 ? 3 : 4;
     setLimit(fetchLimit);
 
     const url =
@@ -79,18 +84,19 @@ export default function SimilarProducts({
           </button>
         </div>
 
-        {/* grid: always 1 col on sm, 3 on md+, 4 on 2xl+ */}
-
-          {loading ? (
-            <div className="grid grid-cols-4 max-2xl:grid-cols-3 max-lg:grid-cols-2 max-sm:grid-cols-1 gap-[40px]">
-  {Array.from({ length: limit }).map((_, i) => (
-    <div
-      key={i}
-      className="h-[390px] w-[280px] bg-gray-200 rounded animate-pulse"
-    />
-  ))}
-</div>
-         ) : ( <ProductCard products={products} /> )}
+        {/* grid skeleton + cards */}
+        {loading ? (
+          <div className="grid grid-cols-4 max-2xl:grid-cols-3 max-lg:grid-cols-2 max-sm:grid-cols-1 gap-[40px]">
+            {Array.from({ length: limit }).map((_, i) => (
+              <div
+                key={i}
+                className="h-[390px] w-[280px] bg-gray-200 rounded animate-pulse"
+              />
+            ))}
+          </div>
+        ) : (
+          <ProductCard products={products} />
+        )}
 
         {/* next buttons */}
         <div className="flex gap-4 mt-4">

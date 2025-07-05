@@ -2,7 +2,7 @@
 /*  src/app/(webpage)/[slugCategorie]/[slugProduct]/page.tsx          */
 /* ------------------------------------------------------------------ */
 import { notFound } from "next/navigation";
-
+import ProductDetails      from "@/components/product/ProductDetails";
 import MainProductSection from "@/components/product/MainProductSection";
 import SimilarProducts from "@/components/product/SimilarProducts";
 import { fetchData } from "@/lib/fetchData";
@@ -32,6 +32,11 @@ type ProductStub = Pick<
   | "stock"
   | "mainImageUrl"
 >;
+
+interface ProductDetailsDataType {
+  description?: string;
+  productDetails?: { name: string; description?: string }[];
+}
 
 /* ------------------------------------------------------------------ */
 /*  1)  Pre-generate paths for ISR                                    */
@@ -93,10 +98,20 @@ export default async function ProductPage({
 
   const { SPTitle = "Produits similaires", SPSubTitle = "" } = titleData ?? {};
 
+    /* ----- fetch product details (description + list) --------------- */
+  const details = await fetchData<ProductDetailsDataType>(
+    `products/MainProductSection/prodcutDetails/${slugProduct}` // ← faute “prodcut” conservée
+  ).catch(() => null);
+
   /* ----- render --------------------------------------------------- */
   return (
     <div className="flex flex-col w-[90%] gap-16 mx-auto">
       <MainProductSection initialProduct={initialProduct} />
+
+<ProductDetails
+        description={details?.description}
+        productDetails={details?.productDetails}
+      />
 
       {/* -------- Similar products -------- */}
       <SimilarProducts
