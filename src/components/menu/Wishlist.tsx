@@ -21,8 +21,8 @@ const Wishlist: React.FC = () => {
             </span>
           </div>
           <div className="flex flex-col">
-            <p className="text-[#C1C4D6] max-2xl: text-xs">Favorite</p>
-            <p className="text-white font-bold max-md:hidden max-2xl:text-sm">My Wishlist</p>
+            <p className="text-[#C1C4D6] max-2xl: text-xs">Préféré</p>
+            <p className="text-white font-bold max-md:hidden max-2xl:text-sm">Liste souhaits</p>
           </div>
         </div>
       )}
