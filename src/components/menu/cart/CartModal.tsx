@@ -86,7 +86,7 @@ const CartModal: React.FC<CartModalProps> = ({ items, onClose }) => {
         Votre panier ({items.length} articles)
       </h1>
 
-      <div className="py-2 text-gray-500 border-b-2">
+      <div className="text-gray-500 border-b-2">
         <Pagination
           currentPage={currentPage}
           totalPages={totalPages}
@@ -110,13 +110,17 @@ const CartModal: React.FC<CartModalProps> = ({ items, onClose }) => {
                 key={item._id}
                 className="flex items-center gap-2 justify-between py-2 border-b-2"
               >
+                  <div className="relative h-16 aspect-[16/16]  bg-gray-200">
                 <Image
                   className="object-cover"
-                  src={item.mainImageUrl || "/path/to/default-image.jpg"}
+                  src={item.mainImageUrl  ?? ""}
                   alt={item.name}
-                  width={60}
-                  height={60}
-                />
+                  quality={75}
+                  placeholder="empty"
+                  priority
+                  sizes="(max-width: 600px) 100vw, 600px"
+                  fill
+                />  </div>
 
                 <div className="text-black flex flex-col gap-2">
                   <p className="text-sm font-bold">{item.name}</p>
@@ -168,9 +172,9 @@ const CartModal: React.FC<CartModalProps> = ({ items, onClose }) => {
           <Link href="/checkout" passHref>
             <button
               aria-label="checkout"
-              className="w-full h-10 rounded-lg bg-orange-400 hover:bg-[#15335D] flex items-center justify-center mb-2"
+              className="w-fit mx-auto px-6 h-10 rounded-full border-2 border-secondary hover:bg-secondary flex items-center justify-center my-2 hover:text-white text-secondary"
             >
-              <span className="text-xl text-white">Checkout</span>
+              <span className="text-xl font-semibold tracking-wide"> Poursuivre au paiement</span>
             </button>
           </Link>
 

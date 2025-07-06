@@ -2,7 +2,7 @@
 import Link from "next/link";
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Image from "next/image";
-import { FaRegTrashAlt } from "react-icons/fa";
+import { FaRegTrashAlt, FaRegEye } from "react-icons/fa";
 import { AiOutlineHeart } from "react-icons/ai";
 import { useDispatch } from "react-redux";
 import { removeFromWishlist } from "@/store/wishlistSlice";
@@ -66,13 +66,18 @@ const Listmywish: React.FC<ListmywishProps> = ({ data }) => {
 
   const [currentPage, setCurrentPage] = useState(1);
   const dataPerPage = 4;
-  const totalPages = useMemo(() => Math.ceil(data.length / dataPerPage), [data.length]);
+  const totalPages = useMemo(
+    () => Math.ceil(data.length / dataPerPage),
+    [data.length]
+  );
 
   const paginatedData = useMemo(() => {
-    return data.slice((currentPage - 1) * dataPerPage, currentPage * dataPerPage);
+    return data.slice(
+      (currentPage - 1) * dataPerPage,
+      currentPage * dataPerPage
+    );
   }, [data, currentPage, dataPerPage]);
 
-  // Ensure current page is valid
   useEffect(() => {
     if (currentPage > totalPages) {
       setCurrentPage(totalPages > 0 ? totalPages : 1);
@@ -94,8 +99,8 @@ const Listmywish: React.FC<ListmywishProps> = ({ data }) => {
           </span>
         </div>
         <div className="flex flex-col">
-          <p className="text-[#C1C4D6] text-sm">Préféré</p>
-          <p className="text-white font-bold max-md:hidden">Liste souhaits</p>
+          <p className="text-[#C1C4D6] text-sm max-2xl:text-xs">Préféré</p>
+          <p className="text-white font-bold max-md:hidden max-2xl:text-sm">Liste souhaits</p>
         </div>
       </div>
 
@@ -104,37 +109,55 @@ const Listmywish: React.FC<ListmywishProps> = ({ data }) => {
           ref={listRef}
           className="absolute flex flex-col mt-2 w-[400px] h-fit max-md:w-[350px] max-h-[600px] overflow-y-auto border-[#15335D] border-4 rounded-lg bg-white z-30 right-52"
         >
-          <h1 className="text-lg font-bold text-black border-b-2 text-center py-2 max-md:text-sm">
-          Liste souhaits
+          <h1 className="text-lg font-bold text-black border-b-2 text-center max-md:text-sm p-2 mx-4">
+            Liste souhaits
           </h1>
-          <div className="py-2 text-gray-500 border-b-2">
-            <PaginationClient currentPage={currentPage} totalPages={totalPages} onPageChange={setCurrentPage} />
+          <div className="text-gray-500 border-b-2 mx-4">
+            <PaginationClient
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={setCurrentPage}
+            />
           </div>
 
           {paginatedData.map((item) => (
-            <div key={item.slug} className="mx-auto h-[100px] max-md:mx-[10%] border-b-2 w-[90%] flex justify-between items-center gap-[16px]">
+            <div
+              key={item.slug}
+              className="mx-auto h-[80px] max-md:mx-[10%] border-b-2 w-[90%] flex justify-between items-center"
+            >
+              <div className="relative h-10 aspect-[16/16]  bg-gray-200">
+                <Image
+                  fill
+                  src={item.mainImageUrl ?? ""}
+                  alt={item.name}
+                  className="object-cover"
+                  quality={75}
+                  placeholder="empty"
+                  priority
+                  sizes="(max-width: 600px) 100vw, 600px"
+                />
+              </div>
+              <span>{item.name}</span>
+              <span className="text-gray-400">{item.price.toFixed(2)} TND</span>
+<div className='flex gap-2'>
               <Link
                 href={`/${item.categorie.slug}/${item.slug}`}
                 onClick={handleLinkClick}
-                className="flex justify-between items-center gap-[16px]"
               >
-                <Image
-                  width={70}
-                  height={60}
-                  src={item.mainImageUrl || "/placeholder.jpg"}
-                  alt={item.name}
-                  className="rounded-md"
-                />
-                <span>{item.name}</span>
-                <span className="text-gray-400">{item.price.toFixed(2)} TND</span>
+                <button
+                  type="button"
+                  className="p-2 hover:bg-[#15335E] border-2 max-md:border-none border-[#15335E] rounded text-black hover:text-white cursor-pointer"
+                >
+                  <FaRegEye />
+                </button>
               </Link>
               <button
-                  type="button"
-                  onClick={() => handleDeleteFavorite(item.slug)}
-                  className="p-4 hover:bg-[#15335E] border-2 max-md:border-none border-[#15335E] rounded text-black hover:text-white cursor-pointer"
-                >
-                  <FaRegTrashAlt />
-                </button>
+                type="button"
+                onClick={() => handleDeleteFavorite(item.slug)}
+                className="p-2 hover:bg-[#15335E] border-2 max-md:border-none border-[#15335E] rounded text-black hover:text-white cursor-pointer"
+              >
+                <FaRegTrashAlt />
+              </button></div>
             </div>
           ))}
         </div>

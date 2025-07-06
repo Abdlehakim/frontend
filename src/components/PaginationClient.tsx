@@ -7,7 +7,7 @@ interface PaginationProps {
   onPageChange: (pageNumber: number) => void;
 }
 
-const PaginationClient: React.FC<PaginationProps> = ({
+const PaginationAdmin: React.FC<PaginationProps> = ({
   currentPage,
   totalPages,
   onPageChange,
@@ -49,16 +49,16 @@ const PaginationClient: React.FC<PaginationProps> = ({
   };
 
   return (
-    <div className="flex justify-center items-center gap-[8px] w-full h-[70px]">
+    <div className="flex justify-center items-center gap-2 w-full h-[50px]">
       {/* Previous button */}
       <div
-        className={`flex justify-end items-center  gap-[4px] cursor-pointer w-20 ${
-          currentPage === 1 ? 'opacity-60 cursor-not-allowed' : ''
+        className={`flex items-center gap-1 cursor-pointer ${
+          currentPage === 1 ? 'opacity-20 cursor-not-allowed' : 'text-primary'
         }`}
         onClick={() => handlePageChange(currentPage - 1)}
       >
         <FaArrowLeft className="cursor-pointer" />
-        <p className="text-sm font-semibold">avant</p>
+        <p className="text-xs font-normal">avant</p>
       </div>
 
       {/* Display pages */}
@@ -67,14 +67,14 @@ const PaginationClient: React.FC<PaginationProps> = ({
           <p
             key={index}
             onClick={() => handlePageChange(page)}
-            className={`cursor-pointer text-lg rounded w-8 h-8 text-center content-center ${
-              currentPage === page ? 'bg-primary text-white' : ''
+            className={`cursor-pointer text-xs rounded w-[25px] flex justify-center items-center h-[25px] ${
+              currentPage === page ? 'bg-primary text-white' : 'text-primary'
             }`}
           >
             {page}
           </p>
         ) : (
-          <p key={index}>
+          <p key={index} className="text-xs">
             {page}
           </p>
         )
@@ -82,16 +82,16 @@ const PaginationClient: React.FC<PaginationProps> = ({
 
       {/* Next button */}
       <div
-        className={`flex justify-start items-center  gap-[4px] cursor-pointer w-20 ${
-          currentPage === totalPages ? 'opacity-60 cursor-not-allowed' : ''
+        className={`flex items-center gap-1 cursor-pointer ${
+          currentPage === totalPages ? 'opacity-20 cursor-not-allowed' : 'text-primary'
         }`}
         onClick={() => handlePageChange(currentPage + 1)}
       >
-        <p className="text-sm font-semibold ">suivant</p>
+        <p className="text-xs font-normal">suivant</p>
         <FaArrowRight className="cursor-pointer" />
       </div>
     </div>
   );
 };
 
-export default PaginationClient;
+export default PaginationAdmin;

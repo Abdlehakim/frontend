@@ -88,7 +88,7 @@ const CartModalOnscroll: React.FC<CartModalOnscrollProps> = ({ items, onClose })
         Your shopping cart ({items.length} items)
       </h1>
 
-      <div className="py-2 text-gray-500 border-b-2">
+      <div className="text-gray-500 border-b-2">
         <Pagination
           currentPage={currentPage}
           totalPages={totalPages}
@@ -163,10 +163,10 @@ const CartModalOnscroll: React.FC<CartModalOnscrollProps> = ({ items, onClose })
       <Link href="/checkout" passHref>
         <button
           aria-label="check"
-          className="w-full h-10 rounded-lg bg-orange-400 hover:bg-[#15335D] flex items-center justify-center mb-2"
-        >
-          <p className="text-xl text-white">Checkout</p>
-        </button>
+          className="w-fit mx-auto px-6 h-10 rounded-full border-2 border-secondary hover:bg-secondary flex items-center justify-center my-2 hover:text-white text-secondary"
+            >
+              <span className="text-xl font-semibold tracking-wide"> Poursuivre au paiement</span>
+            </button>
       </Link>
 
       <button
