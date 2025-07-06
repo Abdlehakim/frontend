@@ -113,8 +113,6 @@ const ProductAction: React.FC<ProductActionProps> = ({
       )
     );
 
-    
-
   /* ---------- attributes ---------- */
   const groups = useMemo(() => normaliseAttributes(product), [product]);
   const [selected, setSelected] = useState<Record<string, string>>(() => {
@@ -124,15 +122,18 @@ const ProductAction: React.FC<ProductActionProps> = ({
   });
   const choose = (id: string, val: string, image?: string) => {
     setSelected((prev) => ({ ...prev, [id]: val }));
-    if (image && onImageSelect) { 
-       onImageSelect(image);}
+    if (image && onImageSelect) {
+      onImageSelect(image);
+    }
   };
 
   /* ---------- price & stock ---------- */
-  const finalPrice =
-    product.discount && product.discount > 0
-      ? product.price * (1 - product.discount / 100)
-      : product.price;
+  const discountPct = product.discount ?? 0;          // <-- safe default
+  const hasDiscount = discountPct > 0;
+  const finalPrice = hasDiscount
+    ? product.price * (1 - discountPct / 100)
+    : product.price;
+
   const inStock =
     product.stockStatus === "in stock" && (product.stock || 0) > 0;
 
@@ -147,10 +148,12 @@ const ProductAction: React.FC<ProductActionProps> = ({
           const isColor = g.type === "color";
           return (
             <div key={g.id} className="flex flex-col gap-4 h-28">
-              <p className="flex gap-4"><span className="font-bold" > {g.label} :</span>
-              {isColor && (
-                <span className="text-gray-700"> {selected[g.id]}</span>
-              )}</p>
+              <p className="flex gap-4">
+                <span className="font-bold">{g.label} :</span>
+                {isColor && (
+                  <span className="text-gray-700">{selected[g.id]}</span>
+                )}
+              </p>
               <div className="flex gap-3 h-20 items-center">
                 {g.values.map((v, idx) => {
                   if (isColor) {
@@ -223,7 +226,7 @@ const ProductAction: React.FC<ProductActionProps> = ({
           <p className="text-primary text-2xl font-bold">
             {finalPrice.toFixed(2)} TND
           </p>
-          {product.discount && (
+          {hasDiscount && (
             <p className="text-gray-500 line-through">
               {product.price.toFixed(2)} TND
             </p>
@@ -272,7 +275,7 @@ const ProductAction: React.FC<ProductActionProps> = ({
                     onClick={() =>
                       addToCartHandler(product, quantity, selected)
                     }
-                    className="flex-1 bg-primary text-white h-10 font-bold rounded-md max-lg:text-sm"
+                    className="flex-1 bg-primary text-white h-10 font-semibold rounded-md max-lg:text-sm"
                   >
                     Ajouter au panier
                   </button>
@@ -281,7 +284,7 @@ const ProductAction: React.FC<ProductActionProps> = ({
                       onClick={() =>
                         addToCartHandler(product, quantity, selected)
                       }
-                      className="w-full bg-black text-white h-10 font-bold rounded-md max-lg:text-sm"
+                      className="w-full bg-black text-white h-10 font-semibold rounded-md max-lg:text-sm"
                     >
                       Acheter
                     </button>
