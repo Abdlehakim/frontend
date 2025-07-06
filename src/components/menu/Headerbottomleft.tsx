@@ -120,6 +120,22 @@ const Headerbottomleft: React.FC<HeaderbottomleftProps> = ({ categories }) => {
     }
   };
 
+  const handleCategoryClick = (
+    e: React.MouseEvent<HTMLAnchorElement, MouseEvent>,
+    categoryId: string
+  ) => {
+    /* -------- mobile ( < lg ) -------- */
+    if (typeof window !== "undefined" && window.innerWidth < 1024) {
+      e.preventDefault(); // stop navigation
+      setActiveCategory(prev => (prev === categoryId ? null : categoryId));
+      if (!subcategories[categoryId]) fetchSubcategories(categoryId);
+      return;
+    }
+
+    /* -------- desktop ( ≥ lg ) -------- */
+    closeMenu();
+  };
+
   const toggleMenu = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsMenuOpen(prev => !prev);
@@ -167,7 +183,7 @@ const Headerbottomleft: React.FC<HeaderbottomleftProps> = ({ categories }) => {
 
       {isMenuOpen && (
         <div
-          className="absolute z-30 top-12 left-1/2 -translate-x-1/2 bg-white shadow-lg mt-4 select-none"
+          className="absolute z-30 top-12 left-1/2 -translate-x-1/2 bg-white shadow-lg mt-4 select-none border-white border-2"
           ref={menuWrapperRef}
           onClick={e => e.stopPropagation()}
         >
@@ -181,31 +197,56 @@ const Headerbottomleft: React.FC<HeaderbottomleftProps> = ({ categories }) => {
               >
                 <Link
                   href={`/${categorie.slug}`}
-                  onClick={closeMenu}
-                 className="group flex items-center gap-[12px] p-4 duration-300 hover:bg-primary hover:text-white"
+                  onClick={(e) => handleCategoryClick(e, categorie._id)}
+                  className="group flex items-center gap-[12px] px-4 py-2 duration-300 hover:bg-primary hover:text-white"
                 >
                   {categorie.iconUrl && (
-                   <InlineOrImg
+                    <InlineOrImg
                       url={categorie.iconUrl}
                       alt={categorie.name}
-                    className="w-[20px] h-[20px] group-hover:text-white"
+                      className="w-[20px] h-[20px] group-hover:text-white"
                     />
                   )}
                   <span className="font-bold text-base">{categorie.name}</span>
                 </Link>
 
-                                {activeCategory === categorie._id &&
+                {/* ---------- desktop sub-cats (hover) ---------- */}
+                {activeCategory === categorie._id &&
                   subcategories[categorie._id]?.length > 0 && (
-                    <div className="absolute top-0 left-full pl-4 w-[300px]">
+                    <div className="hidden lg:block absolute top-0 left-full pl-4 w-[300px]">
                       {subcategories[categorie._id].map(subCat => (
                         <Link
                           key={subCat._id}
                           href={`/${subCat.slug}`}
-                         onClick={closeMenu}
-                          className="flex bg-white items-center gap-[12px] duration-300 hover:bg-primary hover:text-white p-4"
+                          onClick={closeMenu}
+                          className="flex bg-white items-center gap-[12px] duration-300 hover:bg-primary hover:text-white px-4 py-2 border-white border-2"
                         >
                           {subCat.iconUrl && (
-                           <InlineOrImg
+                            <InlineOrImg
+                              url={subCat.iconUrl}
+                              alt={subCat.name}
+                              className="w-[20px] h-[20px] group-hover:text-white"
+                            />
+                          )}
+                          <span className="font-bold text-base">{subCat.name}</span>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+
+                {/* ---------- mobile sub-cats (click) ---------- */}
+                {activeCategory === categorie._id &&
+                  subcategories[categorie._id]?.length > 0 && (
+                    <div className="lg:hidden flex flex-col pl-8 bg-gray-50">
+                      {subcategories[categorie._id].map(subCat => (
+                        <Link
+                          key={subCat._id}
+                          href={`/${subCat.slug}`}
+                          onClick={closeMenu}
+                          className="flex items-center gap-[12px] duration-300 hover:bg-primary hover:text-white px-4 py-2"
+                        >
+                          {subCat.iconUrl && (
+                            <InlineOrImg
                               url={subCat.iconUrl}
                               alt={subCat.name}
                               className="w-[20px] h-[20px] group-hover:text-white"
