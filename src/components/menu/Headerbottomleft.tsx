@@ -1,11 +1,15 @@
 /* ------------------------------------------------------------------ */
 /*  src/components/menu/Headerbottomleft.tsx                          */
+/*  (v4) — mobile:                                                   */
+/*    • if a category has *no* sub-cats → navigate immediately        */
+/*    • otherwise → open smooth accordion                            */
 /* ------------------------------------------------------------------ */
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
 import { FaBars } from "react-icons/fa6";
 import { fetchData } from "@/lib/fetchData";
 
@@ -19,18 +23,15 @@ export interface Categorie {
   imageUrl?: string | null;
   bannerUrl?: string | null;
 }
-
 export interface SubCategorie {
   _id: string;
   name: string;
   slug: string;
   iconUrl?: string | null;
 }
-
 interface HeaderbottomleftProps {
   categories: Categorie[];
 }
-
 interface InlineOrImgProps {
   url: string;
   className?: string;
@@ -91,6 +92,8 @@ const InlineOrImg: React.FC<InlineOrImgProps> = ({ url, className, alt }) => {
 
 /* ───────── component ───────── */
 const Headerbottomleft: React.FC<HeaderbottomleftProps> = ({ categories }) => {
+  const router = useRouter();
+
   /** map<catId, subCats[]> */
   const [subcategories, setSubcategories] = useState<
     Record<string, SubCategorie[]>
@@ -101,15 +104,17 @@ const Headerbottomleft: React.FC<HeaderbottomleftProps> = ({ categories }) => {
   const menuWrapperRef = useRef<HTMLDivElement>(null);
   const toggleButtonRef = useRef<HTMLDivElement>(null);
 
-  /* --- fetch sub-cats --- */
+  /* --- fetch sub-cats; return array so caller can inspect --- */
   const fetchSubcategories = async (catId: string) => {
     try {
       const data = await fetchData<SubCategorie[]>(
         `categories/${catId}/subcategories`
       );
       setSubcategories((prev) => ({ ...prev, [catId]: data }));
+      return data;
     } catch (err) {
       console.error("fetchSubcategories error:", err);
+      return [];
     }
   };
 
@@ -120,18 +125,33 @@ const Headerbottomleft: React.FC<HeaderbottomleftProps> = ({ categories }) => {
   };
 
   /* --- mobile click (< lg) --- */
-  const handleCategoryClick = (
-    e: React.MouseEvent<HTMLAnchorElement, MouseEvent>,
-    catId: string
+  const handleCategoryClick = async (
+    e: React.MouseEvent<HTMLAnchorElement>,
+    cat: Categorie
   ) => {
-    if (typeof window !== "undefined" && window.innerWidth < 1024) {
-      e.preventDefault(); // keep menu open
-      setActiveCategory(catId); // open clicked, close others
-      if (!subcategories[catId]) fetchSubcategories(catId);
+    if (typeof window === "undefined" || window.innerWidth >= 1024) {
+      // desktop → let <Link> handle navigation, then close
+      closeMenu();
       return;
     }
-    // desktop navigate
-    closeMenu();
+
+    // ---- mobile branch ----
+    const alreadyLoaded = subcategories[cat._id];
+    const subs =
+      alreadyLoaded ?? (await fetchSubcategories(cat._id)); // ensure we know
+
+    if (!subs.length) {
+      // no sub-cats → navigate immediately
+      // because we'll preventDefault below, navigate programmatically:
+      e.preventDefault();
+      closeMenu();
+      router.push(`/${cat.slug}`);
+      return;
+    }
+
+    // has sub-cats → keep menu open & toggle accordion
+    e.preventDefault();
+    setActiveCategory(cat._id);
   };
 
   /* --- menu visibility --- */
@@ -200,7 +220,7 @@ const Headerbottomleft: React.FC<HeaderbottomleftProps> = ({ categories }) => {
                   {/* ---- category row ---- */}
                   <Link
                     href={`/${cat.slug}`}
-                    onClick={(e) => handleCategoryClick(e, cat._id)}
+                    onClick={(e) => handleCategoryClick(e, cat)}
                     className="group flex items-center gap-3 px-4 py-2 duration-300 hover:bg-primary hover:text-white"
                   >
                     {cat.iconUrl && (
