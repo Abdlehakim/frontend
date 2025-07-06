@@ -21,7 +21,7 @@ export default async function Headerbottom() {
   return (
     <header>
       <div className="w-full h-[80px] bg-primary flex justify-center items-center border-t-gray-600">
-        <div className="w-[90%] h-full flex justify-between max-lg:justify-center items-center">
+        <div className="w-[90%] h-full flex justify-between max-lg:justify-start items-center max-sm:justify-center">
           {categories.length > 0 && <Headerbottomleft categories={categories} />}
           <Headerbottomright />
         </div>

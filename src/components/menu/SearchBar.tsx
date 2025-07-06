@@ -73,9 +73,9 @@ const SearchBar: React.FC = () => {
     setProducts([]); // Clear products to close search results
   };
   return (
-    <div className="relative w-[450px] max-2xl:w-[500px] max-xl:w-[250px] max-xl:hidden ml-4">
+    <div className="relative w-[450px] max-2xl:w-[300px] max-xl:w-[250px] max-xl:hidden">
       <input
-            className="w-full h-12 px-4 py-2 rounded-full max-lg:hidden border border-gray-300"
+            className="w-full h-12 px-4 py-2 rounded-full max-xl:hidden border border-gray-300"
             type="text"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}

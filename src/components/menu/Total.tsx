@@ -8,7 +8,7 @@ interface TotalProps {
 
 const Total: React.FC<TotalProps> = ({ totalPrice }) => {
   return (
-    <span className="w-[120px] text-lg max-md:hidden">
+    <span className="w-[120px] text-lg max-2xl:text-sm max-md:hidden">
       {totalPrice.toFixed(2).slice(0, 8)} TND
     </span>
   );

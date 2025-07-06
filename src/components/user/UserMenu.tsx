@@ -44,7 +44,7 @@ const UserMenu = () => {
   }, [pathname]);
 
   return (
-    <div className="flex items-center justify-center w-[200px] max-lg:w-fit text-white cursor-pointer select-none">
+    <div className="flex items-center justify-center w-[200px] max-2xl:w-[150px] max-lg:w-fit text-white cursor-pointer select-none">
       <div
         className="flex items-center justify-center gap-[8px] w-fit max-lg:w-fit text-white"
         ref={dropdownRef}
@@ -79,8 +79,8 @@ const UserMenu = () => {
             ))}
         </div>
         <div className="flex flex-col">
-          <p className="text-[#C1C4D6] text-sm max-md:hidden">Mon Compte</p>
-          <p className="text-white font-bold max-md:hidden">détails</p>
+          <p className="text-[#C1C4D6] text-sm max-2xl:text-xs max-md:hidden">Mon Compte</p>
+          <p className="text-white font-bold max-md:hidden max-2xl:text-sm">détails</p>
         </div>
       </div>
     </div>

@@ -102,7 +102,7 @@ const CartLogic = () => {
 
   return (
     <>
-      <div className="flex items-center justify-center w-[200px] max-lg:w-fit text-white cursor-pointer select-none">
+      <div className="flex items-center justify-center w-[200px] max-2xl:w-[150px] max-lg:w-fit text-white cursor-pointer select-none">
         <div
           className="flex items-center justify-center gap-[8px] w-fit max-lg:w-fit text-white cursor-pointer"
           onClick={toggleCartModal}
@@ -125,7 +125,7 @@ const CartLogic = () => {
             </div>
           </div>
           <div className="flex flex-col">
-            <p className="text-text text-sm max-md:hidden">Mon Panier</p>
+            <p className="text-text text-sm max-2xl:text-xs max-md:hidden">Mon Panier</p>
             <Total totalPrice={totalPrice} />
           </div>
         </div>

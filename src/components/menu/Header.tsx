@@ -13,11 +13,11 @@ const Header = async () => {
   return (
     <>
       <Headertop />
-      <div className="w-full h-[80px] bg-primary flex justify-center items-center max-lg:justify-around gap-[16px] border-y border-gray-600">
-        <div className="w-[90%] flex justify-between items-center max-lg:justify-around gap-[16px] ">
+      <div className="w-full h-[80px] bg-primary flex justify-center items-center gap-[16px] border-y border-gray-600">
+        <div className="w-[90%] flex justify-between items-center  gap-[16px] ">
           <LogoComponent />
           <SearchBar />
-          <div className="flex">
+          <div className="flex w-fit">
             <CartLogic />
             <Wishlist />
             <UserMenu/>
