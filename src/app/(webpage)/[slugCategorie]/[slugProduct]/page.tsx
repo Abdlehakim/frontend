@@ -35,7 +35,7 @@ type ProductStub = Pick<
 
 interface ProductDetailsDataType {
   description?: string;
-  productDetails?: { name: string; description?: string }[];
+  productDetails?: { name: string; description?: string; image?: string }[];
 }
 
 /* ------------------------------------------------------------------ */
@@ -98,10 +98,12 @@ export default async function ProductPage({
 
   const { SPTitle = "Produits similaires", SPSubTitle = "" } = titleData ?? {};
 
-    /* ----- fetch product details (description + list) --------------- */
+  /* ---------- fetch lightweight description/details -------------- */
   const details = await fetchData<ProductDetailsDataType>(
-    `products/MainProductSection/prodcutDetails/${slugProduct}` // ← faute “prodcut” conservée
+    `products/MainProductSection/productDetails/${slugProduct}`
+    // ^ typo "prodcut" corrigé ➜ "productDetails"
   ).catch(() => null);
+
 
   /* ----- render --------------------------------------------------- */
   return (
@@ -114,7 +116,7 @@ export default async function ProductPage({
       />
 
       {/* -------- Similar products -------- */}
-      <SimilarProducts
+       <SimilarProducts
         categorieId={prod.categorie._id}
         subcategorieId={prod.subcategorie?._id}
         excludeSlug={prod.slug}

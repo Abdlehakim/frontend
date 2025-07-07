@@ -198,11 +198,11 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
                 : 'opacity-50 cursor-not-allowed'
             }`}
           >
-            Checkout
+            Continue
           </button>
           <Link href="/">
             <button className="mt-2 w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm">
-              Continue Shopping
+              Annuler
             </button>
           </Link>
         </div>
@@ -234,12 +234,12 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
             onClick={backcarte}
             className="mt-2 w-full rounded-md border border-blue-500 px-4 py-2.5 text-sm font-semibold text-white bg-blue-500 hover:bg-[#15335E]"
           >
-            Back
+            retournez
           </button>
 
           <Link href="/">
             <button className="mt-2 w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm">
-              Cancel
+              Annuler
             </button>
           </Link>
         </div>
