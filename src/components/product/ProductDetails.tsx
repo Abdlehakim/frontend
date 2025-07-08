@@ -1,36 +1,45 @@
+// ───────────────────────────────────────────────────────────────
+// src/components/ProductDetails.tsx
+// ───────────────────────────────────────────────────────────────
 "use client";
 
 import Image from "next/image";
 import { useState } from "react";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
 import type { FC } from "react";
 
 export interface DetailRow {
   name: string;
-  description?: string | null;
+  description?: string | null; // markdown
   image?: string | null;
 }
 
 interface Props {
-  description?: string | null;
+  description?: string | null;        // plain intro paragraph
   productDetails?: DetailRow[] | null;
 }
 
 const ProductDetails: FC<Props> = ({ description, productDetails }) => {
-  const [selectedTab, setSelectedTab] = useState(productDetails?.[0]?.name || "");
-  const currentRow = productDetails?.find((row) => row.name === selectedTab);
+  /* pick first tab by default (safe-guard for empty array) */
+  const firstName = productDetails?.[0]?.name ?? "";
+  const [selectedTab, setSelectedTab] = useState(firstName);
+  const currentRow = productDetails?.find((r) => r.name === selectedTab);
 
-  if (!description && (!productDetails || productDetails.length === 0)) return null;
+  if (!description && (!productDetails || productDetails.length === 0)) {
+    return null;
+  }
 
   return (
     <section className="bg-white rounded border p-6 flex flex-col gap-6">
       <h2 className="text-2xl font-bold">Détails du produit</h2>
 
-      {/* ---- description always visible ---- */}
+      {/* intro description (always visible) */}
       {description && (
         <p className="text-gray-700 leading-relaxed">{description}</p>
       )}
 
-      {/* ---- tab header (modern underline style) ---- */}
+      {/* tabs */}
       {productDetails && productDetails.length > 0 && (
         <>
           <div className="border-b border-gray-200">
@@ -51,22 +60,24 @@ const ProductDetails: FC<Props> = ({ description, productDetails }) => {
             </nav>
           </div>
 
-          {/* ---- selected tab content ---- */}
+          {/* selected panel */}
           {currentRow && (
             <div className="flex flex-wrap md:flex-nowrap gap-8 pt-6">
-              {/* left: description */}
-              <div className="flex-1 text-gray-800 whitespace-pre-line w-fit">
-                {currentRow.description}
+              {/* markdown description */}
+              <div className="flex-1 prose prose-sm max-w-none text-gray-800">
+                <ReactMarkdown remarkPlugins={[remarkGfm]}>
+                  {currentRow.description ?? ""}
+                </ReactMarkdown>
               </div>
 
-              {/* right: image if available */}
+              {/* optional image */}
               {currentRow.image && (
                 <div className="relative max-w-[500px] min-h-[400px] aspect-[16/2]">
                   <Image
                     src={currentRow.image}
                     alt={currentRow.name}
                     fill
-                    className="object-cover"
+                    className="object-contain"
                   />
                 </div>
               )}
