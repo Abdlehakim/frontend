@@ -24,13 +24,7 @@ type PageParams = {
 /* ---------- “light” Product type sent to MainProductSection ------- */
 type ProductStub = Pick<
   Product,
-  | "slug"
-  | "name"
-  | "reference"
-  | "price"
-  | "discount"
-  | "stock"
-  | "mainImageUrl"
+  | "slug" | "name" | "reference" | "price" | "discount" | "stock" | "mainImageUrl" | "tva"
 >;
 
 interface ProductDetailsDataType {
@@ -90,6 +84,7 @@ export default async function ProductPage({
     discount: prod.discount,
     stock: prod.stock,
     mainImageUrl: prod.mainImageUrl,
+    tva: prod.tva,
   };
 
   const titleData = await fetchData<ProductTitleDataType>(
