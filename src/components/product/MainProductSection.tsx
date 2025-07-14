@@ -27,7 +27,7 @@ const Skel = ({ className = "" }: { className?: string }) => (
 /* ---------- props ---------- */
 type ProductStub = Pick<
   Product,
-  "slug" | "name" | "reference" | "price" | "discount" | "stock" | "mainImageUrl"
+  "slug" | "name" | "reference" | "price" | "discount" | "stock" | "mainImageUrl" | "tva"
 >;
 interface Props {
   initialProduct: ProductStub;
@@ -64,21 +64,23 @@ const MainProductSection: React.FC<Props> = ({ initialProduct }) => {
   /* ---------- helpers ---------- */
   const handleImageClick = (img: string) => setSelectedImage(img);
 
-  const addToCartHandler = (p: Product, qty: number) => {
-    const cartItem: Omit<CartItem, "quantity"> = {
-      _id: p._id,
-      name: p.name,
-      reference: p.reference,
-      price: p.price,
-      mainImageUrl: p.mainImageUrl,
-      discount: p.discount ?? 0,
-      slug: p.slug,
-      categorie: p.categorie
-        ? { name: p.categorie.name, slug: p.categorie.slug }
-        : undefined,
-    };
-    dispatch(addItem({ item: cartItem, quantity: qty }));
+const addToCartHandler = (p: Product, qty: number) => {
+  const cartItem: Omit<CartItem, "quantity"> = {
+    _id: p._id,
+    name: p.name,
+    reference: p.reference,
+    price: p.price,
+    tva: p.tva,              // 🆕  required field
+    mainImageUrl: p.mainImageUrl,
+    discount: p.discount ?? 0,
+    slug: p.slug,
+    categorie: p.categorie
+      ? { name: p.categorie.name, slug: p.categorie.slug }
+      : undefined,
   };
+  dispatch(addItem({ item: cartItem, quantity: qty }));
+};
+
 
   /* ---------- derived ---------- */
   const loading = !("_id" in product);
