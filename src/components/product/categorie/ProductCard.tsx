@@ -1,3 +1,6 @@
+/* ------------------------------------------------------------------
+   src/components/product/ProductCard.tsx
+------------------------------------------------------------------ */
 "use client";
 
 import React from "react";
@@ -18,8 +21,7 @@ interface ProductCardProps {
 const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
   const dispatch = useDispatch();
   const wishlistItems = useSelector((state: RootState) => state.wishlist.items);
-  const isInWishlist = (slug: string) =>
-    wishlistItems.some((w) => w.slug === slug);
+  const isInWishlist = (slug: string) => wishlistItems.some((w) => w.slug === slug);
 
   const handleWishlistClick = (product: Product) => {
     if (!product.categorie) return;
@@ -34,12 +36,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
           slug: product.categorie.slug,
         },
         slug: product.slug,
-      })
+      }),
     );
   };
 
   return (
-    <div className="group w-fit max-md:h-fit h-fit grid grid-cols-4 max-2xl:grid-cols-3 max-lg:grid-cols-2 max-sm:grid-cols-1 gap-[40px] ">
+    <div className="group w-fit max-md:h-fit h-fit grid grid-cols-4 max-2xl:grid-cols-3 max-lg:grid-cols-2 max-sm:grid-cols-1 gap-[40px]">
       {products.map((product) => {
         /** price helpers */
         const discountedPrice = product.discount
@@ -50,24 +52,21 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
         const isOutOfStock =
           product.stockStatus === "out of stock" || product.stock === 0;
 
-      
-        // url helper — use sub-category if present, else category
+        /** url helper — use sub-category if present, else category */
         const parentSlug =
-          product.subcategorie?.slug ??
-          product.categorie?.slug ??
-          "categorie";
+          product.subcategorie?.slug ?? product.categorie?.slug ?? "categorie";
         const productUrl = `/${parentSlug}/${product.slug}`;
 
-        /** ---------- single card ---------- */
+        /* -------- single card -------- */
         return (
           <div
             key={product._id}
             className="h-fit w-[280px] flex flex-col gap-[10px] transform duration-200 ease-in-out group-hover:scale-[0.9] hover:!scale-[1.1]  max-md:group-hover:scale-[1] max-md:hover:!scale-[1]"
           >
-            {/* ---------- product image ---------- */}
+            {/* image */}
             <Link href={productUrl}>
               <div className="relative aspect-[16/14] bg-gray-200">
-                 <Image
+                <Image
                   src={product.mainImageUrl ?? ""}
                   alt={product.name}
                   fill
@@ -80,7 +79,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
               </div>
             </Link>
 
-            {/* ---------- product info ---------- */}
+            {/* info */}
             <div className="flex flex-col w-full h-[80px]">
               <Link href={productUrl}>
                 <div className="flex justify-between h-[65px] max-sm:h-16 max-md:h-20">
@@ -113,7 +112,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
               </Link>
             </div>
 
-            {/* ---------- actions ---------- */}
+            {/* actions */}
             <div className="flex justify-between h-[45px] text-lg max-md:text-sm">
               {/* add-to-cart */}
               <button
@@ -121,37 +120,37 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
                 onClick={() => {
                   if (isOutOfStock) return;
 
+                  /* 🔥 UPDATED – base item carries tva & subcategorie */
                   const base: Omit<CartItem, "quantity"> = {
                     _id: product._id,
                     name: product.name,
                     reference: product.reference,
                     price: product.price,
+                    tva: product.tva,                    // NEW
                     mainImageUrl: product.mainImageUrl,
                     discount: product.discount ?? 0,
                     slug: product.slug,
-                  };
-
-                  const cartItem: Omit<CartItem, "quantity"> = product.categorie
-                    ? {
-                        ...base,
-                        categorie: {
+                    categorie: product.categorie
+                      ? {
                           name: product.categorie.name,
                           slug: product.categorie.slug,
-                        },
-                      }
-                    : {
-                        ...base,
-                        categorie: { name: "inconnue", slug: "categorie" },
-                      };
+                        }
+                      : { name: "inconnue", slug: "categorie" },
+                    ...(product.subcategorie && {
+                      subcategorie: {
+                        name: product.subcategorie.name,
+                        slug: product.subcategorie.slug,
+                      },
+                    }),
+                  };
 
-                  dispatch(addItem({ item: cartItem, quantity: 1 }));
+                  dispatch(addItem({ item: base, quantity: 1 }));
                 }}
-                className={`AddtoCart relative w-[50%] max-lg:w-[60%] max-md:rounded-[3px] group/box
-                            ${
-                              isOutOfStock
-                                ? "bg-gray-400 cursor-not-allowed"
-                                : "bg-primary text-white hover:bg-[#15335D]"
-                            }`}
+                className={`AddtoCart relative w-[50%] max-lg:w-[60%] max-md:rounded-[3px] group/box ${
+                  isOutOfStock
+                    ? "bg-gray-400 cursor-not-allowed"
+                    : "bg-primary text-white hover:bg-[#15335D]"
+                }`}
               >
                 <p className="absolute inset-0 flex items-center justify-center transition-transform duration-300 lg:group-hover/box:translate-x-[10%] max-md:text-xs">
                   {isOutOfStock ? "Rupture de stock" : "A. au panier"}

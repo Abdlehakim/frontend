@@ -7,7 +7,7 @@ interface CheckoutNavProps {
 
 const CheckoutNav: React.FC<CheckoutNavProps> = ({ currentStep }) => {
   return (
-    <div className="w-full h-[200px] flex justify-center">
+    <div className="w-full h-[80px] flex justify-center">
       <ol className="items-center flex w-full max-w-2xl text-center text-sm font-medium text-gray-500 dark:text-gray-400 sm:text-base">
         {/* Cart Step */}
         <li

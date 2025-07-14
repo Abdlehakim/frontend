@@ -17,7 +17,7 @@ interface PaymentMethod {
 }
 
 interface PaymentMethodeProps {
-  selectedPaymentMethod: PaymentMethodId | ""; // "" when none yet selected
+  selectedPaymentMethod: PaymentMethodId | "";
   handlePaymentMethodChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 

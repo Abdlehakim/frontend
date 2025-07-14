@@ -1,14 +1,20 @@
+/* ------------------------------------------------------------------
+   src/store/cartSlice.ts
+------------------------------------------------------------------ */
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
+/* ───────── types ───────── */
 export interface CartItem {
   _id: string;
   name: string;
   reference: string;
   price: number;
+  tva: number;                                  // ← TVA now mandatory
   mainImageUrl: string;
   discount?: number;
   slug: string;
-  categorie?: { name: string; slug: string };
+  categorie?:    { name: string; slug: string };
+  subcategorie?: { name: string; slug: string };
   quantity: number;
 }
 
@@ -16,7 +22,7 @@ interface CartState {
   items: CartItem[];
 }
 
-// Load cart state from localStorage or fallback to empty
+/* ───────── helpers ───────── */
 const loadCartState = (): CartState => {
   if (typeof window !== "undefined") {
     const saved = localStorage.getItem("cart");
@@ -25,21 +31,21 @@ const loadCartState = (): CartState => {
   return { items: [] };
 };
 
-const initialState: CartState = loadCartState();
-
-// Persist helper
-const saveCartState = (state: CartState) => {
+const saveCartState = (state: CartState) =>
   localStorage.setItem("cart", JSON.stringify(state));
-};
+
+/* ───────── slice ───────── */
+const initialState: CartState = loadCartState();
 
 const cartSlice = createSlice({
   name: "cart",
   initialState,
   reducers: {
+    /* ------------------------------------ addItem */
     addItem: (
       state,
       action: PayloadAction<{
-        item: Omit<CartItem, "quantity">;
+        item: Omit<CartItem, "quantity">; // already contains tva
         quantity: number;
       }>
     ) => {
@@ -54,11 +60,13 @@ const cartSlice = createSlice({
       saveCartState(state);
     },
 
+    /* ------------------------------------ removeItem */
     removeItem: (state, action: PayloadAction<{ _id: string }>) => {
       state.items = state.items.filter((i) => i._id !== action.payload._id);
       saveCartState(state);
     },
 
+    /* ------------------------------------ updateItemQuantity */
     updateItemQuantity: (
       state,
       action: PayloadAction<{ _id: string; quantity: number }>
@@ -74,6 +82,7 @@ const cartSlice = createSlice({
       }
     },
 
+    /* ------------------------------------ clearCart */
     clearCart: (state) => {
       state.items = [];
       saveCartState(state);

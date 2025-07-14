@@ -1,76 +1,76 @@
+/* ------------------------------------------------------------------
+   src/app/checkout/page.tsx
+------------------------------------------------------------------ */
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { CartItem, removeItem, updateItemQuantity } from "@/store/cartSlice";
 import { RootState } from "@/store";
-import OrderSummary from "@/components/checkout/OrderSummary";
+import { CartItem, removeItem, updateItemQuantity } from "@/store/cartSlice";
 import CheckoutNav from "@/components/checkout/CheckoutNav";
 import RecapProduct from "@/components/checkout/RecapProduct";
 import PaymentSummary from "@/components/checkout/PaymentSummary";
-import PaymentMethode from "@/components/checkout/PaymentMethode";
-import Addresse from "@/components/checkout/DeliveryAddress";
+import PaymentMethode, { PaymentMethodId } from "@/components/checkout/PaymentMethode";
+import DeliveryAddressSelect from "@/components/checkout/DeliveryAddress";
 import DeliveryMethod from "@/components/checkout/DeliveryMethod";
+import OrderSummary from "@/components/checkout/OrderSummary";
 
 const Checkout: React.FC = () => {
-  const items = useSelector((state: RootState) => state.cart.items);
+  const items = useSelector((s: RootState) => s.cart.items);
   const dispatch = useDispatch();
 
-  const [currentStep, setCurrentStep] = useState<
-    "cart" | "checkout" | "order-summary"
-  >("cart");
-  const [refOrder, setRefOrder] = useState<string>("");
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>(
-    "Payment on delivery"
-  );
-  const [selectedMethod, setSelectedMethod] = useState<string>("fedex");
-  const [deliveryCost, setDeliveryCost] = useState<number>(0);
+  /* ----- step navigation ----- */
+  const [currentStep, setCurrentStep] = useState<"cart" | "checkout" | "order-summary">("cart");
+  const [refOrder,  setRefOrder]  = useState("");
 
-  // Totals
+  /* ----- selections ----- */
+  const [selectedAddressId, setSelectedAddressId] = useState<string>(() =>
+    typeof window !== "undefined" ? localStorage.getItem("selectedAddress") ?? "" : ""
+  );
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethodId | "">("");
+  const [selectedMethod, setSelectedMethod] = useState<string>("");
+  const [deliveryCost, setDeliveryCost] = useState(0);
+
+  /* persist address in localStorage */
+  useEffect(() => {
+    if (selectedAddressId) localStorage.setItem("selectedAddress", selectedAddressId);
+  }, [selectedAddressId]);
+
+  /* ----- totals (unchanged) ----- */
   const totalPrice = items.reduce((sum, item) => {
-    const priceAfterDiscount = item.discount
-      ? item.price * (100 - item.discount) / 100
-      : item.price;
-    return sum + priceAfterDiscount * item.quantity;
+    const ttc = item.discount ? (item.price * (100 - item.discount)) / 100 : item.price;
+    return sum + ttc * item.quantity;
   }, 0);
 
   const totalDiscount = items.reduce((sum, item) => {
     const full = item.price * item.quantity;
-    const discounted = item.discount
-      ? (item.price * (100 - item.discount) / 100) * item.quantity
-      : full;
-    return sum + (full - discounted);
+    const disc = item.discount ? ((item.price * (100 - item.discount)) / 100) * item.quantity : full;
+    return sum + (full - disc);
   }, 0);
 
-  // Handlers
-  const incrementHandler = (item: CartItem) => {
-    dispatch(updateItemQuantity({ _id: item._id, quantity: item.quantity + 1 }));
-  };
-  const decrementHandler = (item: CartItem) => {
-    if (item.quantity > 1) {
-      dispatch(updateItemQuantity({ _id: item._id, quantity: item.quantity - 1 }));
-    }
-  };
-  const removeCartHandler = (id: string) => {
-    dispatch(removeItem({ _id: id }));
-  };
-  const handlePaymentMethodChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    setSelectedPaymentMethod(e.target.value);
-  };
-  const handleMethodChange = (method: string, cost: number) => {
-    setSelectedMethod(method);
-    setDeliveryCost(cost);
-  };
-  const handleCart = () => setCurrentStep("cart");
-  const handleOrderSummary = (ref: string) => {
-    setRefOrder(ref);
-    setCurrentStep("order-summary");
-  };
+  /* ----- cart handlers (unchanged) ----- */
+  const incrementHandler = (it: CartItem) =>
+    dispatch(updateItemQuantity({ _id: it._id, quantity: it.quantity + 1 }));
+  const decrementHandler = (it: CartItem) =>
+    it.quantity > 1 && dispatch(updateItemQuantity({ _id: it._id, quantity: it.quantity - 1 }));
+  const removeCartHandler = (id: string) => dispatch(removeItem({ _id: id }));
 
+  /* ----- changes for address & delivery ----- */
+  const handleAddressChange = (id: string) => setSelectedAddressId(id);
+  const handleMethodChange  = (id: string, cost: number) => { setSelectedMethod(id); setDeliveryCost(cost); };
+
+  /* ----- payment change ----- */
+  const handlePaymentChange = (e: React.ChangeEvent<HTMLInputElement>) =>
+    setSelectedPaymentMethod(e.target.value as PaymentMethodId);
+
+  const handleOrderSummary = (ref: string) => { setRefOrder(ref); setCurrentStep("order-summary"); };
+
+  /* ---------- render ---------- */
   return (
-    <div>
+    <div className="my-8 flex flex-col gap-4">
       <CheckoutNav currentStep={currentStep} />
 
+      {/* STEP 1: cart */}
       {currentStep === "cart" && (
         <div className="mx-auto w-[80%] flex gap-4">
           <RecapProduct
@@ -80,44 +80,52 @@ const Checkout: React.FC = () => {
             removeCartHandler={removeCartHandler}
           />
           <PaymentSummary
-            currentStep={currentStep}
+            currentStep="cart"
             items={items}
             totalPrice={totalPrice}
             totalDiscount={totalDiscount}
-            onCheckout={() => setCurrentStep("checkout")}
-            selectedPaymentMethod={selectedPaymentMethod}
-            backcarte={handleCart}
-            handleOrderSummary={handleOrderSummary}
-            selectedMethod={selectedMethod}
             deliveryCost={deliveryCost}
+            selectedMethod={selectedMethod}
+            selectedPaymentMethod={selectedPaymentMethod}
+            /* new props */
+            addressId={selectedAddressId}
+            onCheckout={() => setCurrentStep("checkout")}
+            backcarte={() => setCurrentStep("cart")}
+            handleOrderSummary={handleOrderSummary}
           />
         </div>
       )}
 
+      {/* STEP 2: checkout */}
       {currentStep === "checkout" && (
         <div className="mx-auto w-[80%] flex gap-4">
           <div className="w-[70%] p-4 bg-gray-100 rounded-md">
-            <Addresse />
+            <DeliveryAddressSelect
+              selectedAddressId={selectedAddressId}
+              onAddressChange={handleAddressChange}
+            />
             <DeliveryMethod
               selectedMethod={selectedMethod}
               onMethodChange={handleMethodChange}
             />
             <PaymentMethode
               selectedPaymentMethod={selectedPaymentMethod}
-              handlePaymentMethodChange={handlePaymentMethodChange}
+              handlePaymentMethodChange={handlePaymentChange}
             />
           </div>
           <PaymentSummary
-            currentStep={currentStep}
+            currentStep="checkout"
             items={items}
             totalPrice={totalPrice}
             totalDiscount={totalDiscount}
-            onCheckout={() => setCurrentStep("checkout")}
-            selectedPaymentMethod={selectedPaymentMethod}
-            backcarte={handleCart}
-            handleOrderSummary={handleOrderSummary}
-            selectedMethod={selectedMethod}
             deliveryCost={deliveryCost}
+            selectedMethod={selectedMethod}
+            selectedPaymentMethod={selectedPaymentMethod}
+            /* new prop */
+            addressId={selectedAddressId}
+            onCheckout={() => setCurrentStep("checkout")}
+            backcarte={() => setCurrentStep("cart")}
+            handleOrderSummary={handleOrderSummary}
           />
         </div>
       )}

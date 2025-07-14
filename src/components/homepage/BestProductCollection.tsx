@@ -25,7 +25,7 @@ export default async function ProductsBestCollection() {
   ).catch(() => []);
 
   if (products.length === 0) return null;
-
+  
   return (
     <section className="desktop max-lg:w-[95%] flex flex-col items-center gap-8 py-8">
       <div className="flex w-full flex-col items-center gap-2 relative">
