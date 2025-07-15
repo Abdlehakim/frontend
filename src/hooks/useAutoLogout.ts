@@ -40,19 +40,15 @@ console.log("scheduling logout in", delay, "ms");
         method: "POST",
         credentials: "include",
       }).catch(() => {});
-       Cookies.remove(TIMER_COOKIE);
+      /* notify other tabs and redirect */
+      bc.postMessage({ type: "logout" });
+      router.replace("/");
+    }, delay);
 
-  // 3) Give browser a moment to sync the HTTP‑only cookie
-  await new Promise((r) => setTimeout(r, 50));
-
-  // 4) Notify tabs & navigate
-  bc.postMessage({ type: "logout" });
-  router.replace("/signin");
-}, delay);
     /* listen for logout from another tab */
   bc.onmessage = (e) => {
      console.log("received broadcast:", e.data);
-  if (e.data?.type === "logout") router.push("/signin");
+  if (e.data?.type === "logout") router.replace("/");
 };
 
     /* cleanup on unmount */
