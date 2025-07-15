@@ -52,7 +52,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   /* ----- POST /signin ----- */
   const login = useCallback(
     async (email: string, password: string) => {
-      await fetchData("/auth/signin", {
+      await fetchData("/signin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",

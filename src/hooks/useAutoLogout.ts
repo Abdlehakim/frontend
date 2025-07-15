@@ -29,12 +29,12 @@ export default function useAutoLogout() {
 
     /* delay = time until expiry but never exceed setTimeout’s max */
     const delay = Math.min(Math.max(expMs - Date.now(), 0), MAX_DELAY);
-    console.log(`Auto-logout in ${Math.round(delay / 1000)} seconds`);
-
+console.log("useAutoLogout mounted, raw cookie =", raw);
     /* cross‑tab logout sync */
     const bc = new BroadcastChannel("auth");
-
+console.log("scheduling logout in", delay, "ms");
     timer.current = setTimeout(async () => {
+       console.log("logout timeout fired");
       /* hit backend to clear cookies + session */
       await fetchData(LOGOUT_PATH, {
         method: "POST",
@@ -47,6 +47,7 @@ export default function useAutoLogout() {
 
     /* listen for logout from another tab */
   bc.onmessage = (e) => {
+     console.log("received broadcast:", e.data);
   if (e.data?.type === "logout") router.replace("/signin");
 };
 
