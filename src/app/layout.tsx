@@ -1,10 +1,11 @@
-/* eslint-disable @next/next/no-css-tags */
+
 import { ReactNode } from "react";
 import { Poppins } from "next/font/google";
 import type { Metadata } from "next";
 import "@/app/globals.css";
 import Providers from "@/components/Providers";
 import GoogleIdentityLoader from "@/components/GoogleIdentityLoader";
+import ClientShell from "@/components/ClientShell";
 
 const poppins = Poppins({
   subsets: ["latin", "latin-ext"],
@@ -33,18 +34,13 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       lang="fr"
       className={`${poppins.className} !scroll-smooth font-sans`}
     >
-      <head>
-        {/* critical stylesheet, loaded with high priority */}
-        <link
-          rel="stylesheet"
-          href="/_next/static/css/5fd3db404cee2557.css"
-          precedence="default"
-          fetchPriority="high"
-        />
-      </head>
-
       <body>
-        <Providers>{children}</Providers>
+        <Providers>
+          {/* Auto‑logout + layout shell around all pages */}
+          <ClientShell>
+            {children}
+          </ClientShell>
+        </Providers>
         <GoogleIdentityLoader />
       </body>
     </html>

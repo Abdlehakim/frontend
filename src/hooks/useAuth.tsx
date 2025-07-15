@@ -1,3 +1,6 @@
+/* ------------------------------------------------------------------
+   src/hooks/useAuth.tsx
+   ------------------------------------------------------------------ */
 "use client";
 
 import React, {
@@ -8,15 +11,15 @@ import React, {
   useCallback,
   type ReactNode,
 } from "react";
+import { fetchData } from "@/lib/fetchData";
 
-/* ---------- types ---------- */
+/* ───────── types ───────── */
 export interface User {
   _id: string;
   email: string;
   username?: string;
   phone?: string;
 }
-
 interface AuthContextValue {
   user: User | null;
   isAuthenticated: boolean;
@@ -26,64 +29,48 @@ interface AuthContextValue {
   refresh: () => Promise<void>;
 }
 
-/* ---------- context ---------- */
+/* ───────── context ───────── */
 const AuthContext = createContext<AuthContextValue | null>(null);
 
-/* ---------- provider ---------- */
+/* ───────── provider ───────── */
 export function AuthProvider({ children }: { children: ReactNode }) {
   const [user, setUser] = useState<User | null>(null);
   const [loading, setLoading] = useState(true);
 
-  const backendUrl =
-    process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3000";
-
-  /* --- hit /api/auth/me and sync state --- */
+  /* ----- GET /auth/me ----- */
   const refresh = useCallback(async () => {
     try {
-      const res = await fetch(`${backendUrl}/api/auth/me`, {
+      const data = await fetchData<{ user: User | null }>("/auth/me", {
         credentials: "include",
       });
-      if (!res.ok) throw new Error("unauthenticated");
-
-      const data = await res.json();
       setUser(data.user ?? null);
     } catch {
       setUser(null);
     }
-  }, [backendUrl]);
+  }, []);
 
-  /* --- POST /api/signin --- */
+  /* ----- POST /signin ----- */
   const login = useCallback(
     async (email: string, password: string) => {
-      const res = await fetch(`${backendUrl}/api/signin`, {
+      await fetchData("/auth/signin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ email, password }),
       });
-
-      if (!res.ok) {
-        const err = await res.json().catch(() => ({}));
-        throw new Error(err.message || "Invalid credentials");
-      }
-
-      const data = await res.json().catch(() => ({}));
-      if (data.user) {
-        setUser(data.user);
-      } else {
-        await refresh();
-      }
+      await refresh();
     },
-    [backendUrl, refresh],
+    [refresh],
   );
 
-  /* --- GET /api/logout --- */
+  /* ----- POST /logout ----- */
   const logout = useCallback(async () => {
-    await fetch(`${backendUrl}/api/logout`, { credentials: "include" });
+    await fetchData("/auth/logout", { method: "POST", credentials: "include" });
+    
     setUser(null);
-  }, [backendUrl]);
+  }, []);
 
-  /* --- initial cookie check --- */
+  /* ----- initial cookie check ----- */
   useEffect(() => {
     (async () => {
       await refresh();
@@ -91,24 +78,20 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     })();
   }, [refresh]);
 
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        isAuthenticated: !!user,
-        loading,
-        login,
-        logout,
-        refresh,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
-  );
+  const ctx: AuthContextValue = {
+    user,
+    isAuthenticated: !!user,
+    loading,
+    login,
+    logout,
+    refresh,
+  };
+
+  return <AuthContext.Provider value={ctx}>{children}</AuthContext.Provider>;
 }
 
-/* ---------- consumer hook ---------- */
-export function useAuth() {
+/* ───────── consumer hook ───────── */
+export function useAuth(): AuthContextValue {
   const ctx = useContext(AuthContext);
   if (!ctx) throw new Error("useAuth must be used within <AuthProvider>");
   return ctx;
