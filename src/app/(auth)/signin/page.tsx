@@ -4,10 +4,6 @@ import { cookies } from "next/headers";
 import { redirect } from "next/navigation";
 import SignInForm from "@/components/signin/SignInForm";
 
-/** 
- * In Next 15 the framework passes `searchParams` as a *Promise* in
- * server components – see vercel/next.js#77609 and related threads.
- */
 type SearchParams = Promise<Record<string, string | string[] | undefined>>;
 
 export default async function SignInPage({
