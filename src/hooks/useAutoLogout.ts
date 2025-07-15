@@ -48,7 +48,7 @@ console.log("scheduling logout in", delay, "ms");
     /* listen for logout from another tab */
   bc.onmessage = (e) => {
      console.log("received broadcast:", e.data);
-  if (e.data?.type === "logout") router.replace("/signin");
+  if (e.data?.type === "logout") router.push("/signin");
 };
 
     /* cleanup on unmount */
