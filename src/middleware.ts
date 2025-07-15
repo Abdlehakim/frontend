@@ -20,15 +20,11 @@ export function middleware(request: NextRequest) {
     return NextResponse.redirect(redirectUrl);
   }
 
-  // If the user is already signed in and tries to access /signin, redirect to home
-  if (pathname === "/signin" && token) {
-    return NextResponse.redirect(new URL("/", request.url));
-  }
 
   // Otherwise, continue
   return NextResponse.next();
 }
 
 export const config = {
-  matcher: ["/settings", "/orderhistory/:path*", "/checkout/:path*", "/signin"],
+  matcher: ["/settings", "/orderhistory/:path*", "/checkout/:path*"],
 };
