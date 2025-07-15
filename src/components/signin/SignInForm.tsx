@@ -1,4 +1,4 @@
-/// src/components/signin/SignInForm.tsx
+// src/components/signin/SignInForm.tsx
 
 "use client";
 
@@ -34,34 +34,56 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
   const router = useRouter();
   const { login, refresh } = useAuth();
 
+  // Form state
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [rememberMe, setRememberMe] = useState(false);
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [hasGoogleLoaded, setHasGoogleLoaded] = useState(false);
 
-  /* check when GIS script is ready */
+  /** Check when Google Identity Services script is ready */
   useEffect(() => {
     const t = setTimeout(
       () =>
         setHasGoogleLoaded(
-          typeof window !== "undefined" && !!window.google?.accounts,
+          typeof window !== "undefined" && !!window.google?.accounts
         ),
-      3000,
+      3000
     );
     return () => clearTimeout(t);
   }, []);
 
-  /* ---------- email / password ---------- */
+  /** On mount, load saved email if “Remember me” was used */
+  useEffect(() => {
+    const savedEmail = localStorage.getItem("rememberedEmail");
+    if (savedEmail) {
+      setEmail(savedEmail);
+      setRememberMe(true);
+    }
+  }, []);
+
+  /** Email/password submit handler */
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
     setIsSubmitting(true);
 
     try {
+      // Perform login (you may extend `login` to accept rememberMe if needed)
       await login(email, password);
+
+      // Persist or clear saved email based on the checkbox
+      if (rememberMe) {
+        localStorage.setItem("rememberedEmail", email);
+      } else {
+        localStorage.removeItem("rememberedEmail");
+      }
+
+      // Refresh auth context and redirect
+      await refresh();
       router.push(redirectTo);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Sign-in failed");
@@ -70,7 +92,7 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
     }
   }
 
-  /* ---------- Google ---------- */
+  /** Google sign-in handler */
   const handleGoogleSignIn = async (resp: CredentialResponse) => {
     if (!resp.credential) return;
 
@@ -83,7 +105,7 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
         body: JSON.stringify({ idToken: resp.credential }),
       });
 
-      await refresh(); // sync context
+      await refresh();
       router.push(redirectTo);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Google sign-in failed");
@@ -92,7 +114,6 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
     }
   };
 
-  /* ---------- JSX (unchanged styling) ---------- */
   return (
     <div className="w-flex w-full h-screen items-center">
       <div className="w-[60%] max-lg:w-[100%] flex justify-center items-center h-screen">
@@ -174,7 +195,12 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
             {/* remember + forgot */}
             <div className="flex items-center justify-between m-2 text-sm font-semibold">
               <label className="inline-flex items-center text-gray-500">
-                <input type="checkbox" className="mr-2 w-4 h-4" />
+                <input
+                  type="checkbox"
+                  className="mr-2 w-4 h-4"
+                  checked={rememberMe}
+                  onChange={(e) => setRememberMe(e.target.checked)}
+                />
                 Remember me
               </label>
               <Link
@@ -218,7 +244,7 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
                 >
                   <Icon className="text-2xl" />
                 </a>
-              ),
+              )
             )}
           </div>
         </div>
