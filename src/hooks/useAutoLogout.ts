@@ -1,57 +1,66 @@
-/* ------------------------------------------------------------------ */
-/*  src/hooks/useAutoLogout.ts                                        */
-/* ------------------------------------------------------------------ */
+// src/hooks/useAutoLogout.ts
 "use client";
 
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
-import { fetchData } from "@/lib/fetchData";  
+import { fetchData } from "@/lib/fetchData";
 
 const TIMER_COOKIE = "token_FrontEnd_exp";
-const LOGOUT_PATH  = "/auth/logout";   
-const MAX_DELAY    = 2_147_483_647;           
+const LOGOUT_PATH  = "/auth/logout";
+const MAX_DELAY    = 2_147_483_647;
+const EXTRA_DELAY  = 10_000; // 10 seconds
 
 export default function useAutoLogout() {
   const router = useRouter();
   const timer  = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   useEffect(() => {
-    /* clear any previous timer (route changes, re‑mounts, etc.) */
+    // clear any existing timer
     if (timer.current) clearTimeout(timer.current);
 
-    /* read expiry from the JS‑readable cookie */
+    // read expiry from the JS‑readable cookie
     const raw = Cookies.get(TIMER_COOKIE);
     if (!raw) return;
-
     const expMs = Number(raw);
     if (!Number.isFinite(expMs)) return;
 
-    /* delay = time until expiry but never exceed setTimeout’s max */
-    const delay = Math.min(Math.max(expMs - Date.now(), 0), MAX_DELAY);
-console.log("useAutoLogout mounted, raw cookie =", raw);
-    /* cross‑tab logout sync */
+    // time until actual expiry
+    const untilExpiry = Math.max(expMs - Date.now(), 0);
+    // add our extra 10s
+    const logoutDelay = Math.min(untilExpiry + EXTRA_DELAY, MAX_DELAY);
+
+    console.log(
+      `Token expires in ${untilExpiry}ms; ` +
+      `scheduling redirect in ${logoutDelay}ms`
+    );
+
     const bc = new BroadcastChannel("auth");
-console.log("scheduling logout in", delay, "ms");
-    timer.current = setTimeout(async () => {
-       console.log("logout timeout fired");
-      /* hit backend to clear cookies + session */
-      await fetchData(LOGOUT_PATH, {
+
+    timer.current = setTimeout(() => {
+      console.log("useAutoLogout: performing logout redirect");
+
+      // inform other tabs
+      bc.postMessage({ type: "logout" });
+
+      // redirect this tab after total delay
+      router.replace("/signin");
+
+      // fire‑and‑forget backend logout
+      fetchData(LOGOUT_PATH, {
         method: "POST",
         credentials: "include",
       }).catch(() => {});
-      /* notify other tabs and redirect */
-      bc.postMessage({ type: "logout" });
-      router.replace("/signin");
-    }, delay);
+    }, logoutDelay);
 
-    /* listen for logout from another tab */
-  bc.onmessage = (e) => {
-     console.log("received broadcast:", e.data);
-  if (e.data?.type === "logout") router.push("/signin");
-};
+    // handle cross‑tab logout
+    bc.onmessage = (e) => {
+      if (e.data?.type === "logout") {
+        router.replace("/signin");
+      }
+    };
 
-    /* cleanup on unmount */
+    // cleanup on unmount
     return () => {
       if (timer.current) clearTimeout(timer.current);
       bc.close();
