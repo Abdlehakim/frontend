@@ -42,13 +42,13 @@ console.log("scheduling logout in", delay, "ms");
       }).catch(() => {});
       /* notify other tabs and redirect */
       bc.postMessage({ type: "logout" });
-      router.replace("/");
+      router.replace("/signin");
     }, delay);
 
     /* listen for logout from another tab */
   bc.onmessage = (e) => {
      console.log("received broadcast:", e.data);
-  if (e.data?.type === "logout") router.replace("/");
+  if (e.data?.type === "logout") router.replace("/signin");
 };
 
     /* cleanup on unmount */
