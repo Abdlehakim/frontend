@@ -31,9 +31,9 @@ interface Categories {
 export const revalidate = 60;
 
 export default async function CategoriesPage() {
-  const categorieTitles = await fetchData<CategorieTitles>("categories/title").catch(
-    () => ({} as CategorieTitles)
-  );
+  const categorieTitles = await fetchData<CategorieTitles>(
+    "categories/title"
+  ).catch(() => ({} as CategorieTitles));
 
   const categories = await fetchData<Categories[]>("categories").catch(
     () => [] as Categories[]
@@ -63,26 +63,27 @@ export default async function CategoriesPage() {
               <div className="absolute inset-0 bg-black/60 rounded-full opacity-0 lg:group-hover:opacity-80 transition-opacity" />
               <p className="absolute top-1/2 left-1/2 w-[85%] -translate-x-1/2 -translate-y-1/2 bg-white text-black text-lg max-lg:text-sm rounded-3xl text-center py-1 max-xl:px-3 transition-all">
                 {categorie.name.length > 8
-    ? `${categorie.name.slice(0, 8)}…`
-    : categorie.name}
+                  ? `${categorie.name.slice(0, 8)}…`
+                  : categorie.name}
               </p>
               <p className="absolute top-[80%] left-1/2 -translate-x-1/2 -translate-y-1/2 text-white text-lg opacity-0 lg:group-hover:opacity-100 transition-opacity pt-2 max-xl:text-xs">
                 {categorie.numberproduct}
               </p>
-              <Image
-                src={categorie.imageUrl ?? "/fallback-image.jpg"}
-                alt={categorie.name}
-                width={400}
-                height={400}
-                className="rounded-full w-[400px] h-[400px] object-cover"
-                sizes="(max-width:640px) 33vw,
+              <div className="relative w-full aspect-[16/16] -z-[10]">
+                <Image
+                  src={categorie.imageUrl ?? ""}
+                  alt={categorie.name}
+                  fill
+                  className="rounded-full object-cover"
+                  sizes="(max-width:640px) 33vw,
                        (max-width:1024px) 25vw,
                        16vw"
-                quality={75}
-                placeholder="blur"
-                blurDataURL="/tiny-placeholder.png"
-                loading="lazy"
-              />
+                  quality={75}
+                  placeholder="blur"
+                  blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA"
+                  loading="lazy"
+                />
+              </div>
             </div>
           </Link>
         ))}

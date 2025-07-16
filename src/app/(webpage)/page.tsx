@@ -1,8 +1,13 @@
 /* ------------------------------------------------------------------ */
 /*  src/app/page.tsx                                                  */
 /* ------------------------------------------------------------------ */
-import dynamic from "next/dynamic";
 import Banner from "@/components/Banner";
+import Categories from "@/components/homepage/Categories";
+import NewProductCollection from "@/components/homepage/NewProductCollection";
+import ProductInPromotion from "@/components/homepage/ProductInPromotionCollection";
+import Brands from "@/components/homepage/Brands";
+import BestProductCollection from "@/components/homepage/BestProductCollection";
+import Stores from "@/components/homepage/Stores";
 import { fetchData } from "@/lib/fetchData";
 
 /* ---------- types ---------- */
@@ -12,14 +17,6 @@ interface BannerData {
   HPbannerTitle: string;
   HPbannerImgUrl: string;
 }
-
-/* ---------- lazy-loaded sections (stream in parallel) ---------- */
-const Categories                = dynamic(() => import("@/components/homepage/Categories"),                { ssr: true });
-const NewProductCollection      = dynamic(() => import("@/components/homepage/NewProductCollection"),      { ssr: true });
-const ProductInPromotion        = dynamic(() => import("@/components/homepage/ProductInPromotionCollection"), { ssr: true });
-const Brands                    = dynamic(() => import("@/components/homepage/Brands"),                    { ssr: true });
-const BestProductCollection     = dynamic(() => import("@/components/homepage/BestProductCollection"),     { ssr: true });
-const Stores                    = dynamic(() => import("@/components/homepage/Stores"),                    { ssr: true });
 
 /* ---------- page ---------- */
 export default async function HomePage() {
@@ -32,10 +29,9 @@ export default async function HomePage() {
 
   return (
     <main className="homepage flex flex-col justify-start gap-10">
-      {/* Banner appears only if both title and image are available */}
       {title && image && <Banner title={title} imageBanner={image} />}
 
-      {/* Streamed sections */}
+      {/* Static sections */}
       <Categories />
       <NewProductCollection />
       <ProductInPromotion />
