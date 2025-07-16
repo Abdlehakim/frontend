@@ -99,7 +99,7 @@ const Checkout: React.FC = () => {
       {/* STEP 2: checkout */}
       {currentStep === "checkout" && (
         <div className="mx-auto w-[80%] flex gap-4">
-          <div className="w-[70%] p-4 bg-gray-100 rounded-md">
+          <div className="w-[70%] p-4 flex flex-col gap-8 bg-gray-100 rounded-md">
             <DeliveryAddressSelect
               selectedAddressId={selectedAddressId}
               onAddressChange={handleAddressChange}

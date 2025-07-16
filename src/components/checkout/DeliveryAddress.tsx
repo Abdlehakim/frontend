@@ -1,13 +1,18 @@
-/* ------------------------------------------------------------------
-   src/components/checkout/DeliveryAddress.tsx
------------------------------------------------------------------- */
+/* ------------------------------------------------------------------ */
+/*  src/components/checkout/DeliveryAddress.tsx                       */
+/* ------------------------------------------------------------------ */
 "use client";
 
-import { useState, useCallback, useEffect } from "react";
+import React, { useState, useCallback, useEffect } from "react";
 import { AiOutlinePlus } from "react-icons/ai";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchData } from "@/lib/fetchData";
 import AddAddress from "./AddAddress";
+
+/* ---------- tiny skeleton helper (like in MainProductSection) ---------- */
+const Skel = ({ className = "" }: { className?: string }) => (
+  <div className={`animate-pulse bg-gray-200 rounded ${className}`} />
+);
 
 /* ---------- model ---------- */
 export interface Address {
@@ -26,22 +31,36 @@ interface Props {
   onAddressChange(id: string): void;
 }
 
+/** Build a clean, comma‑separated address string */
+function formatAddress(addr: Address): string {
+  return [
+    addr.Name,
+    addr.StreetAddress,
+    addr.City,
+    addr.Province,
+    addr.PostalCode,
+    addr.Country
+  ]
+    .filter(Boolean)
+    .join(", ");
+}
+
 export default function DeliveryAddress({
   selectedAddressId,
   onAddressChange,
 }: Props) {
   /* data state */
   const [addresses, setAddresses] = useState<Address[]>([]);
-  const [loading,   setLoading]   = useState(false);
-  const [error,     setError]     = useState("");
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
 
   /* UI state */
-  const [showForm,  setShowForm]  = useState(false);
+  const [showForm, setShowForm] = useState(false);
 
   /* auth hook */
   const { isAuthenticated, loading: authLoading } = useAuth();
 
-  /* fetch addresses (no more auto-select) */
+  /* fetch addresses */
   const fetchAddresses = useCallback(async () => {
     try {
       setLoading(true);
@@ -63,47 +82,58 @@ export default function DeliveryAddress({
   }, []);
 
   useEffect(() => {
-    if (!authLoading && isAuthenticated) fetchAddresses();
+    if (!authLoading && isAuthenticated) {
+      fetchAddresses();
+    }
   }, [authLoading, isAuthenticated, fetchAddresses]);
 
-  /* ---------- render ---------- */
   return (
     <>
-      {(authLoading || loading) && (
-        <p className="text-gray-500 py-2">Loading addresses…</p>
-      )}
+      {/* error message */}
       {error && <p className="text-red-500 py-2">{error}</p>}
 
-      <div className="sm:col-span-2">
-        <h3 className="text-xl font-semibold pb-3">Delivery Address</h3>
+      <div className="flex flex-col gap-2">
+        <h3 className="text-xl font-semibold">
+          Sélectionnez votre adresse ou ajoutez une nouvelle adresse :
+        </h3>
 
         <div className="grid gap-4 mb-4">
-          <select
-            name="address-method"
-            value={selectedAddressId}
-            onChange={(e) => onAddressChange(e.target.value)}
-            className="w-full rounded-lg border border-gray-200 bg-gray-50 p-4"
-          >
-            <option value="">Select Address</option>
-            {addresses.map((a) => (
-              <option key={a._id} value={a._id}>
-                {`${a.Name}, ${a.StreetAddress}, ${a.Country}/${
-                  a.Province ?? ""
-                }/${a.City}/${a.PostalCode}`}
-              </option>
-            ))}
-          </select>
+          {(authLoading || loading) ? (
+            /* skeleton placeholder for select */
+            <Skel className="h-10 w-full" />
+          ) : (
+            /* real select once loaded */
+            <select
+              name="address-method"
+              value={selectedAddressId}
+              onChange={(e) => onAddressChange(e.target.value)}
+              className="w-full rounded-lg border border-gray-200 bg-white p-2"
+              title={
+                addresses.find((a) => a._id === selectedAddressId)
+                  ? formatAddress(
+                      addresses.find((a) => a._id === selectedAddressId)!
+                    )
+                  : undefined
+              }
+            >
+              <option value="">Select Address</option>
+              {addresses.map((a) => (
+                <option key={a._id} value={a._id}>
+                  {formatAddress(a)}
+                </option>
+              ))}
+            </select>
+          )}
 
+          {/* button always visible */}
           <button
             type="button"
             onClick={() => setShowForm(true)}
             disabled={!isAuthenticated}
-            className="flex items-center justify-center gap-2 rounded-lg border
-                       border-gray-200 bg-white px-5 py-2.5 text-sm font-medium
-                       hover:bg-gray-100 disabled:opacity-50"
+            className="flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-5 py-2.5 text-sm font-medium hover:bg-primary hover:text-white disabled:opacity-50"
           >
             <AiOutlinePlus className="h-5 w-5" />
-            Add new address
+            Ajoutez une nouvelle adresse
           </button>
         </div>
       </div>

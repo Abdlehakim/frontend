@@ -11,7 +11,7 @@ import { toast } from "react-toastify";
 import { clearCart, CartItem } from "@/store/cartSlice";
 import PaypalButton from "@/components/checkout/PaypalButton";
 import { PaymentMethodId } from "@/components/checkout/PaymentMethode";
-import { fetchData } from "@/lib/fetchData";   // 🆕 helper
+import { fetchData } from "@/lib/fetchData"; // 🆕 helper
 
 /* ---------- props ---------- */
 interface PaymentSummaryProps {
@@ -84,17 +84,26 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
 
   const postOrder = async () => {
     const orderLines = items.map(
-  ({ _id, reference, name, quantity, tva, mainImageUrl, discount, price }) => ({
-    _id,
-    reference,
-    name,
-    quantity,
-    tva,
-    mainImageUrl,
-    discount,
-    price,
-  })
-);
+      ({
+        _id,
+        reference,
+        name,
+        quantity,
+        tva,
+        mainImageUrl,
+        discount,
+        price,
+      }) => ({
+        _id,
+        reference,
+        name,
+        quantity,
+        tva,
+        mainImageUrl,
+        discount,
+        price,
+      })
+    );
 
     const payload = {
       address: addressId,
@@ -179,16 +188,16 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
           <button
             onClick={onCheckout}
             disabled={items.length === 0}
-            className={`w-full rounded-md px-4 py-2.5 text-sm font-semibold text-white ${
+            className={`mt-2 w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm text-black hover:text-white ${
               items.length
-                ? "bg-primary hover:bg-[#15335E]"
-                : "opacity-50 cursor-not-allowed"
+                ? " hover:bg-primary"
+                : "cursor-not-allowed"
             }`}
           >
             Continue
           </button>
           <Link href="/">
-            <button className="mt-2 w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm">
+            <button className="mt-2 w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm hover:bg-primary hover:text-white">
               Annuler
             </button>
           </Link>
@@ -202,10 +211,10 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
             <button
               onClick={handleOrderSubmit}
               disabled={!isFormValid}
-              className={`w-full rounded-md px-4 py-2.5 text-sm font-semibold text-white ${
+              className={`mt-2 w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm text-black  ${
                 isFormValid
-                  ? "bg-primary hover:bg-[#15335E]"
-                  : "opacity-50 cursor-not-allowed"
+                    ? " hover:bg-primary hover:text-white"
+                : "cursor-not-allowed"
               }`}
             >
               Confirm Order
@@ -219,13 +228,13 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
 
           <button
             onClick={backcarte}
-            className="mt-2 w-full rounded-md border border-blue-500 px-4 py-2.5 text-sm font-semibold text-white bg-blue-500 hover:bg-[#15335E]"
+            className="mt-2 w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm hover:bg-primary hover:text-white"
           >
             Retournez
           </button>
 
           <Link href="/">
-            <button className="mt-2 w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm">
+            <button className="mt-2 w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm hover:bg-primary hover:text-white">
               Annuler
             </button>
           </Link>

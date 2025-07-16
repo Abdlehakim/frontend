@@ -219,7 +219,7 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
             </div>
 
             {/* Google */}
-            <div className="flex flex-col items-center h-20">
+            <div className="flex flex-col items-center h-20 w-full">
               {isGoogleLoading || !hasGoogleLoaded ? (
                 <LoadingDots />
               ) : (
