@@ -13,23 +13,24 @@ export interface LogoData {
 export const revalidate = 60;
 
 export default async function LogoComponent() {
-  const { name, logoImageUrl }: LogoData =
-    await fetchData<LogoData>("/website/header/getHeaderData")
-      .catch(() => ({ name: "", logoImageUrl: "" } as LogoData));
+  const { name, logoImageUrl }: LogoData = await fetchData<LogoData>(
+    "/website/header/getHeaderData"
+  ).catch(() => ({ name: "", logoImageUrl: "" } as LogoData));
 
   return (
-    <div className="relative w-full aspect-[16/15] max-h-[80px] max-2xl:max-h-[60px] max-2xl:max-w-[250px] max-w-[350px] max-md:max-h-[40px] max-md:max-w-[160px] z-40">
-      <Link href="/" aria-label="Home page">
+    
+      <Link href="/" aria-label="Home page" className="relative w-full aspect-[16/15] max-h-[80px] max-2xl:max-h-[60px] max-2xl:max-w-[250px] max-w-[350px] max-md:max-h-[40px] max-md:max-w-[160px]">
         <Image
-          src={logoImageUrl || "/fallback-image.jpg"}
+          src={logoImageUrl ?? ""}
           alt={`${name} logo`}
-        fill
+          fill
+          quality={75}
           placeholder="blur"
-          blurDataURL={logoImageUrl || "/fallback-image.jpg"}
+          blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA"
           sizes="(max-width: 1920px) 100vw, (max-width: 1200px) 100vw"
           className="object-cover"
         />
       </Link>
-    </div>
+  
   );
 }

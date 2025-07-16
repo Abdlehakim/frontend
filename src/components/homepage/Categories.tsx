@@ -81,8 +81,7 @@ export default async function CategoriesPage() {
                        16vw"
                   quality={75}
                   placeholder="blur"
-                  blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA"
-                  loading="lazy"
+                  blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA"          
                 />
               </div>
             </div>
