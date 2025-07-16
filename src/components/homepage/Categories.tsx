@@ -74,6 +74,7 @@ export default async function CategoriesPage() {
                   src={categorie.imageUrl ?? ""}
                   alt={categorie.name}
                   fill
+                  priority
                   className="rounded-full object-cover"
                   sizes="(max-width:640px) 33vw,
                        (max-width:1024px) 25vw,
