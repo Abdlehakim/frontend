@@ -7,12 +7,7 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
-import {
-  FaFacebookF,
-  FaInstagram,
-  FaTwitter,
-  FaYoutube,
-} from "react-icons/fa";
+import { FaFacebookF, FaInstagram, FaTwitter, FaYoutube } from "react-icons/fa";
 import { GoogleLogin, type CredentialResponse } from "@react-oauth/google";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchData } from "@/lib/fetchData";
@@ -86,7 +81,7 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
       await refresh();
       router.push(redirectTo);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Sign-in failed");
+      setError(err instanceof Error ? err.message : "Échec de la connexion");
     } finally {
       setIsSubmitting(false);
     }
@@ -108,7 +103,7 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
       await refresh();
       router.push(redirectTo);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Google sign-in failed");
+      setError(err instanceof Error ? err.message : "Échec de la connexion Google");
     } finally {
       setIsGoogleLoading(false);
     }
@@ -119,18 +114,7 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
       <div className="w-[60%] max-lg:w-[100%] flex justify-center items-center h-screen">
         <div className="px-8 flex flex-col w-[600px] h-full bg-white bg-opacity-80 rounded-xl max-md:rounded-none justify-center gap-4 z-10">
           <div className="flex flex-col gap-2 items-center">
-            <h1 className="text-4xl font-bold">Bienvenu Client</h1>
-            <p className="text-lg text-gray-200">Login to your account.</p>
-            <div className="flex items-center w-[300px] gap-2">
-              <div className="flex-grow border-t border-gray-400" />
-              <Link
-                href="/signup"
-                className="text-primary text-sm font-semibold hover:underline"
-              >
-                Click here to create an account
-              </Link>
-              <div className="flex-grow border-t border-gray-400" />
-            </div>
+            <h1 className="text-2xl uppercase font-bold">Connectez-vous </h1>
           </div>
 
           {error && <p className="text-red-500">{error}</p>}
@@ -139,12 +123,12 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
             {/* email */}
             <div className="flex flex-col gap-1">
               <label htmlFor="email" className="text-lg font-medium">
-                Email
+                E‑mail
               </label>
               <input
                 id="email"
                 type="email"
-                placeholder="you@example.com"
+                placeholder="vous@exemple.com"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
@@ -156,7 +140,7 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
             {/* password */}
             <div className="flex flex-col gap-1 relative">
               <label htmlFor="password" className="text-lg font-medium">
-                Password
+                Mot de passe
               </label>
               <div className="relative">
                 <input
@@ -189,32 +173,32 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
               disabled={isSubmitting}
               className="h-12 w-full text-white text-lg font-semibold rounded-md bg-primary transition hover:bg-secondary"
             >
-              {isSubmitting ? "Signing in..." : "Sign in"}
+              {isSubmitting ? "Connexion..." : "Se connecter"}
             </button>
 
             {/* remember + forgot */}
-            <div className="flex items-center justify-between m-2 text-sm font-semibold">
-              <label className="inline-flex items-center text-gray-500">
+            <div className="flex items-center justify-between mt-2 text-sm font-semibold">
+              <label className="inline-flex items-center text-gray-500 max-md:text-xs">
                 <input
                   type="checkbox"
                   className="mr-2 w-4 h-4"
                   checked={rememberMe}
                   onChange={(e) => setRememberMe(e.target.checked)}
                 />
-                Remember me
+                Se souvenir de moi
               </label>
               <Link
                 href="/forgot-password"
-                className="text-primary hover:underline"
+                className="text-primary hover:underline max-md:text-xs"
               >
-                Forgot password?
+                Mot de passe oublié&nbsp;?
               </Link>
             </div>
 
             {/* divider */}
             <div className="flex items-center">
               <hr className="flex-grow border-t border-gray-300" />
-              <span className="mx-2 text-gray-500">or</span>
+              <span className="mx-2 text-gray-500">ou</span>
               <hr className="flex-grow border-t border-gray-300" />
             </div>
 
@@ -225,7 +209,7 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
               ) : (
                 <GoogleLogin
                   onSuccess={handleGoogleSignIn}
-                  onError={() => setError("Google sign-in failed")}
+                  onError={() => setError("Échec de la connexion Google")}
                 />
               )}
             </div>
@@ -233,19 +217,28 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
             <hr className="border-t border-gray-300" />
           </form>
 
+          <div className="flex items-center w-full gap-2 justify-center">
+            <div className="flex-grow border-t border-gray-400" />
+            <Link
+  href="/signup"
+  className="text-primary text-center text-sm font-semibold hover:underline"
+>
+  Vous n’avez pas de compte ? Cliquez ici pour en créer un.
+</Link>
+            <div className="flex-grow border-t border-gray-400" />
+          </div>
+<hr className="border-t border-gray-300" />
           {/* socials */}
           <div className="flex gap-4 justify-center">
-            {[FaFacebookF, FaInstagram, FaTwitter, FaYoutube].map(
-              (Icon, i) => (
-                <a
-                  key={i}
-                  href="#"
-                  className="w-12 h-12 border-4 border-gray-500 rounded-full flex items-center justify-center text-gray-500"
-                >
-                  <Icon className="text-2xl" />
-                </a>
-              )
-            )}
+            {[FaFacebookF, FaInstagram, FaTwitter, FaYoutube].map((Icon, i) => (
+              <a
+                key={i}
+                href="#"
+                className="w-12 h-12 border-4 border-gray-500 rounded-full flex items-center justify-center text-gray-500"
+              >
+                <Icon className="text-2xl" />
+              </a>
+            ))}
           </div>
         </div>
       </div>
@@ -254,7 +247,7 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
       <div className="fixed inset-0 -z-10">
         <Image
           src="/signin.jpg"
-          alt="Sign-in background"
+          alt="Arrière-plan de connexion"
           fill
           className="object-cover"
         />

@@ -62,20 +62,7 @@ export default function SignUpForm({ redirectTo }: SignUpFormProps) {
         <div className="px-8 flex flex-col w-[600px] h-[700px] bg-white bg-opacity-80 rounded-xl justify-center gap-[16px] z-10">
           {/* Heading */}
           <div className="flex flex-col gap-[8px] items-center">
-            <h1 className="text-4xl font-bold">Bienvenu Client</h1>
-            <p className="text-lg text-gray-200">
-              Create an account. Vous avez déjà un compte ?
-            </p>
-            <div className="flex items-center w-[300px] gap-[8px]">
-              <div className="flex-grow border-t border-gray-400" />
-              <Link
-                href="/signin"
-                className="text-primary text-sm font-semibold hover:underline"
-              >
-                Cliquez ici pour vous connecter
-              </Link>
-              <div className="flex-grow border-t border-gray-400" />
-            </div>
+            <h1 className="text-2xl uppercase font-bold">Create an account</h1>
           </div>
 
           {error && (
@@ -163,16 +150,25 @@ export default function SignUpForm({ redirectTo }: SignUpFormProps) {
               {isSubmitting ? "Signing up..." : "Sign up"}
             </button>
           </form>
+          <div className="flex items-center mt-4 w-full gap-[8px]">
+            <div className="flex-grow border-t border-gray-400" />
+            <Link
+              href="/signin"
+              className="text-primary text-sm font-semibold hover:underline text-center"
+            >
+              Vous Avez deja un compte ? Cliquez ici pour vous connecter
+            </Link>
+            <div className="flex-grow border-t border-gray-400" />
+          </div>
         </div>
       </div>
 
       {/* Background image */}
-      <div className=" relative  inset-0 -z-10">
+      <div className="fixed inset-0 -z-10">
         <Image
           src="/signin.jpg"
-          alt="signin background"
+          alt="Arrière-plan de connexion"
           fill
-          priority
           className="object-cover"
         />
       </div>
