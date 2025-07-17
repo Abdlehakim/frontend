@@ -8,7 +8,6 @@ import { usePathname } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 
 const UserMenu = () => {
-  
   const { user, isAuthenticated } = useAuth();
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
@@ -19,7 +18,11 @@ const UserMenu = () => {
 
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
-      if (isDropdownOpen && dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+      if (
+        isDropdownOpen &&
+        dropdownRef.current &&
+        !dropdownRef.current.contains(event.target as Node)
+      ) {
         closeDropdown();
       }
     };
@@ -27,14 +30,17 @@ const UserMenu = () => {
       if (isDropdownOpen) closeDropdown();
     };
 
+    const container: HTMLElement | Window =
+      document.querySelector("main") || window;
+
     if (isDropdownOpen) {
       document.addEventListener("mousedown", handleClickOutside);
-      window.addEventListener("scroll", handleScroll);
+      container.addEventListener("scroll", handleScroll, { passive: true });
     }
 
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
-      window.removeEventListener("scroll", handleScroll);
+      container.removeEventListener("scroll", handleScroll);
     };
   }, [isDropdownOpen]);
 
@@ -58,7 +64,6 @@ const UserMenu = () => {
                 className="absolute shadow-xl z-30 flex gap-[8px] flex-col top-12 -translate-x-1/5 max-md:-translate-x-28"
                 onClick={(e) => e.stopPropagation()}
               >
-                {/* Pass the user’s name (or username) to the Dropdown */}
                 <Dropdown userName={user?.username ?? "User"} />
               </div>
             ) : (
@@ -79,8 +84,12 @@ const UserMenu = () => {
             ))}
         </div>
         <div className="flex flex-col">
-          <p className="text-[#C1C4D6] text-sm max-2xl:text-xs max-md:hidden">Mon Compte</p>
-          <p className="text-white font-bold max-md:hidden max-2xl:text-sm">détails</p>
+          <p className="text-[#C1C4D6] text-sm max-2xl:text-xs max-md:hidden">
+            Mon Compte
+          </p>
+          <p className="text-white font-bold max-md:hidden max-2xl:text-sm">
+            détails
+          </p>
         </div>
       </div>
     </div>

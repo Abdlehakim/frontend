@@ -78,19 +78,19 @@ const Dropdown: React.FC<DropdownProps> = ({ userName }) => {
       <div className="border-t border-gray-100" />
       <Link
         href="/settings"
-        className="block px-4 py-2 text-sm text-primary hover:bg-primary hover:text-white"
+        className="block px-4 py-2 text-sm text-primary hover:bg-primary hover:text-white max-lg:text-xs"
       >
         Paramètres
       </Link>
       <Link
         href="/orderhistory"
-        className="block px-4 py-2 text-sm text-primary hover:bg-primary hover:text-white"
+        className="block px-4 py-2 text-sm max-lg:text-xs text-primary hover:bg-primary hover:text-white"
       >
         Historique des achats
       </Link>
       <a
         href="#"
-        className="block px-4 py-2 text-sm text-primary hover:bg-primary hover:text-white"
+        className="block px-4 py-2 text-sm text-primary hover:bg-primary hover:text-white max-lg:text-xs"
         onClick={(e) => {
           e.preventDefault();
           handleSignOut();

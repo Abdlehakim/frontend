@@ -72,7 +72,7 @@ const ProductDetails: FC<Props> = ({ description, productDetails }) => {
 
               {/* optional image */}
               {currentRow.image && (
-                <div className="relative max-w-[500px] min-h-[400px] aspect-[16/2]">
+                <div className="relative max-md:max-w-full max-w-[500px] min-h-[400px] aspect-[16/2]">
                   <Image
                     src={currentRow.image}
                     alt={currentRow.name}
