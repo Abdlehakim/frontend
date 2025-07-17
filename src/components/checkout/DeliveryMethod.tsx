@@ -58,7 +58,7 @@ const DeliveryMethod: React.FC<DeliveryMethodProps> = ({
 
   return (
     <div className="flex flex-col gap-4">
-      <h2 className="text-xl font-semibold "> Choisissez la méthode de livraison qui vous convient :</h2>
+      <h2 className="text-xl font-semibold max-lg:text-sm max-lg:text-center "> Choisissez la méthode de livraison qui vous convient :</h2>
 
       {loading ? (
         <div className="grid grid-cols-3 max-md:grid-cols-1 gap-2">
@@ -100,7 +100,7 @@ const DeliveryMethod: React.FC<DeliveryMethodProps> = ({
                   className="h-8 w-8 border-gray-300 bg-white text-primary-600 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-primary-600"
                 />
                 <div className="ml-4 text-sm">
-                  <p className="font-medium text-gray-900 dark:text-white">
+                  <p className="font-medium text-gray-900 max-lg:text-xs">
                     {opt.cost === 0
                       ? `Free shipping – ${opt.name}`
                       : `${opt.cost} TND – ${opt.name}`}

@@ -92,22 +92,22 @@ export default function DeliveryAddress({
       {/* error message */}
       {error && <p className="text-red-500 py-2">{error}</p>}
 
-      <div className="flex flex-col gap-2">
-        <h3 className="text-xl font-semibold">
+      <div className="flex flex-col gap-4">
+        <h3 className="text-xl font-semibold max-lg:text-sm max-lg:text-center">
           Sélectionnez votre adresse ou ajoutez une nouvelle adresse :
         </h3>
 
         <div className="grid gap-4 mb-4">
           {(authLoading || loading) ? (
             /* skeleton placeholder for select */
-            <Skel className="h-10 w-full" />
+            <Skel className="h-12 w-full" />
           ) : (
             /* real select once loaded */
             <select
               name="address-method"
               value={selectedAddressId}
               onChange={(e) => onAddressChange(e.target.value)}
-              className="w-full rounded-lg border border-gray-200 bg-white p-2"
+              className="w-full h-12 border  border-gray-300 px-4  rounded-md focus:outline-none text-md max-lg:text-xs"
               title={
                 addresses.find((a) => a._id === selectedAddressId)
                   ? formatAddress(
@@ -130,9 +130,9 @@ export default function DeliveryAddress({
             type="button"
             onClick={() => setShowForm(true)}
             disabled={!isAuthenticated}
-            className="flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-5 py-2.5 text-sm font-medium hover:bg-primary hover:text-white disabled:opacity-50"
+            className="flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-5 py-2.5 text-sm font-medium hover:bg-primary hover:text-white disabled:opacity-50 max-lg:text-xs"
           >
-            <AiOutlinePlus className="h-5 w-5" />
+            <AiOutlinePlus className="h-5 w-5 " />
             Ajoutez une nouvelle adresse
           </button>
         </div>

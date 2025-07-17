@@ -72,7 +72,7 @@ const Checkout: React.FC = () => {
 
       {/* STEP 1: cart */}
       {currentStep === "cart" && (
-        <div className="mx-auto w-[80%] flex gap-4">
+        <div className="mx-auto w-[80%] flex max-lg:flex-col gap-4">
           <RecapProduct
             items={items}
             incrementHandler={incrementHandler}
@@ -98,8 +98,8 @@ const Checkout: React.FC = () => {
 
       {/* STEP 2: checkout */}
       {currentStep === "checkout" && (
-        <div className="mx-auto w-[80%] flex gap-4">
-          <div className="w-[70%] p-4 flex flex-col gap-8 bg-gray-100 rounded-md">
+        <div className="mx-auto w-[80%] flex max-lg:flex-col gap-4">
+          <div className="w-[70%] p-4 flex flex-col gap-8 bg-gray-100 rounded-md max-lg:w-full max-lg:gap-4">
             <DeliveryAddressSelect
               selectedAddressId={selectedAddressId}
               onAddressChange={handleAddressChange}

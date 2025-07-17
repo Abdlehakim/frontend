@@ -51,7 +51,7 @@ const PaymentMethode: React.FC<PaymentMethodeProps> = ({
   return (
     <div className="space-y-4">
       {/* heading always visible */}
-      <h3 className="text-xl font-semibold text-gray-900 dark:text-white">
+      <h3 className="text-xl font-semibold max-lg:text-sm max-lg:text-center">
         Choisissez le moyen de paiement qui vous convient :
       </h3>
 
@@ -85,7 +85,7 @@ const PaymentMethode: React.FC<PaymentMethodeProps> = ({
             <label
               key={key}
               htmlFor={key}
-              className="cursor-pointer rounded-lg border border-gray-200 bg-white p-4"
+              className="cursor-pointer rounded-lg border border-gray-200 bg-white p-4 max-lg:text-sm"
             >
               <div className="flex items-center">
                 <input
@@ -98,10 +98,10 @@ const PaymentMethode: React.FC<PaymentMethodeProps> = ({
                   className="h-8 w-8 border-gray-300 bg-white text-primary-600  dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-primary-600"
                 />
                 <div className="ml-4 text-sm">
-                  <span className="font-medium text-gray-900 dark:text-white">
+                  <span className="font-medium text-gray-900">
                     {label}
                   </span>
-                  <p className="mt-1 text-xs text-gray-500 dark:text-gray-400">
+                  <p className="mt-1 text-xs text-gray-500">
                     {help}
                   </p>
                 </div>

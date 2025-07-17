@@ -8,7 +8,7 @@ interface CheckoutNavProps {
 const CheckoutNav: React.FC<CheckoutNavProps> = ({ currentStep }) => {
   return (
     <div className="w-full h-[80px] flex justify-center">
-      <ol className="items-center flex w-full max-w-2xl text-center text-sm font-medium text-gray-500 dark:text-gray-400 sm:text-base">
+      <ol className="items-center justify-center flex w-full max-w-2xl text-center text-sm font-medium text-gray-500">
         {/* Cart Step */}
         <li
           className={`after:border-1 flex items-center after:mx-6 after:hidden after:h-1 after:w-full after:border-b after:border-gray-200 sm:after:inline-block sm:after:content-[''] md:w-full xl:after:mx-10 ${

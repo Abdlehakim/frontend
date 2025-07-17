@@ -149,7 +149,7 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
 
   /* ---------- JSX ---------- */
   return (
-    <div className="bg-gray-100 rounded-md p-4 w-[30%]">
+    <div className="bg-gray-100 rounded-md p-4 w-[30%] max-lg:w-full">
       {/* Promo code */}
       <div className="flex border border-[#15335E] overflow-hidden rounded-md">
         <input

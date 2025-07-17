@@ -22,7 +22,7 @@ const RecapProduct: React.FC<RecapProductProps> = ({
   decrementHandler,
   removeCartHandler,
 }) => (
-  <div className="w-[70%] h-fit">
+  <div className="w-[70%] max-lg:w-full h-fit">
     {items.length > 0 ? (
       <div className="flex flex-col gap-2">
         {items.map((item) => {
@@ -42,7 +42,7 @@ const RecapProduct: React.FC<RecapProductProps> = ({
           return (
             <div
               key={item._id}
-              className="flex justify-around gap-4 bg-gray-100 p-4 rounded-md"
+              className="relative flex justify-around gap-4 bg-gray-100 p-4 rounded-md max-lg:flex-col"
             >
               {/* ---------------- product image ---------------- */}
               <div className="relative aspect-[16/14] h-40 bg-gray-200">
@@ -59,7 +59,7 @@ const RecapProduct: React.FC<RecapProductProps> = ({
               </div>
 
               {/* ---------------- info ---------------- */}
-              <div className="flex flex-col justify-center w-2/5 gap-2">
+              <div className="flex flex-col justify-center w-2/5 max-lg:w-full gap-2">
                 <div className="flex flex-col">
                   <p className="text-xl font-bold break-words">{item.name}</p>
                   <p className="text-gray-600 uppercase text-xs">
@@ -90,7 +90,7 @@ const RecapProduct: React.FC<RecapProductProps> = ({
               </div>
 
               {/* ---------------- quantity controls ---------------- */}
-              <div className="flex items-center justify-center w-1/5">
+              <div className="flex items-center justify-center w-1/5 max-lg:w-full">
                 <div className="flex border border-gray-300 rounded-lg overflow-hidden">
                   <button
                     onClick={() => decrementHandler(item)}
@@ -111,7 +111,7 @@ const RecapProduct: React.FC<RecapProductProps> = ({
               </div>
 
               {/* ---------------- totals ---------------- */}
-              <div className="flex flex-col items-end justify-center w-1/5">
+              <div className="flex flex-col items-end justify-center w-1/5 max-lg:w-full max-lg:items-center">
                 <p className="font-semibold">TTC&nbsp;{lineTtc.toFixed(2)} DT</p>
                 <p className="text-xs text-gray-500">
                   TVA&nbsp;{lineTva.toFixed(2)} DT
@@ -122,7 +122,7 @@ const RecapProduct: React.FC<RecapProductProps> = ({
               </div>
 
               {/* ---------------- remove ---------------- */}
-              <div className="flex justify-end w-1/12">
+               <div className="flex justify-end w-1/12 max-lg:w-full max-lg:order-first max-lg:mb-2 max-lg:items-end">
                 <RxCross1
                   className="cursor-pointer"
                   onClick={() => removeCartHandler(item._id)}
