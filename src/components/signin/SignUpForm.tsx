@@ -1,3 +1,5 @@
+// src/components/signin/SignUpForm.tsx
+
 "use client";
 
 import React, { useState } from "react";
@@ -5,6 +7,8 @@ import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
+import { useAuth } from "@/hooks/useAuth";
+import { fetchData } from "@/lib/fetchData";
 
 interface SignUpFormProps {
   redirectTo: string;
@@ -12,20 +16,18 @@ interface SignUpFormProps {
 
 export default function SignUpForm({ redirectTo }: SignUpFormProps) {
   const router = useRouter();
+  const { refresh } = useAuth();
 
   /* ---------------- form state ---------------- */
   const [username, setUsername] = useState("");
-  const [phone, setPhone]   = useState("");
-  const [email, setEmail]   = useState("");
+  const [phone, setPhone] = useState("");
+  const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
   /* ---------------- feedback ------------------ */
-  const [error, setError]         = useState("");
+  const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const backendUrl =
-    process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3000";
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
@@ -33,23 +35,22 @@ export default function SignUpForm({ redirectTo }: SignUpFormProps) {
     setIsSubmitting(true);
 
     try {
-      const res = await fetch(`${backendUrl}/api/signup`, {
+      // POST to /api/auth/signup via your fetchData helper
+      await fetchData<{
+        message: string;
+        user: { id: string; email: string; username: string };
+      }>("signup", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ username, phone, email, password }),
       });
 
-      if (!res.ok) {
-        const data = await res.json();
-        setError(data.message || "Sign-up failed");
-        return;
-      }
-
+      // re-hydrate your auth context and then redirect
+      await refresh();
       router.push(redirectTo);
-    } catch (err) {
-      console.error("Sign-up error:", err);
-      setError("An unexpected error occurred");
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Sign-up failed");
     } finally {
       setIsSubmitting(false);
     }
