@@ -59,7 +59,7 @@ export default function SignUpForm({ redirectTo }: SignUpFormProps) {
   return (
     <div className="flex w-full h-screen items-center">
       <div className="w-[60%] max-lg:w-full flex justify-center items-center h-screen">
-        <div className="px-8 flex flex-col w-[600px] h-[700px] bg-white bg-opacity-80 rounded-xl justify-center gap-[16px] z-10">
+        <div className="px-8 flex flex-col w-[600px] h-full bg-white bg-opacity-80 rounded-xl justify-center gap-[16px] z-10">
           {/* Heading */}
           <div className="flex flex-col gap-[8px] items-center">
             <h1 className="text-2xl uppercase font-bold">Create an account</h1>
