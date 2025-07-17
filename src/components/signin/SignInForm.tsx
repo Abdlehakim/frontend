@@ -1,163 +1,139 @@
-// src/components/signin/SignInForm.tsx
+// src/components/signin/SignUpForm.tsx
 
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
-import { FaFacebookF, FaInstagram, FaTwitter, FaYoutube } from "react-icons/fa";
-import { GoogleLogin, type CredentialResponse } from "@react-oauth/google";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchData } from "@/lib/fetchData";
 import LoadingDots from "@/components/LoadingDots";
 
-declare global {
-  interface Window {
-    google?: {
-      accounts?: Record<string, unknown>;
-    };
-  }
-}
-
-interface SignInFormProps {
+interface SignUpFormProps {
   redirectTo: string;
 }
 
-export default function SignInForm({ redirectTo }: SignInFormProps) {
+export default function SignUpForm({ redirectTo }: SignUpFormProps) {
   const router = useRouter();
-  const { login, refresh } = useAuth();
+  const { refresh } = useAuth();
 
-  // Form state
+  /* ---------------- form state ---------------- */
+  const [username, setUsername] = useState("");
+  const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [rememberMe, setRememberMe] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
+
+  /* ---------------- feedback ------------------ */
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
-  const [isGoogleLoading, setIsGoogleLoading] = useState(false);
-  const [hasGoogleLoaded, setHasGoogleLoaded] = useState(false);
 
-  /** Check when Google Identity Services script is ready */
-  useEffect(() => {
-    const t = setTimeout(
-      () =>
-        setHasGoogleLoaded(
-          typeof window !== "undefined" && !!window.google?.accounts
-        ),
-      3000
-    );
-    return () => clearTimeout(t);
-  }, []);
-
-  /** On mount, load saved email if “Remember me” was used */
-  useEffect(() => {
-    const savedEmail = localStorage.getItem("rememberedEmail");
-    if (savedEmail) {
-      setEmail(savedEmail);
-      setRememberMe(true);
-    }
-  }, []);
-
-  /** Email/password submit handler */
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
     setIsSubmitting(true);
 
     try {
-      // Perform login
-      await login(email, password);
+      // POST to /api/auth/signup via your fetchData helper
+      await fetchData<{
+        message: string;
+        user: { id: string; email: string; username: string };
+      }>("signup", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ username, phone, email, password }),
+      });
 
-      // Persist or clear saved email based on the checkbox
-      if (rememberMe) {
-        localStorage.setItem("rememberedEmail", email);
-      } else {
-        localStorage.removeItem("rememberedEmail");
-      }
-
-      // Refresh auth context and redirect
+      // re‑hydrate your auth context and then redirect
       await refresh();
       router.push(redirectTo);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Échec de la connexion");
+      setError(err instanceof Error ? err.message : "Échec de l’inscription");
       setIsSubmitting(false);
     }
   }
 
-  /** Google sign-in handler */
-  const handleGoogleSignIn = async (resp: CredentialResponse) => {
-    if (!resp.credential) return;
-
-    setIsGoogleLoading(true);
-    try {
-      await fetchData<{ message?: string }>("/signin/google", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ idToken: resp.credential }),
-      });
-
-      await refresh();
-      router.push(redirectTo);
-    } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Échec de la connexion Google");
-      setIsGoogleLoading(false);
-      setIsSubmitting(false);
-    }
-  };
-
   return (
     <>
       {/* full-screen loading overlay */}
-      {(isSubmitting || isGoogleLoading) && (
+      {isSubmitting && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <LoadingDots />
         </div>
       )}
 
-      <div className="w-flex w-full h-screen items-center">
-        <div className="w-[60%] max-lg:w-[100%] flex justify-center items-center h-full">
-          <div className="px-8 flex flex-col w-[600px] h-full bg-white bg-opacity-80 rounded-xl max-md:rounded-none justify-center gap-4 z-10">
-            <div className="flex flex-col gap-2 items-center">
-              <h1 className="text-2xl uppercase font-bold">Connectez-vous</h1>
+      <div className="flex w-full h-screen items-center">
+        <div className="w-[60%] max-lg:w-full flex justify-center items-center h-full">
+          <div className="px-8 flex flex-col w-[600px] h-full bg-white bg-opacity-80 rounded-xl justify-center gap-[16px] z-10">
+            {/* Heading */}
+            <div className="flex flex-col gap-[8px] items-center">
+              <h1 className="text-2xl uppercase font-bold">Créer un compte</h1>
             </div>
 
-            {error && <p className="text-red-500">{error}</p>}
+            {error && (
+              <p className="text-red-500 text-center font-semibold">{error}</p>
+            )}
 
-            <form onSubmit={handleSubmit} className="flex flex-col gap-2">
-              {/* email */}
-              <div className="flex flex-col gap-1">
+            {/* Form */}
+            <form onSubmit={handleSubmit} className="flex flex-col gap-[8px]">
+              <div>
+                <label htmlFor="username" className="block mb-1 font-medium">
+                  Nom d’utilisateur
+                </label>
+                <input
+                  id="username"
+                  placeholder="Votre nom"
+                  type="text"
+                  value={username}
+                  onChange={(e) => setUsername(e.target.value)}
+                  required
+                  className="w-full h-12 border  border-gray-300 px-4  rounded-md focus:outline-none text-md"
+                />
+              </div>
+
+              <div>
+                <label htmlFor="phone" className="block mb-1 font-medium">
+                  Téléphone (facultatif)
+                </label>
+                <input
+                  id="phone"
+                  placeholder="Votre numéro de téléphone"
+                  type="text"
+                  value={phone}
+                  onChange={(e) => setPhone(e.target.value)}
+                  className="w-full h-12 border  border-gray-300 px-4  rounded-md focus:outline-none text-md"
+                />
+              </div>
+
+              <div>
                 <label htmlFor="email" className="block mb-1 font-medium">
                   E‑mail
                 </label>
                 <input
                   id="email"
-                  type="email"
                   placeholder="vous@exemple.com"
+                  type="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  autoComplete="email"
                   className="w-full h-12 border  border-gray-300 px-4  rounded-md focus:outline-none text-md"
                 />
               </div>
 
-              {/* password */}
-              <div className="flex flex-col gap-1 relative">
+              <div className="flex flex-col gap-[4px] relative">
                 <label htmlFor="password" className="block mb-1 font-medium">
                   Mot de passe
                 </label>
                 <div className="relative">
                   <input
                     id="password"
+                    placeholder="*******"
                     type={showPassword ? "text" : "password"}
-                    placeholder="•••••••"
-                    value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    autoComplete="current-password"
                     className="w-full h-12 border  border-gray-300 px-4  rounded-md focus:outline-none text-md"
                   />
                   <button
@@ -174,93 +150,37 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
                 </div>
               </div>
 
-              {/* submit */}
               <button
                 type="submit"
                 disabled={isSubmitting}
-                className="mt-2 h-12 w-full text-white text-lg font-semibold rounded-md bg-primary transition hover:bg-secondary"
+                className="h-[50px] w-full text-white text-lg font-semibold py-2 rounded-md bg-primary border-2 transition duration-200 mt-4 hover:bg-secondary"
               >
-                Se connecter
+                {isSubmitting ? "Inscription en cours..." : "S’inscrire"}
               </button>
-
-              {/* remember + forgot */}
-              <div className="flex items-center justify-between mt-2 text-sm font-semibold">
-                <label className="inline-flex items-center text-gray-500 max-md:text-xs">
-                  <input
-                    type="checkbox"
-                    className="mr-2 w-4 h-4"
-                    checked={rememberMe}
-                    onChange={(e) => setRememberMe(e.target.checked)}
-                  />
-                  Se souvenir de moi
-                </label>
-                <Link
-                  href="/forgot-password"
-                  className="text-primary hover:underline max-md:text-xs"
-                >
-                  Mot de passe oublié&nbsp;?
-                </Link>
-              </div>
-
-              {/* divider */}
-              <div className="flex items-center">
-                <hr className="flex-grow border-t border-gray-300" />
-                <span className="mx-2 text-gray-500">ou</span>
-                <hr className="flex-grow border-t border-gray-300" />
-              </div>
-
-              {/* Google */}
-              <div className="flex flex-col items-center h-20 w-full">
-                {isGoogleLoading || !hasGoogleLoaded ? (
-                  <LoadingDots />
-                ) : (
-                  <GoogleLogin
-                    onSuccess={handleGoogleSignIn}
-                    onError={() => setError("Échec de la connexion Google")}
-                  />
-                )}
-              </div>
-
-              <hr className="border-t border-gray-300" />
             </form>
 
-            <div className="flex items-center w-full gap-2 justify-center">
+            <div className="flex items-center mt-4 w-full gap-[8px]">
               <div className="flex-grow border-t border-gray-400" />
               <Link
-                href="/signup"
-                className="text-primary text-center text-sm font-semibold hover:underline"
+                href="/signin"
+                className="text-primary text-sm font-semibold hover:underline text-center"
               >
-                Vous n’avez pas de compte ? Cliquez ici pour en créer un.
+                Vous avez déjà un compte ? Connectez-vous
               </Link>
               <div className="flex-grow border-t border-gray-400" />
             </div>
-
-            <hr className="border-t border-gray-300" />
-
-            {/* socials */}
-            <div className="flex gap-4 justify-center">
-              {[FaFacebookF, FaInstagram, FaTwitter, FaYoutube].map((Icon, i) => (
-                <a
-                  key={i}
-                  href="#"
-                  className="w-12 h-12 border-4 border-gray-500 rounded-full flex items-center justify-center text-gray-500"
-                >
-                  <Icon className="text-2xl" />
-                </a>
-              ))}
-            </div>
           </div>
         </div>
-      </div>
 
-      {/* background */}
-      <div className="fixed inset-0 -z-10">
-        <Image
-          src="/signin.jpg"
-          alt="Arrière-plan de connexion"
-          fill
-          className="object-cover"
-        />
+        {/* Background image */}
+        <div className="fixed inset-0 -z-10">
+          <Image
+            src="/signin.jpg"
+            alt="Arrière-plan d’inscription"
+            fill
+            className="object-cover"
+          />
+        </div>
       </div>
     </>
   );
