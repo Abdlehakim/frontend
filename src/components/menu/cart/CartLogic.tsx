@@ -15,37 +15,35 @@ const CartLogic = () => {
   const [isCartModalOnscroll, setIsCartModalOnscrollOpen] = useState(false);
   const [isScrolling, setIsScrolling] = useState(false);
   const items = useSelector((state: RootState) => state.cart.items);
+  const pathname = usePathname();
 
   const cartModalWrapperRef = useRef<HTMLDivElement>(null);
   const onscrollCartModalWrapperRef = useRef<HTMLDivElement>(null);
-  const pathname = usePathname();
 
-  // Calculate total quantity of items in the cart (Memoized)
-  const totalQuantity = useMemo(() => {
-    return items.reduce((total, item) => total + (item.quantity || 0), 0);
-  }, [items]);
+  const totalQuantity = useMemo(
+    () => items.reduce((total, item) => total + (item.quantity || 0), 0),
+    [items]
+  );
 
-  // Calculate total price (Memoized)
-  const totalPrice = useMemo(() => {
-    return items.reduce((total, item) => {
-      const finalPrice =
-        item.discount != null && item.discount > 0
-          ? item.price - (item.price * item.discount) / 100
-          : item.price;
-      return total + finalPrice * item.quantity;
-    }, 0);
-  }, [items]);
+  const totalPrice = useMemo(
+    () =>
+      items.reduce((total, item) => {
+        const finalPrice =
+          item.discount != null && item.discount > 0
+            ? item.price - (item.price * item.discount) / 100
+            : item.price;
+        return total + finalPrice * item.quantity;
+      }, 0),
+    [items]
+  );
 
   const toggleCartModal = () => setIsCartOpen((prev) => !prev);
-
   const toggleCartModalOnscroll = () =>
     setIsCartModalOnscrollOpen((prev) => !prev);
-
   const closeCartModal = () => setIsCartOpen(false);
   const closeCartModalOnscroll = () => setIsCartModalOnscrollOpen(false);
 
-  // Handle clicks outside of the cart modal
-
+  // 1️⃣ Close on outside clicks
   useEffect(() => {
     const handleClickOutside = (event: MouseEvent) => {
       if (
@@ -64,22 +62,38 @@ const CartLogic = () => {
       }
     };
 
-    if (isCartOpen) {
+    if (isCartOpen || isCartModalOnscroll) {
       document.addEventListener("mousedown", handleClickOutside);
     }
-    if (isCartModalOnscroll) {
-      document.addEventListener("mousedown", handleClickOutside);
-    }
-
     return () => {
       document.removeEventListener("mousedown", handleClickOutside);
     };
   }, [isCartOpen, isCartModalOnscroll]);
 
-  // Handle scroll events
+  // 2️⃣ Detect threshold scroll for floating button
   useEffect(() => {
+    const container: HTMLElement | Window =
+      document.querySelector("main") || window;
+
     const handleScroll = () => {
-      setIsScrolling(window.scrollY > 120);
+      const scrollPos =
+        container instanceof Window ? window.pageYOffset : container.scrollTop;
+      setIsScrolling(scrollPos > 120);
+    };
+
+    container.addEventListener("scroll", handleScroll, { passive: true });
+    handleScroll();
+    return () => {
+      container.removeEventListener("scroll", handleScroll);
+    };
+  }, []);
+
+  // 3️⃣ Close both modals immediately on any user scroll
+  useEffect(() => {
+    const container: HTMLElement | Window =
+      document.querySelector("main") || window;
+
+    const onUserScroll = () => {
       if (isCartOpen) {
         closeCartModal();
       }
@@ -88,13 +102,13 @@ const CartLogic = () => {
       }
     };
 
-    window.addEventListener("scroll", handleScroll);
+    container.addEventListener("scroll", onUserScroll, { passive: true });
     return () => {
-      window.removeEventListener("scroll", handleScroll);
+      container.removeEventListener("scroll", onUserScroll);
     };
   }, [isCartOpen, isCartModalOnscroll]);
 
-  // Close cart on route change
+  // 4️⃣ Close cart on route change
   useEffect(() => {
     closeCartModal();
     closeCartModalOnscroll();
@@ -109,12 +123,10 @@ const CartLogic = () => {
           ref={cartModalWrapperRef}
         >
           <div className="relative my-auto mx-2">
-            <div>
-              <SlBag size={40} />
-              <span className="w-4 flex justify-center h-4 items-center text-xs rounded-full absolute -top-1 -right-1 text-white bg-secondary">
-                {totalQuantity}
-              </span>
-            </div>
+            <SlBag size={40} />
+            <span className="absolute -top-1 -right-1 w-4 h-4 flex items-center justify-center text-xs rounded-full bg-secondary text-white">
+              {totalQuantity}
+            </span>
             <div
               className="absolute max-md:fixed shadow-xl z-30 flex gap-[8px] flex-col top-12 left-1/2 -translate-x-1/3 max-md:-translate-x-1/2 max-md:top-16 max-md:w-full"
               onClick={(e) => e.stopPropagation()}
@@ -125,13 +137,15 @@ const CartLogic = () => {
             </div>
           </div>
           <div className="flex flex-col">
-            <p className="text-text text-sm max-2xl:text-xs max-md:hidden">Mon Panier</p>
+            <p className="text-text text-sm max-2xl:text-xs max-md:hidden">
+              Mon Panier
+            </p>
             <Total totalPrice={totalPrice} />
           </div>
         </div>
       </div>
 
-      {/* Show the floating cart button when scrolling */}
+      {/* Floating cart on scroll */}
       {isScrolling && (
         <div
           className="fixed top-5 right-5 rounded-full z-50 bg-[#15335D] w-fit p-4 flex items-center gap-[16px] border-4 border-white shadow-lg cursor-pointer"
@@ -140,11 +154,9 @@ const CartLogic = () => {
         >
           <div className="relative">
             <SlBag size={25} className="text-white" />
-            <span className="w-4 flex justify-center h-4 items-center text-xs rounded-full absolute -top-1 -right-1 text-white bg-secondary">
-              <p>{totalQuantity}</p>
+            <span className="absolute -top-1 -right-1 w-4 h-4 flex items-center justify-center text-xs rounded-full bg-secondary text-white">
+              {totalQuantity}
             </span>
-
-            {/* Scrolling Cart Modal */}
             <div
               className="absolute max-md:fixed shadow-xl z-30 flex gap-[8px] top-12 right-0 flex-col max-md:top-[80px] max-md:right-[50%] max-md:transform max-md:translate-x-1/2 transition-all duration-900 ease-in-out"
               onClick={(e) => e.stopPropagation()}
