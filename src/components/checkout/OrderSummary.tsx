@@ -6,10 +6,9 @@
 
 import React, { Key, useEffect, useState } from "react";
 import Image from "next/image";
-import { FiCheckCircle } from "react-icons/fi";
-import { FaSpinner } from "react-icons/fa";
 import { useRouter } from "next/navigation";
 import { fetchData } from "@/lib/fetchData";
+import LoadingDots from "@/components/LoadingDots";
 
 /* ---------- types ---------- */
 interface Address {
@@ -29,7 +28,7 @@ interface OrderItem {
   product: string;
   name: string;
   quantity: number;
-  mainImageUrl: string;   // ✅ canonical key
+  mainImageUrl: string;
   discount: number;
   price: number;
 }
@@ -74,13 +73,14 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ data }) => {
     })();
   }, [data]);
 
-  /* ---------- loading & error states ---------- */
-  if (loading)
+  /* loading overlay */
+  if (loading) {
     return (
-      <div className="flex justify-center items-center py-8 pt-16">
-        <FaSpinner className="animate-spin text-gray-500 w-16 h-16" />
+      <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+        <LoadingDots />
       </div>
     );
+  }
 
   if (!order) return <div>Order data not found.</div>;
 
@@ -93,28 +93,26 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ data }) => {
       <div className="bg-white shadow-lg rounded-lg p-6 h-fit w-[50%]">
         {/* Header */}
         <div className="flex items-center justify-center gap-2 mb-6">
-          <FiCheckCircle className="text-green-500 w-12 h-12" />
           <h2 className="text-3xl font-bold text-green-500">
-            Thanks for your order!
+            Merci pour votre commande !
           </h2>
         </div>
 
         {/* Order summary */}
         <div className="border-t border-gray-300 mt-4 pt-4">
-          <h3 className="text-xl font-semibold mb-2">Order Summary</h3>
+          <h3 className="text-xl font-semibold mb-2">Résumé de la commande</h3>
           <p className="text-gray-700">
-            Your order <span className="font-bold">#{order.ref}</span> is
-            successful.
+            Votre commande <span className="font-bold">#{order.ref}</span> a été réussie.
           </p>
           <div className="mt-4">
             <p className="text-base font-bold">
-              Total:&nbsp;<span>{fmt(order.total)}</span>
+              Total : <span>{fmt(order.total)}</span>
             </p>
           </div>
 
           {/* Items */}
           <div className="mt-6">
-            <p className="font-semibold text-lg mb-2">Article(s):</p>
+            <p className="font-semibold text-lg mb-2">Article(s) :</p>
             <div className="flex flex-col divide-y divide-gray-200">
               {order.orderItems.length ? (
                 order.orderItems.map((item) => {
@@ -140,10 +138,10 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ data }) => {
                           <p className="text-lg font-semibold">{item.name}</p>
                           <p className="text-sm text-gray-600">
                             {fmt(unit)}{" "}
-                            {item.discount > 0 && "(Discounted)"}
+                            {item.discount > 0 && "(Remisé)"}
                           </p>
                           <p className="text-sm text-gray-500">
-                            Quantity: {item.quantity}
+                            Quantité : {item.quantity}
                           </p>
                         </div>
                       </div>
@@ -152,7 +150,7 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ data }) => {
                   );
                 })
               ) : (
-                <p>No items found</p>
+                <p>Aucun article trouvé</p>
               )}
             </div>
           </div>
@@ -160,17 +158,17 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ data }) => {
           {/* Meta */}
           <div className="mt-8 space-y-2">
             <p className="text-gray-700">
-              Payment Method:&nbsp;
+              Mode de paiement :{" "}
               <span className="font-bold">{order.paymentMethod}</span>
             </p>
             <p className="text-gray-700">
-              Delivery Method:&nbsp;
+              Méthode de livraison :{" "}
               <span className="font-bold uppercase">
                 {order.deliveryMethod}
               </span>
             </p>
             <h3 className="text-gray-700 uppercase font-bold mt-6 mb-2">
-              Delivery Address
+              Adresse de livraison
             </h3>
             <p className="text-gray-700 whitespace-pre-line">
               {order.address.Name}
@@ -191,13 +189,13 @@ const OrderSummary: React.FC<OrderSummaryProps> = ({ data }) => {
             onClick={() => router.push("/")}
             className="nav-btn hover:bg-NavbuttonH uppercase font-bold px-4 py-2 text-black"
           >
-            Go to Home Page
+            Accueil
           </button>
           <button
             onClick={() => router.push("/orderhistory")}
             className="nav-btn hover:bg-NavbuttonH uppercase font-bold px-4 py-2 text-black"
           >
-            Check Order Status
+            Suivre ma commande
           </button>
         </div>
       </div>

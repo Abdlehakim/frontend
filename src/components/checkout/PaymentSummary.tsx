@@ -11,7 +11,8 @@ import { toast } from "react-toastify";
 import { clearCart, CartItem } from "@/store/cartSlice";
 import PaypalButton from "@/components/checkout/PaypalButton";
 import { PaymentMethodId } from "@/components/checkout/PaymentMethode";
-import { fetchData } from "@/lib/fetchData"; // 🆕 helper
+import { fetchData } from "@/lib/fetchData";
+import LoadingDots from "@/components/LoadingDots";
 
 /* ---------- props ---------- */
 interface PaymentSummaryProps {
@@ -42,6 +43,9 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
   handleOrderSummary,
 }) => {
   const dispatch = useDispatch();
+
+  /* ---------- loading overlay ---------- */
+  const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
 
   /* ---------- totals ---------- */
   const [totalWithShipping, setTotalWithShipping] = useState(
@@ -137,11 +141,14 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
       toast.error("Select address, delivery and payment method.");
       return;
     }
+
+    setIsSubmittingOrder(true);
     try {
       await postOrder();
     } catch (err) {
       toast.error("Failed to submit order. Please try again.");
       console.error(err);
+      setIsSubmittingOrder(false);
     }
   };
 
@@ -149,98 +156,104 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
 
   /* ---------- JSX ---------- */
   return (
-    <div className="bg-gray-100 rounded-md p-4 w-[30%] max-lg:w-full">
-      {/* Promo code */}
-      <div className="flex border border-[#15335E] overflow-hidden rounded-md">
-        <input
-          type="text"
-          placeholder="Promo code"
-          className="w-full bg-white px-4 py-2.5 text-sm"
-        />
-        <button className="bg-primary px-4 text-sm font-semibold text-white">
-          Apply
-        </button>
-      </div>
-
-      {/* Totals */}
-      <ul className="mt-8 space-y-4 text-gray-800">
-        <li className="flex justify-between text-base">
-          <span>Discount</span>
-          <span className="font-bold">{totalDiscount.toFixed(2)} TND</span>
-        </li>
-        <li className="flex justify-between text-base">
-          <span>Shipping</span>
-          <span className="font-bold">{deliveryCost.toFixed(2)} TND</span>
-        </li>
-        <li className="flex justify-between text-base">
-          <span>TVA</span>
-          <span className="font-bold">{totalTva.toFixed(2)} TND</span>
-        </li>
-        <li className="flex justify-between text-base font-bold">
-          <span>Total</span>
-          <span>{totalWithShipping.toFixed(2)} TND</span>
-        </li>
-      </ul>
-
-      {/* Step 1: cart */}
-      {currentStep === "cart" && (
-        <div className="mt-8 space-y-2">
-          <button
-            onClick={onCheckout}
-            disabled={items.length === 0}
-            className={`mt-2 w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm text-black hover:text-white ${
-              items.length
-                ? " hover:bg-primary"
-                : "cursor-not-allowed"
-            }`}
-          >
-            Continue
-          </button>
-          <Link href="/">
-            <button className="mt-2 w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm hover:bg-primary hover:text-white">
-              Annuler
-            </button>
-          </Link>
+    <>
+      {isSubmittingOrder && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <LoadingDots />
         </div>
       )}
 
-      {/* Step 2: checkout */}
-      {currentStep === "checkout" && (
-        <div className="mt-8 space-y-2">
-          {selectedPaymentMethod !== "paypal" ? (
+      <div className="bg-gray-100 rounded-md p-4 w-[30%] max-lg:w-full">
+        {/* Promo code */}
+        <div className="flex border border-[#15335E] overflow-hidden rounded-md">
+          <input
+            type="text"
+            placeholder="Promo code"
+            className="w-full bg-white px-4 py-2.5 text-sm"
+          />
+          <button className="bg-primary px-4 text-sm font-semibold text-white">
+            Apply
+          </button>
+        </div>
+
+        {/* Totals */}
+        <ul className="mt-8 space-y-4 text-gray-800">
+          <li className="flex justify-between text-base">
+            <span>Discount</span>
+            <span className="font-bold">{totalDiscount.toFixed(2)} TND</span>
+          </li>
+          <li className="flex justify-between text-base">
+            <span>Shipping</span>
+            <span className="font-bold">{deliveryCost.toFixed(2)} TND</span>
+          </li>
+          <li className="flex justify-between text-base">
+            <span>TVA</span>
+            <span className="font-bold">{totalTva.toFixed(2)} TND</span>
+          </li>
+          <li className="flex justify-between text-base font-bold">
+            <span>Total</span>
+            <span>{totalWithShipping.toFixed(2)} TND</span>
+          </li>
+        </ul>
+
+        {/* Step 1: cart */}
+        {currentStep === "cart" && (
+          <div className="mt-8 space-y-2">
             <button
-              onClick={handleOrderSubmit}
-              disabled={!isFormValid}
-              className={`mt-2 w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm text-black  ${
-                isFormValid
-                    ? " hover:bg-primary hover:text-white"
-                : "cursor-not-allowed"
+              onClick={onCheckout}
+              disabled={items.length === 0}
+              className={`mt-2 w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm text-black hover:text-white ${
+                items.length ? " hover:bg-primary" : "cursor-not-allowed"
               }`}
             >
-              Confirm Order
+              Continue
             </button>
-          ) : (
-            <PaypalButton
-              amount={totalWithShipping.toFixed(2)}
-              onSuccess={handlePayPalSuccess}
-            />
-          )}
+            <Link href="/">
+              <button className="mt-2 w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm hover:bg-primary hover:text-white">
+                Annuler
+              </button>
+            </Link>
+          </div>
+        )}
 
-          <button
-            onClick={backcarte}
-            className="mt-2 w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm hover:bg-primary hover:text-white"
-          >
-            Retournez
-          </button>
+        {/* Step 2: checkout */}
+        {currentStep === "checkout" && (
+          <div className="mt-8 space-y-2">
+            {selectedPaymentMethod !== "paypal" ? (
+              <button
+                onClick={handleOrderSubmit}
+                disabled={!isFormValid}
+                className={`mt-2 w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm text-black  ${
+                  isFormValid
+                    ? " hover:bg-primary hover:text-white"
+                    : "cursor-not-allowed"
+                }`}
+              >
+                Confirm Order
+              </button>
+            ) : (
+              <PaypalButton
+                amount={totalWithShipping.toFixed(2)}
+                onSuccess={handlePayPalSuccess}
+              />
+            )}
 
-          <Link href="/">
-            <button className="mt-2 w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm hover:bg-primary hover:text-white">
-              Annuler
+            <button
+              onClick={backcarte}
+              className="mt-2 w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm hover:bg-primary hover:text-white"
+            >
+              Retournez
             </button>
-          </Link>
-        </div>
-      )}
-    </div>
+
+            <Link href="/">
+              <button className="mt-2 w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm hover:bg-primary hover:text-white">
+                Annuler
+              </button>
+            </Link>
+          </div>
+        )}
+      </div>
+    </>
   );
 };
 
