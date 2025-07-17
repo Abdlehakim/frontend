@@ -46,11 +46,11 @@ export default function SignUpForm({ redirectTo }: SignUpFormProps) {
         body: JSON.stringify({ username, phone, email, password }),
       });
 
-      // re-hydrate your auth context and then redirect
+      // re‑hydrate your auth context and then redirect
       await refresh();
       router.push(redirectTo);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Sign-up failed");
+      setError(err instanceof Error ? err.message : "Échec de l’inscription");
     } finally {
       setIsSubmitting(false);
     }
@@ -58,11 +58,11 @@ export default function SignUpForm({ redirectTo }: SignUpFormProps) {
 
   return (
     <div className="flex w-full h-screen items-center">
-      <div className="w-[60%] max-lg:w-full flex justify-center items-center h-screen">
+      <div className="w-[60%] max-lg:w-full flex justify-center items-center h-full">
         <div className="px-8 flex flex-col w-[600px] h-full bg-white bg-opacity-80 rounded-xl justify-center gap-[16px] z-10">
           {/* Heading */}
           <div className="flex flex-col gap-[8px] items-center">
-            <h1 className="text-2xl uppercase font-bold">Create an account</h1>
+            <h1 className="text-2xl uppercase font-bold">Créer un compte</h1>
           </div>
 
           {error && (
@@ -73,7 +73,7 @@ export default function SignUpForm({ redirectTo }: SignUpFormProps) {
           <form onSubmit={handleSubmit} className="flex flex-col gap-[8px]">
             <div>
               <label htmlFor="username" className="block mb-1 font-medium">
-                Username
+                Nom d’utilisateur
               </label>
               <input
                 id="username"
@@ -88,11 +88,11 @@ export default function SignUpForm({ redirectTo }: SignUpFormProps) {
 
             <div>
               <label htmlFor="phone" className="block mb-1 font-medium">
-                Phone (optional)
+                Téléphone (facultatif)
               </label>
               <input
                 id="phone"
-                placeholder="Numéro de téléphone"
+                placeholder="Votre numéro de téléphone"
                 type="text"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
@@ -102,11 +102,11 @@ export default function SignUpForm({ redirectTo }: SignUpFormProps) {
 
             <div>
               <label htmlFor="email" className="block mb-1 font-medium">
-                Email
+                E‑mail
               </label>
               <input
                 id="email"
-                placeholder="votremail@email.com"
+                placeholder="vous@exemple.com"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
@@ -117,7 +117,7 @@ export default function SignUpForm({ redirectTo }: SignUpFormProps) {
 
             <div className="flex flex-col gap-[4px] relative">
               <label htmlFor="password" className="mb-1 text-lg font-medium">
-                Password
+                Mot de passe
               </label>
               <div className="relative">
                 <input
@@ -147,16 +147,17 @@ export default function SignUpForm({ redirectTo }: SignUpFormProps) {
               disabled={isSubmitting}
               className="h-[50px] w-full text-white text-lg font-semibold py-2 rounded-md bg-primary border-2 transition duration-200 mt-4 hover:bg-secondary"
             >
-              {isSubmitting ? "Signing up..." : "Sign up"}
+              {isSubmitting ? "Inscription en cours..." : "S’inscrire"}
             </button>
           </form>
+
           <div className="flex items-center mt-4 w-full gap-[8px]">
             <div className="flex-grow border-t border-gray-400" />
             <Link
               href="/signin"
               className="text-primary text-sm font-semibold hover:underline text-center"
             >
-              Vous Avez deja un compte ? Cliquez ici pour vous connecter
+              Vous avez déjà un compte ? Connectez-vous
             </Link>
             <div className="flex-grow border-t border-gray-400" />
           </div>
@@ -167,7 +168,7 @@ export default function SignUpForm({ redirectTo }: SignUpFormProps) {
       <div className="fixed inset-0 -z-10">
         <Image
           src="/signin.jpg"
-          alt="Arrière-plan de connexion"
+          alt="Arrière-plan d’inscription"
           fill
           className="object-cover"
         />

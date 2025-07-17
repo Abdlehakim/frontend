@@ -111,7 +111,7 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
 
   return (
     <div className="w-flex w-full h-screen items-center">
-      <div className="w-[60%] max-lg:w-[100%] flex justify-center items-center h-screen">
+      <div className="w-[60%] max-lg:w-[100%] flex justify-center items-center h-full">
         <div className="px-8 flex flex-col w-[600px] h-full bg-white bg-opacity-80 rounded-xl max-md:rounded-none justify-center gap-4 z-10">
           <div className="flex flex-col gap-2 items-center">
             <h1 className="text-2xl uppercase font-bold">Connectez-vous </h1>
