@@ -158,7 +158,7 @@ const CartLogic = () => {
               {totalQuantity}
             </span>
             <div
-              className="absolute max-md:fixed shadow-xl z-30 flex gap-[8px] top-12 right-0 flex-col max-md:top-[80px] max-md:right-[50%] max-md:transform max-md:translate-x-1/2 transition-all duration-900 ease-in-out"
+              className="absolute max-md:fixed shadow-lg z-30 flex gap-[8px] top-12 right-0 flex-col max-md:top-[90px] max-md:right-[50%] max-md:transform max-md:translate-x-1/2 transition-all duration-900 ease-in-out"
               onClick={(e) => e.stopPropagation()}
             >
               {isCartModalOnscroll && items.length > 0 && (
