@@ -82,7 +82,7 @@ export default function SignUpForm({ redirectTo }: SignUpFormProps) {
                 value={username}
                 onChange={(e) => setUsername(e.target.value)}
                 required
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none text-lg"
+                className="w-full h-12 border  border-gray-300 px-4  rounded-md focus:outline-none text-md"
               />
             </div>
 
@@ -96,7 +96,7 @@ export default function SignUpForm({ redirectTo }: SignUpFormProps) {
                 type="text"
                 value={phone}
                 onChange={(e) => setPhone(e.target.value)}
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none text-lg"
+                className="w-full h-12 border  border-gray-300 px-4  rounded-md focus:outline-none text-md"
               />
             </div>
 
@@ -111,12 +111,12 @@ export default function SignUpForm({ redirectTo }: SignUpFormProps) {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 required
-                className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none text-lg"
+                className="w-full h-12 border  border-gray-300 px-4  rounded-md focus:outline-none text-md"
               />
             </div>
 
             <div className="flex flex-col gap-[4px] relative">
-              <label htmlFor="password" className="mb-1 text-lg font-medium">
+              <label htmlFor="password" className="block mb-1 font-medium">
                 Mot de passe
               </label>
               <div className="relative">
@@ -126,7 +126,7 @@ export default function SignUpForm({ redirectTo }: SignUpFormProps) {
                   type={showPassword ? "text" : "password"}
                   onChange={(e) => setPassword(e.target.value)}
                   required
-                  className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none text-lg font-semibold"
+                  className="w-full h-12 border  border-gray-300 px-4  rounded-md focus:outline-none text-md"
                 />
                 <button
                   type="button"

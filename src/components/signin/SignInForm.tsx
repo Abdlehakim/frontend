@@ -67,7 +67,7 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
     setIsSubmitting(true);
 
     try {
-      // Perform login (you may extend `login` to accept rememberMe if needed)
+      // Perform login
       await login(email, password);
 
       // Persist or clear saved email based on the checkbox
@@ -82,7 +82,6 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
       router.push(redirectTo);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Échec de la connexion");
-    } finally {
       setIsSubmitting(false);
     }
   }
@@ -104,141 +103,152 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
       router.push(redirectTo);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Échec de la connexion Google");
-    } finally {
       setIsGoogleLoading(false);
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <div className="w-flex w-full h-screen items-center">
-      <div className="w-[60%] max-lg:w-[100%] flex justify-center items-center h-full">
-        <div className="px-8 flex flex-col w-[600px] h-full bg-white bg-opacity-80 rounded-xl max-md:rounded-none justify-center gap-4 z-10">
-          <div className="flex flex-col gap-2 items-center">
-            <h1 className="text-2xl uppercase font-bold">Connectez-vous </h1>
-          </div>
+    <>
+      {/* full-screen loading overlay */}
+      {(isSubmitting || isGoogleLoading) && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <LoadingDots />
+        </div>
+      )}
 
-          {error && <p className="text-red-500">{error}</p>}
-
-          <form onSubmit={handleSubmit} className="flex flex-col gap-2">
-            {/* email */}
-            <div className="flex flex-col gap-1">
-              <label htmlFor="email" className="text-lg font-medium">
-                E‑mail
-              </label>
-              <input
-                id="email"
-                type="email"
-                placeholder="vous@exemple.com"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                required
-                autoComplete="email"
-                className="w-full h-12 border px-4 border-primary rounded-md focus:outline-none text-sm font-semibold"
-              />
+      <div className="w-flex w-full h-screen items-center">
+        <div className="w-[60%] max-lg:w-[100%] flex justify-center items-center h-full">
+          <div className="px-8 flex flex-col w-[600px] h-full bg-white bg-opacity-80 rounded-xl max-md:rounded-none justify-center gap-4 z-10">
+            <div className="flex flex-col gap-2 items-center">
+              <h1 className="text-2xl uppercase font-bold">Connectez-vous</h1>
             </div>
 
-            {/* password */}
-            <div className="flex flex-col gap-1 relative">
-              <label htmlFor="password" className="text-lg font-medium">
-                Mot de passe
-              </label>
-              <div className="relative">
+            {error && <p className="text-red-500">{error}</p>}
+
+            <form onSubmit={handleSubmit} className="flex flex-col gap-2">
+              {/* email */}
+              <div className="flex flex-col gap-1">
+                <label htmlFor="email" className="block mb-1 font-medium">
+                  E‑mail
+                </label>
                 <input
-                  id="password"
-                  type={showPassword ? "text" : "password"}
-                  placeholder="•••••••"
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  id="email"
+                  type="email"
+                  placeholder="vous@exemple.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   required
-                  autoComplete="current-password"
-                  className="w-full border border-primary rounded-md px-3 py-2 pr-10 focus:outline-none text-lg font-semibold"
+                  autoComplete="email"
+                  className="w-full h-12 border  border-gray-300 px-4  rounded-md focus:outline-none text-md"
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-3 flex items-center text-gray-500"
-                >
-                  {showPassword ? (
-                    <AiOutlineEyeInvisible size={22} />
-                  ) : (
-                    <AiOutlineEye size={22} />
-                  )}
-                </button>
               </div>
-            </div>
 
-            {/* submit */}
-            <button
-              type="submit"
-              disabled={isSubmitting}
-              className="h-12 w-full text-white text-lg font-semibold rounded-md bg-primary transition hover:bg-secondary"
-            >
-              {isSubmitting ? "Connexion..." : "Se connecter"}
-            </button>
+              {/* password */}
+              <div className="flex flex-col gap-1 relative">
+                <label htmlFor="password" className="block mb-1 font-medium">
+                  Mot de passe
+                </label>
+                <div className="relative">
+                  <input
+                    id="password"
+                    type={showPassword ? "text" : "password"}
+                    placeholder="•••••••"
+                    value={password}
+                    onChange={(e) => setPassword(e.target.value)}
+                    required
+                    autoComplete="current-password"
+                    className="w-full h-12 border  border-gray-300 px-4  rounded-md focus:outline-none text-md"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword(!showPassword)}
+                    className="absolute inset-y-0 right-3 flex items-center text-gray-500"
+                  >
+                    {showPassword ? (
+                      <AiOutlineEyeInvisible size={22} />
+                    ) : (
+                      <AiOutlineEye size={22} />
+                    )}
+                  </button>
+                </div>
+              </div>
 
-            {/* remember + forgot */}
-            <div className="flex items-center justify-between mt-2 text-sm font-semibold">
-              <label className="inline-flex items-center text-gray-500 max-md:text-xs">
-                <input
-                  type="checkbox"
-                  className="mr-2 w-4 h-4"
-                  checked={rememberMe}
-                  onChange={(e) => setRememberMe(e.target.checked)}
-                />
-                Se souvenir de moi
-              </label>
-              <Link
-                href="/forgot-password"
-                className="text-primary hover:underline max-md:text-xs"
+              {/* submit */}
+              <button
+                type="submit"
+                disabled={isSubmitting}
+                className="mt-2 h-12 w-full text-white text-lg font-semibold rounded-md bg-primary transition hover:bg-secondary"
               >
-                Mot de passe oublié&nbsp;?
+                Se connecter
+              </button>
+
+              {/* remember + forgot */}
+              <div className="flex items-center justify-between mt-2 text-sm font-semibold">
+                <label className="inline-flex items-center text-gray-500 max-md:text-xs">
+                  <input
+                    type="checkbox"
+                    className="mr-2 w-4 h-4"
+                    checked={rememberMe}
+                    onChange={(e) => setRememberMe(e.target.checked)}
+                  />
+                  Se souvenir de moi
+                </label>
+                <Link
+                  href="/forgot-password"
+                  className="text-primary hover:underline max-md:text-xs"
+                >
+                  Mot de passe oublié&nbsp;?
+                </Link>
+              </div>
+
+              {/* divider */}
+              <div className="flex items-center">
+                <hr className="flex-grow border-t border-gray-300" />
+                <span className="mx-2 text-gray-500">ou</span>
+                <hr className="flex-grow border-t border-gray-300" />
+              </div>
+
+              {/* Google */}
+              <div className="flex flex-col items-center h-20 w-full">
+                {isGoogleLoading || !hasGoogleLoaded ? (
+                  <LoadingDots />
+                ) : (
+                  <GoogleLogin
+                    onSuccess={handleGoogleSignIn}
+                    onError={() => setError("Échec de la connexion Google")}
+                  />
+                )}
+              </div>
+
+              <hr className="border-t border-gray-300" />
+            </form>
+
+            <div className="flex items-center w-full gap-2 justify-center">
+              <div className="flex-grow border-t border-gray-400" />
+              <Link
+                href="/signup"
+                className="text-primary text-center text-sm font-semibold hover:underline"
+              >
+                Vous n’avez pas de compte ? Cliquez ici pour en créer un.
               </Link>
-            </div>
-
-            {/* divider */}
-            <div className="flex items-center">
-              <hr className="flex-grow border-t border-gray-300" />
-              <span className="mx-2 text-gray-500">ou</span>
-              <hr className="flex-grow border-t border-gray-300" />
-            </div>
-
-            {/* Google */}
-            <div className="flex flex-col items-center h-20 w-full">
-              {isGoogleLoading || !hasGoogleLoaded ? (
-                <LoadingDots />
-              ) : (
-                <GoogleLogin
-                  onSuccess={handleGoogleSignIn}
-                  onError={() => setError("Échec de la connexion Google")}
-                />
-              )}
+              <div className="flex-grow border-t border-gray-400" />
             </div>
 
             <hr className="border-t border-gray-300" />
-          </form>
 
-          <div className="flex items-center w-full gap-2 justify-center">
-            <div className="flex-grow border-t border-gray-400" />
-            <Link
-  href="/signup"
-  className="text-primary text-center text-sm font-semibold hover:underline"
->
-  Vous n’avez pas de compte ? Cliquez ici pour en créer un.
-</Link>
-            <div className="flex-grow border-t border-gray-400" />
-          </div>
-<hr className="border-t border-gray-300" />
-          {/* socials */}
-          <div className="flex gap-4 justify-center">
-            {[FaFacebookF, FaInstagram, FaTwitter, FaYoutube].map((Icon, i) => (
-              <a
-                key={i}
-                href="#"
-                className="w-12 h-12 border-4 border-gray-500 rounded-full flex items-center justify-center text-gray-500"
-              >
-                <Icon className="text-2xl" />
-              </a>
-            ))}
+            {/* socials */}
+            <div className="flex gap-4 justify-center">
+              {[FaFacebookF, FaInstagram, FaTwitter, FaYoutube].map((Icon, i) => (
+                <a
+                  key={i}
+                  href="#"
+                  className="w-12 h-12 border-4 border-gray-500 rounded-full flex items-center justify-center text-gray-500"
+                >
+                  <Icon className="text-2xl" />
+                </a>
+              ))}
+            </div>
           </div>
         </div>
       </div>
@@ -252,6 +262,6 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
           className="object-cover"
         />
       </div>
-    </div>
+    </>
   );
 }
