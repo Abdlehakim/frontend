@@ -167,7 +167,7 @@ export default function SignUpForm({ redirectTo }: SignUpFormProps) {
       </div>
 
       {/* Background image */}
-      <div className="fixed inset-0 -z-10">
+      <div className=" relative  inset-0 -z-10">
         <Image
           src="/signin.jpg"
           alt="signin background"
