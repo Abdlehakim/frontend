@@ -64,7 +64,7 @@ export default async function Footer() {
   return (
     <div className="pt-8 flex flex-col justify-center items-center">
       {/* Top Section */}
-      <div className="bg-[#15335D] text-white flex justify-center py-16 max-md:py-8 w-full">
+      <div className="bg-primary text-white flex justify-center py-8 max-md:py-6 w-full">
         <div className="flex items-start justify-between md:max-lg:justify-around w-[80%] max-xl:w-[90%] max-lg:w-[98%] max-md:w-[95%] max-md:flex-col max-md:items-center max-md:gap-[40px]">
           {/* Left */}
           <div className="flex flex-col gap-[32px] items-center">
