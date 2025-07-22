@@ -57,6 +57,7 @@ export default function SettingsPage() {
       const redirectTo = searchParams.get("redirectTo") || "/";
       router.push(`/signin?redirectTo=${redirectTo}`);
     }
+      console.log("auth -> loading:", loading, "isAuthenticated:", isAuthenticated,);
   }, [loading, isAuthenticated, router, searchParams]);
 
   const fetchAddresses = useCallback(async () => {

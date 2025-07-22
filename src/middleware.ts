@@ -15,6 +15,7 @@ export function middleware(request: NextRequest) {
       pathname.startsWith("/orderhistory")) &&
     !token
   ) {
+    
     const redirectUrl = new URL("/signin", request.url);
     redirectUrl.searchParams.set("redirectTo", pathname);
     return NextResponse.redirect(redirectUrl);

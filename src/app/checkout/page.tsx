@@ -52,6 +52,7 @@ const Checkout: React.FC = () => {
       const redirectTo = searchParams.get("redirectTo") || "/";
       router.push(`/signin?redirectTo=${redirectTo}`);
     }
+      console.log("auth -> loading:", loading, "isAuthenticated:", isAuthenticated);
   }, [loading, isAuthenticated, router, searchParams]);
   /* ▲ */
 
