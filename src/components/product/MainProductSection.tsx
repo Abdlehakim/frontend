@@ -160,7 +160,7 @@ const MainProductSection: React.FC<Props> = ({ initialProduct }) => {
                     >
                       <Image
                         src={img}
-                        alt=""
+                        alt={`${product.name ?? "product"} ${idx + 1}`}
                         className="object-cover p-1 rounded-lg"
                         quality={75}
                         placeholder="empty"
