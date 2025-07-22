@@ -3,10 +3,11 @@
 ------------------------------------------------------------------ */
 "use client";
 
-import React from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
 import { FaEye, FaRegHeart, FaHeart, FaCartShopping } from "react-icons/fa6";
+import { FaSpinner } from "react-icons/fa";
 import { useDispatch, useSelector } from "react-redux";
 import { addItem, type CartItem } from "@/store/cartSlice";
 import { addToWishlist } from "@/store/wishlistSlice";
@@ -21,7 +22,11 @@ interface ProductCardProps {
 const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
   const dispatch = useDispatch();
   const wishlistItems = useSelector((state: RootState) => state.wishlist.items);
-  const isInWishlist = (slug: string) => wishlistItems.some((w) => w.slug === slug);
+  const isInWishlist = (slug: string) =>
+    wishlistItems.some((w) => w.slug === slug);
+
+  /* 🔥 NEW: track which product buttons are in "loading" state */
+  const [loadingIds, setLoadingIds] = useState<Record<string, boolean>>({});
 
   const handleWishlistClick = (product: Product) => {
     if (!product.categorie) return;
@@ -36,8 +41,48 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
           slug: product.categorie.slug,
         },
         slug: product.slug,
-      }),
+      })
     );
+  };
+
+  const handleAddToCart = (product: Product, isOutOfStock: boolean) => {
+    if (isOutOfStock || loadingIds[product._id]) return;
+
+    /* show loader 3s */
+    setLoadingIds((prev) => ({ ...prev, [product._id]: true }));
+
+    /* add to cart immediately (or after delay if you prefer) */
+    const base: Omit<CartItem, "quantity"> = {
+      _id: product._id,
+      name: product.name,
+      reference: product.reference,
+      price: product.price,
+      tva: product.tva,
+      mainImageUrl: product.mainImageUrl,
+      discount: product.discount ?? 0,
+      slug: product.slug,
+      categorie: product.categorie
+        ? {
+            name: product.categorie.name,
+            slug: product.categorie.slug,
+          }
+        : { name: "inconnue", slug: "categorie" },
+      ...(product.subcategorie && {
+        subcategorie: {
+          name: product.subcategorie.name,
+          slug: product.subcategorie.slug,
+        },
+      }),
+    };
+    dispatch(addItem({ item: base, quantity: 1 }));
+
+    setTimeout(() => {
+      setLoadingIds((prev) => {
+        const clone = { ...prev };
+        delete clone[product._id];
+        return clone;
+      });
+    }, 500);
   };
 
   return (
@@ -56,6 +101,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
         const parentSlug =
           product.subcategorie?.slug ?? product.categorie?.slug ?? "categorie";
         const productUrl = `/${parentSlug}/${product.slug}`;
+
+        const isLoading = !!loadingIds[product._id];
 
         /* -------- single card -------- */
         return (
@@ -116,46 +163,31 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
             <div className="flex justify-between h-[45px] text-lg max-md:text-sm">
               {/* add-to-cart */}
               <button
-                disabled={isOutOfStock}
-                onClick={() => {
-                  if (isOutOfStock) return;
-
-                  /* 🔥 UPDATED – base item carries tva & subcategorie */
-                  const base: Omit<CartItem, "quantity"> = {
-                    _id: product._id,
-                    name: product.name,
-                    reference: product.reference,
-                    price: product.price,
-                    tva: product.tva,                    // NEW
-                    mainImageUrl: product.mainImageUrl,
-                    discount: product.discount ?? 0,
-                    slug: product.slug,
-                    categorie: product.categorie
-                      ? {
-                          name: product.categorie.name,
-                          slug: product.categorie.slug,
-                        }
-                      : { name: "inconnue", slug: "categorie" },
-                    ...(product.subcategorie && {
-                      subcategorie: {
-                        name: product.subcategorie.name,
-                        slug: product.subcategorie.slug,
-                      },
-                    }),
-                  };
-
-                  dispatch(addItem({ item: base, quantity: 1 }));
-                }}
+                disabled={isOutOfStock || isLoading}
+                onClick={() => handleAddToCart(product, isOutOfStock)}
                 className={`AddtoCart relative w-[50%] max-lg:w-[60%] max-md:rounded-[3px] group/box ${
-                  isOutOfStock
+                  isOutOfStock || isLoading
                     ? "bg-gray-400 cursor-not-allowed"
                     : "bg-primary text-white hover:bg-[#15335D]"
                 }`}
               >
-                <p className="absolute inset-0 flex items-center justify-center transition-transform duration-300 lg:group-hover/box:translate-x-[10%] max-md:text-xs">
-                  {isOutOfStock ? "Rupture de stock" : "A. au panier"}
-                </p>
-                {!isOutOfStock && (
+                {/* text OR spinner */}
+                {isOutOfStock ? (
+                  <p className="absolute inset-0 flex items-center justify-center transition-transform duration-300 text-sm max-md:text-xs">
+                    Rupture de stock
+                  </p>
+                ) : isLoading ? (
+                  <div className="absolute inset-0 flex items-center justify-center">
+                    <FaSpinner className="w-5 h-5 animate-spin" />
+                  </div>
+                ) : (
+                  <p className="absolute inset-0 flex items-center justify-center transition-transform duration-300 lg:group-hover/box:translate-x-[10%] text-sm max-md:text-xs">
+                    A. au panier
+                  </p>
+                )}
+
+                {/* cart icon slide-in (hide while loading/out-of-stock) */}
+                {!isOutOfStock && !isLoading && (
                   <span className="absolute inset-0 flex items-center justify-center -translate-x-full transition-transform duration-300 lg:group-hover/box:translate-x-[-35%]">
                     <FaCartShopping className="w-6 h-6" />
                   </span>
@@ -165,7 +197,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
               {/* view */}
               <Link href={productUrl} className="w-[25%] max-lg:w-[30%]">
                 <button className="AddtoCart relative h-full w-full bg-white text-primary border border-primary max-md:rounded-[3px] group/box">
-                  <span className="absolute inset-0 flex items-center justify-center transition-transform duration-300 lg:group-hover/box:-translate-y-full max-md:text-xs">
+                  <span className="absolute inset-0 flex items-center justify-center transition-transform duration-300 lg:group-hover/box:-translate-y-full text-sm max-md:text-xs">
                     Voir
                   </span>
                   <span className="absolute inset-0 flex items-center justify-center -translate-y-full transition-transform duration-300 lg:group-hover/box:translate-y-0">

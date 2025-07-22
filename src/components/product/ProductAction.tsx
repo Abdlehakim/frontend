@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------ */
-/*  ProductAction — now with field-level loaders                      */
+/*  ProductAction — now with button-level loader on "Ajouter au panier" */
 /* ------------------------------------------------------------------ */
 "use client";
 
@@ -7,6 +7,7 @@ import Link from "next/link";
 import Image from "next/image";
 import React, { useMemo, useState } from "react";
 import type { Product } from "@/types/Product";
+import { FaSpinner } from "react-icons/fa6"; // ✅ loader icon
 
 /* ---------- tiny skeleton helper ---------- */
 const Skel = ({ className = "" }: { className?: string }) => (
@@ -128,7 +129,7 @@ const ProductAction: React.FC<ProductActionProps> = ({
   };
 
   /* ---------- price & stock ---------- */
-  const discountPct = product.discount ?? 0;          // <-- safe default
+  const discountPct = product.discount ?? 0;
   const hasDiscount = discountPct > 0;
   const finalPrice = hasDiscount
     ? product.price * (1 - discountPct / 100)
@@ -136,6 +137,16 @@ const ProductAction: React.FC<ProductActionProps> = ({
 
   const inStock =
     product.stockStatus === "in stock" && (product.stock || 0) > 0;
+
+  /* ---------- NEW: loader for add-to-cart button ---------- */
+  const [adding, setAdding] = useState(false);
+
+  const onAddToCart = () => {
+    if (adding) return;
+    setAdding(true);
+    addToCartHandler(product, quantity, selected);
+    setTimeout(() => setAdding(false), 500); 
+  };
 
   /* ------------------------------------------------------------------ */
   return (
@@ -271,20 +282,34 @@ const ProductAction: React.FC<ProductActionProps> = ({
                 </div>
 
                 <div className="flex gap-4 w-full">
+                  {/* ---------- ADD TO CART with loader ---------- */}
                   <button
-                    onClick={() =>
-                      addToCartHandler(product, quantity, selected)
-                    }
-                    className="flex-1 bg-primary text-white h-10 font-semibold rounded-md max-lg:text-sm"
+                    onClick={onAddToCart}
+                    disabled={adding}
+                    className={`flex-1 h-10 font-semibold rounded-md max-lg:text-sm relative ${
+                      adding
+                        ? "bg-gray-400 cursor-not-allowed text-white border-2"
+                        : "bg-white border-primary border-2 text-black hover:bg-primary hover:text-white"
+                    }`}
                   >
-                    Ajouter au panier
+                    {/* spinner OR text (no translate animation on spinner) */}
+                    {adding ? (
+                      <div className="absolute inset-0 flex items-center justify-center">
+                        <FaSpinner className="w-5 h-5 animate-spin" />
+                      </div>
+                    ) : (
+                      <span className="absolute inset-0 flex items-center justify-center">
+                        Ajouter au panier
+                      </span>
+                    )}
                   </button>
+
                   <Link href="/checkout" className="flex-1">
                     <button
                       onClick={() =>
                         addToCartHandler(product, quantity, selected)
                       }
-                      className="w-full bg-black text-white h-10 font-semibold rounded-md max-lg:text-sm"
+                      className="w-full bg-primary text-white h-10 font-semibold rounded-md max-lg:text-sm hover:bg-secondary"
                     >
                       Acheter
                     </button>
@@ -302,6 +327,7 @@ const ProductAction: React.FC<ProductActionProps> = ({
           )}
         </div>
       )}
+      <hr className="my-4" />
     </>
   );
 };

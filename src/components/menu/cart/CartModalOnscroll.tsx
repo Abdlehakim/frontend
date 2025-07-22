@@ -14,16 +14,17 @@ interface CartModalOnscrollProps {
   onClose: () => void;
 }
 
-const CartModalOnscroll: React.FC<CartModalOnscrollProps> = ({ items, onClose }) => {
+const CartModalOnscroll: React.FC<CartModalOnscrollProps> = ({
+  items,
+  onClose,
+}) => {
   const dispatch = useDispatch();
 
   const totalPrice = useMemo(() => {
     return items.reduce((total, item) => {
       const discount = item.discount ?? 0;
       const finalPrice =
-        discount > 0
-          ? item.price - (item.price * discount) / 100
-          : item.price;
+        discount > 0 ? item.price - (item.price * discount) / 100 : item.price;
       return total + finalPrice * item.quantity;
     }, 0);
   }, [items]);
@@ -60,9 +61,10 @@ const CartModalOnscroll: React.FC<CartModalOnscrollProps> = ({ items, onClose })
 
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 4;
-  const totalPages = useMemo(() => Math.ceil(items.length / itemsPerPage), [
-    items.length,
-  ]);
+  const totalPages = useMemo(
+    () => Math.ceil(items.length / itemsPerPage),
+    [items.length]
+  );
 
   const paginatedItems = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
@@ -119,7 +121,9 @@ const CartModalOnscroll: React.FC<CartModalOnscrollProps> = ({ items, onClose })
 
               <div className="text-black flex flex-col gap-[8px]">
                 <p className="text-sm font-bold">{item.name}</p>
-                <p className="text-gray-800 text-xs">Quantity: {item.quantity}</p>
+                <p className="text-gray-800 text-xs">
+                  Quantity: {item.quantity}
+                </p>
                 <p className="text-gray-800 text-xs max-md:hidden">
                   Price Unit: TND {unitPrice.toFixed(2)}
                 </p>
@@ -164,13 +168,16 @@ const CartModalOnscroll: React.FC<CartModalOnscrollProps> = ({ items, onClose })
         <button
           aria-label="check"
           className="w-fit mx-auto px-6 h-10 rounded-full border-2 border-secondary hover:bg-secondary flex items-center justify-center my-2 hover:text-white text-secondary"
-            >
-              <span className="text-xl font-semibold tracking-wide"> Poursuivre au paiement</span>
-            </button>
+        >
+          <span className="text-xl font-semibold tracking-wide">
+            {" "}
+            Poursuivre au paiement
+          </span>
+        </button>
       </Link>
 
       <button
-        className="w-full text-center text-black underline cursor-pointer mb-2"
+        className="w-full text-center text-black hover:underline cursor-pointer mb-2 hover:text-primary"
         onClick={(e) => {
           e.stopPropagation();
           onClose();

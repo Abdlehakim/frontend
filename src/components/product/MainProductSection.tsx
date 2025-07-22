@@ -27,7 +27,14 @@ const Skel = ({ className = "" }: { className?: string }) => (
 /* ---------- props ---------- */
 type ProductStub = Pick<
   Product,
-  "slug" | "name" | "reference" | "price" | "discount" | "stock" | "mainImageUrl" | "tva"
+  | "slug"
+  | "name"
+  | "reference"
+  | "price"
+  | "discount"
+  | "stock"
+  | "mainImageUrl"
+  | "tva"
 >;
 interface Props {
   initialProduct: ProductStub;
@@ -64,23 +71,22 @@ const MainProductSection: React.FC<Props> = ({ initialProduct }) => {
   /* ---------- helpers ---------- */
   const handleImageClick = (img: string) => setSelectedImage(img);
 
-const addToCartHandler = (p: Product, qty: number) => {
-  const cartItem: Omit<CartItem, "quantity"> = {
-    _id: p._id,
-    name: p.name,
-    reference: p.reference,
-    price: p.price,
-    tva: p.tva,              // 🆕  required field
-    mainImageUrl: p.mainImageUrl,
-    discount: p.discount ?? 0,
-    slug: p.slug,
-    categorie: p.categorie
-      ? { name: p.categorie.name, slug: p.categorie.slug }
-      : undefined,
+  const addToCartHandler = (p: Product, qty: number) => {
+    const cartItem: Omit<CartItem, "quantity"> = {
+      _id: p._id,
+      name: p.name,
+      reference: p.reference,
+      price: p.price,
+      tva: p.tva, // 🆕  required field
+      mainImageUrl: p.mainImageUrl,
+      discount: p.discount ?? 0,
+      slug: p.slug,
+      categorie: p.categorie
+        ? { name: p.categorie.name, slug: p.categorie.slug }
+        : undefined,
+    };
+    dispatch(addItem({ item: cartItem, quantity: qty }));
   };
-  dispatch(addItem({ item: cartItem, quantity: qty }));
-};
-
 
   /* ---------- derived ---------- */
   const loading = !("_id" in product);
@@ -204,11 +210,19 @@ const addToCartHandler = (p: Product, qty: number) => {
 
         {/* info */}
         {product.info ? (
-          <p className="text-lg text-gray-700 h-8 max-lg:h-fit max-lg:text-sm">{product.info}</p>
+          <p className="text-lg text-gray-700 h-8 max-lg:h-fit max-lg:text-sm">
+            {product.info}
+          </p>
         ) : (
           <Skel className="h-8 w-3/4" />
         )}
 
+        {/* actions */}
+        <ProductAction
+          product={product as Product}
+          addToCartHandler={addToCartHandler}
+          onImageSelect={(img) => img && setSelectedImage(img)}
+        />
         {/* disponibilité */}
         {loading ? (
           <Skel className="h-6 w-48" />
@@ -220,13 +234,6 @@ const addToCartHandler = (p: Product, qty: number) => {
             </span>
           </div>
         )}
-
-        {/* actions */}
-        <ProductAction
-          product={product as Product}
-          addToCartHandler={addToCartHandler}
-          onImageSelect={(img) => img && setSelectedImage(img)}
-        />
       </div>
     </div>
   );

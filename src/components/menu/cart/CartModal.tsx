@@ -179,7 +179,7 @@ const CartModal: React.FC<CartModalProps> = ({ items, onClose }) => {
           </Link>
 
           <button
-            className="w-full text-center text-black underline cursor-pointer mb-2"
+            className="w-full text-center text-black hover:underline cursor-pointer mb-2 hover:text-primary"
             onClick={(e) => {
               e.stopPropagation();
               onClose();
