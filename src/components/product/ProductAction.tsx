@@ -251,16 +251,16 @@ const ProductAction: React.FC<ProductActionProps> = ({
       {loading ? (
         <Skel className="h-12 w-full" />
       ) : (
-        <div className="flex flex-col items-center gap-4">
+        <div className="flex flex-col justify-center items-center gap-4">
           {inStock ? (
             <>
               {/* qty picker + add / buy */}
-              <div className="flex justify-between w-full gap-4 max-md:flex-col">
+              <div className="flex justify-between items-center w-full gap-4 max-md:flex-col">
                 <div className="flex items-center max-lg:justify-center gap-2">
                   <button
                     onClick={dec}
                     disabled={quantity === 1}
-                    className="p-2 border"
+                    className="p-2 border hover:bg-primary hover:text-white"
                   >
                     –
                   </button>
@@ -275,7 +275,7 @@ const ProductAction: React.FC<ProductActionProps> = ({
                   <button
                     onClick={inc}
                     disabled={quantity >= (product.stock || 0)}
-                    className="p-2 border"
+                    className="p-2 border hover:bg-primary hover:text-white"
                   >
                     +
                   </button>

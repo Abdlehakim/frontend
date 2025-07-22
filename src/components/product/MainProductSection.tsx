@@ -135,7 +135,7 @@ const MainProductSection: React.FC<Props> = ({ initialProduct }) => {
           <button
             onClick={() => scroll("left")}
             disabled={loading}
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-6 h-16 flex items-center justify-center disabled:opacity-30"
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-6 h-16 flex items-center justify-center disabled:opacity-30 border-2 border-primary hover:bg-primary hover:text-white"
           >
             <IoChevronBackSharp size={22} />
           </button>
@@ -165,7 +165,7 @@ const MainProductSection: React.FC<Props> = ({ initialProduct }) => {
           <button
             onClick={() => scroll("right")}
             disabled={loading}
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-6 h-16 flex items-center justify-center disabled:opacity-30"
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-6 h-16 flex items-center justify-center disabled:opacity-30 border-2 border-primary hover:bg-primary hover:text-white"
           >
             <IoChevronForwardSharp size={22} />
           </button>

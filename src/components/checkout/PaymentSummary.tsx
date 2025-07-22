@@ -1,6 +1,6 @@
 /* ------------------------------------------------------------------
    src/components/checkout/PaymentSummary.tsx
-   (uses fetchData helper for the POST, no more BACKEND_URL constant)
+   (only the totals + buttons block made sticky – everything else untouched)
 ------------------------------------------------------------------ */
 "use client";
 
@@ -164,7 +164,11 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
       )}
 
       <div className="bg-gray-100 rounded-md p-4 w-[30%] max-lg:w-full">
-        {/* Promo code */}
+        
+
+        {/* ▼▼▼ STICKY WRAPPER STARTS HERE ▼▼▼ */}
+        <div className="mt-8 sticky top-4 space-y-8">
+          {/* Promo code */}
         <div className="flex border border-[#15335E] overflow-hidden rounded-md">
           <input
             type="text"
@@ -175,83 +179,85 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
             Apply
           </button>
         </div>
+        
+          {/* Totals */}
+          <ul className="space-y-4 text-gray-800">
+            <li className="flex justify-between text-base">
+              <span>Discount</span>
+              <span className="font-bold">{totalDiscount.toFixed(2)} TND</span>
+            </li>
+            <li className="flex justify-between text-base">
+              <span>Shipping</span>
+              <span className="font-bold">{deliveryCost.toFixed(2)} TND</span>
+            </li>
+            <li className="flex justify-between text-base">
+              <span>TVA</span>
+              <span className="font-bold">{totalTva.toFixed(2)} TND</span>
+            </li>
+            <li className="flex justify-between text-base font-bold">
+              <span>Total</span>
+              <span>{totalWithShipping.toFixed(2)} TND</span>
+            </li>
+          </ul>
 
-        {/* Totals */}
-        <ul className="mt-8 space-y-4 text-gray-800">
-          <li className="flex justify-between text-base">
-            <span>Discount</span>
-            <span className="font-bold">{totalDiscount.toFixed(2)} TND</span>
-          </li>
-          <li className="flex justify-between text-base">
-            <span>Shipping</span>
-            <span className="font-bold">{deliveryCost.toFixed(2)} TND</span>
-          </li>
-          <li className="flex justify-between text-base">
-            <span>TVA</span>
-            <span className="font-bold">{totalTva.toFixed(2)} TND</span>
-          </li>
-          <li className="flex justify-between text-base font-bold">
-            <span>Total</span>
-            <span>{totalWithShipping.toFixed(2)} TND</span>
-          </li>
-        </ul>
-
-        {/* Step 1: cart */}
-        {currentStep === "cart" && (
-          <div className="mt-8 space-y-2">
-            <button
-              onClick={onCheckout}
-              disabled={items.length === 0}
-              className={`mt-2 w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm text-black hover:text-white ${
-                items.length ? " hover:bg-primary" : "cursor-not-allowed"
-              }`}
-            >
-              Continue
-            </button>
-            <Link href="/">
-              <button className="mt-2 w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm hover:bg-primary hover:text-white">
-                Annuler
-              </button>
-            </Link>
-          </div>
-        )}
-
-        {/* Step 2: checkout */}
-        {currentStep === "checkout" && (
-          <div className="mt-8 space-y-2">
-            {selectedPaymentMethod !== "paypal" ? (
+          {/* Step 1: cart */}
+          {currentStep === "cart" && (
+            <div className="space-y-2">
               <button
-                onClick={handleOrderSubmit}
-                disabled={!isFormValid}
-                className={`mt-2 w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm text-black  ${
-                  isFormValid
-                    ? " hover:bg-primary hover:text-white"
-                    : "cursor-not-allowed"
+                onClick={onCheckout}
+                disabled={items.length === 0}
+                className={`mt-2 w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm text-black hover:text-white ${
+                  items.length ? " hover:bg-primary" : "cursor-not-allowed"
                 }`}
               >
-                Confirm Order
+                Continue
               </button>
-            ) : (
-              <PaypalButton
-                amount={totalWithShipping.toFixed(2)}
-                onSuccess={handlePayPalSuccess}
-              />
-            )}
+              <Link href="/">
+                <button className="mt-2 w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm hover:bg-primary hover:text-white">
+                  Annuler
+                </button>
+              </Link>
+            </div>
+          )}
 
-            <button
-              onClick={backcarte}
-              className="mt-2 w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm hover:bg-primary hover:text-white"
-            >
-              Retournez
-            </button>
+          {/* Step 2: checkout */}
+          {currentStep === "checkout" && (
+            <div className="space-y-2">
+              {selectedPaymentMethod !== "paypal" ? (
+                <button
+                  onClick={handleOrderSubmit}
+                  disabled={!isFormValid}
+                  className={`mt-2 w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm text-black  ${
+                    isFormValid
+                      ? " hover:bg-primary hover:text-white"
+                      : "cursor-not-allowed"
+                  }`}
+                >
+                  Confirm Order
+                </button>
+              ) : (
+                <PaypalButton
+                  amount={totalWithShipping.toFixed(2)}
+                  onSuccess={handlePayPalSuccess}
+                />
+              )}
 
-            <Link href="/">
-              <button className="mt-2 w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm hover:bg-primary hover:text-white">
-                Annuler
+              <button
+                onClick={backcarte}
+                className="mt-2 w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm hover:bg-primary hover:text-white"
+              >
+                Retournez
               </button>
-            </Link>
-          </div>
-        )}
+
+                <Link href="/">
+                  <button className="mt-2 w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm hover:bg-primary hover:text-white">
+                    Annuler
+                  </button>
+                </Link>
+            </div>
+          )}
+        </div>
+        {/* ▲▲▲ STICKY WRAPPER ENDS HERE ▲▲▲ */}
       </div>
     </>
   );
