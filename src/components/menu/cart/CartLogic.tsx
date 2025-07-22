@@ -86,7 +86,7 @@ const CartLogic = () => {
     const handleScroll = () => {
       const scrollPos =
         container instanceof Window ? window.pageYOffset : container.scrollTop;
-      setIsScrolling(scrollPos > 120);
+      setIsScrolling(scrollPos > 80);
     };
 
     container.addEventListener("scroll", handleScroll, { passive: true });

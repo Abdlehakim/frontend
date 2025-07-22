@@ -14,20 +14,39 @@ interface CartModalOnscrollProps {
   onClose: () => void;
 }
 
+/* ---------- helper to merge by _id ---------- */
+const useMergedItems = (items: CartItem[]) =>
+  useMemo(() => {
+    const map = new Map<string, CartItem>();
+    for (const it of items) {
+      const key = String(it._id);
+      const found = map.get(key);
+      if (found) {
+        found.quantity += it.quantity;
+      } else {
+        map.set(key, { ...it });
+      }
+    }
+    return Array.from(map.values());
+  }, [items]);
+
 const CartModalOnscroll: React.FC<CartModalOnscrollProps> = ({
   items,
   onClose,
 }) => {
   const dispatch = useDispatch();
 
+  /* merge duplicates so UI shows one line */
+  const mergedItems = useMergedItems(items);
+
   const totalPrice = useMemo(() => {
-    return items.reduce((total, item) => {
+    return mergedItems.reduce((total, item) => {
       const discount = item.discount ?? 0;
       const finalPrice =
         discount > 0 ? item.price - (item.price * discount) / 100 : item.price;
       return total + finalPrice * item.quantity;
     }, 0);
-  }, [items]);
+  }, [mergedItems]);
 
   const incrementHandler = useCallback(
     (item: CartItem, e: React.MouseEvent) => {
@@ -62,14 +81,14 @@ const CartModalOnscroll: React.FC<CartModalOnscrollProps> = ({
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 4;
   const totalPages = useMemo(
-    () => Math.ceil(items.length / itemsPerPage),
-    [items.length]
+    () => Math.ceil(mergedItems.length / itemsPerPage),
+    [mergedItems.length]
   );
 
   const paginatedItems = useMemo(() => {
     const start = (currentPage - 1) * itemsPerPage;
-    return items.slice(start, start + itemsPerPage);
-  }, [items, currentPage]);
+    return mergedItems.slice(start, start + itemsPerPage);
+  }, [mergedItems, currentPage]);
 
   useEffect(() => {
     if (currentPage > totalPages) {
@@ -77,9 +96,7 @@ const CartModalOnscroll: React.FC<CartModalOnscrollProps> = ({
     }
   }, [currentPage, totalPages]);
 
-  if (items.length === 0) {
-    return null;
-  }
+  if (mergedItems.length === 0) return null;
 
   return (
     <div
@@ -87,7 +104,7 @@ const CartModalOnscroll: React.FC<CartModalOnscrollProps> = ({
       onClick={(e) => e.stopPropagation()}
     >
       <h1 className="text-lg font-bold text-black border-b-2 text-center py-2 max-md:text-sm">
-        Your shopping cart ({items.length} items)
+        Your shopping cart ({mergedItems.length} items)
       </h1>
 
       <div className="text-gray-500 border-b-2">
@@ -121,9 +138,7 @@ const CartModalOnscroll: React.FC<CartModalOnscrollProps> = ({
 
               <div className="text-black flex flex-col gap-[8px]">
                 <p className="text-sm font-bold">{item.name}</p>
-                <p className="text-gray-800 text-xs">
-                  Quantity: {item.quantity}
-                </p>
+                <p className="text-gray-800 text-xs">Quantity: {item.quantity}</p>
                 <p className="text-gray-800 text-xs max-md:hidden">
                   Price Unit: TND {unitPrice.toFixed(2)}
                 </p>
@@ -170,7 +185,6 @@ const CartModalOnscroll: React.FC<CartModalOnscrollProps> = ({
           className="w-fit mx-auto px-6 h-10 rounded-full border-2 border-secondary hover:bg-secondary flex items-center justify-center my-2 hover:text-white text-secondary"
         >
           <span className="text-xl font-semibold tracking-wide">
-            {" "}
             Poursuivre au paiement
           </span>
         </button>

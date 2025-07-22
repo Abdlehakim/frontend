@@ -41,6 +41,7 @@ export default function SimilarProducts({
     setLoading(true);
 
     const w = typeof window !== "undefined" ? window.innerWidth : 1024;
+    
     const fetchLimit = w <= 767 ? 1 : w < 1024 ? 2 : w < 1536 ? 3 : 4;
     setLimit(fetchLimit);
 
@@ -49,10 +50,23 @@ export default function SimilarProducts({
       `?limit=${fetchLimit}&exclude=${excludeSlug}&t=${Date.now()}`;
 
     fetchData<Product[]>(url)
-      .then((data) => setProducts(data))
-      .catch(() => setProducts([]))
+      .then((data) => {
+        console.log("SimilarProducts fetched data:", data); // <-- LOG HERE
+        setProducts(data);
+      })
+      .catch((err) => {
+        console.error("SimilarProducts fetch error:", err);
+        setProducts([]);
+      })
       .finally(() => setLoading(false));
   }, [key, excludeSlug, refresh]);
+
+  // Optional: log whenever products state changes
+  useEffect(() => {
+    if (!loading) {
+      console.log("SimilarProducts state products:", products);
+    }
+  }, [products, loading]);
 
   if (!loading && products.length === 0) {
     return <p className="w-full text-center py-10">No similar product.</p>;
