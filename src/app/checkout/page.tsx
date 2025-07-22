@@ -15,9 +15,20 @@ import DeliveryAddressSelect from "@/components/checkout/DeliveryAddress";
 import DeliveryMethod from "@/components/checkout/DeliveryMethod";
 import OrderSummary from "@/components/checkout/OrderSummary";
 
+/* ▼ added */
+import { useAuth } from "@/hooks/useAuth";
+import { useRouter, useSearchParams } from "next/navigation";
+/* ▲ added */
+
 const Checkout: React.FC = () => {
   const items = useSelector((s: RootState) => s.cart.items);
   const dispatch = useDispatch();
+
+  /* ▼ added */
+  const {isAuthenticated, loading } = useAuth();
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  /* ▲ added */
 
   /* ----- step navigation ----- */
   const [currentStep, setCurrentStep] = useState<"cart" | "checkout" | "order-summary">("cart");
@@ -35,6 +46,15 @@ const Checkout: React.FC = () => {
   useEffect(() => {
     if (selectedAddressId) localStorage.setItem("selectedAddress", selectedAddressId);
   }, [selectedAddressId]);
+
+  /* ▼ optional redirect like SettingsPage */
+  useEffect(() => {
+    if (!loading && !isAuthenticated) {
+      const redirectTo = searchParams.get("redirectTo") || "/checkout";
+      router.push(`/signin?redirectTo=${redirectTo}`);
+    }
+  }, [loading, isAuthenticated, router, searchParams]);
+  /* ▲ */
 
   /* ----- totals (unchanged) ----- */
   const totalPrice = items.reduce((sum, item) => {

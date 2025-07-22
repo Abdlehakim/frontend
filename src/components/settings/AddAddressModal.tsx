@@ -1,17 +1,16 @@
 "use client";
 import React, { useState } from "react";
+import { fetchData } from "@/lib/fetchData";
 
 interface AddAddressModalProps {
   isOpen: boolean;
   onClose: () => void;
-  backendUrl: string;
   onAddressAdd: () => Promise<void> | void;
 }
 
 export default function AddAddressModal({
   isOpen,
   onClose,
-  backendUrl,
   onAddressAdd,
 }: AddAddressModalProps) {
   const [name, setName] = useState("");
@@ -21,16 +20,15 @@ export default function AddAddressModal({
   const [city, setCity] = useState("");
   const [postalCode, setPostalCode] = useState("");
   const [loading, setLoading] = useState(false);
-  // Local error state similar to EditAddressModal
   const [error, setError] = useState("");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setLoading(true);
-    // Clear any previous error
     setError("");
+
     try {
-      const res = await fetch(`${backendUrl}/api/client/address/postAddress`, {
+      await fetchData<unknown>("/client/address/postAddress", {
         method: "POST",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
@@ -43,19 +41,12 @@ export default function AddAddressModal({
           PostalCode: postalCode,
         }),
       });
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Failed to add address.");
-      }
-      await res.json();
-      await onAddressAdd(); // Trigger parent callback on success
-      onClose(); // Close the modal after submission
+
+      await onAddressAdd();
+      onClose();
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("An unexpected error occurred");
-      }
+      if (err instanceof Error) setError(err.message);
+      else setError("An unexpected error occurred");
     } finally {
       setLoading(false);
     }
@@ -64,9 +55,7 @@ export default function AddAddressModal({
   if (!isOpen) return null;
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30"
-    >
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
       <div
         className="bg-white p-6 rounded shadow max-w-2xl w-full"
         onClick={(e) => e.stopPropagation()}

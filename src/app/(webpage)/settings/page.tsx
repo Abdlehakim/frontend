@@ -6,11 +6,11 @@ import { useAuth } from "@/hooks/useAuth";
 import PaginationClient from "@/components/PaginationClient";
 import { FaTrash, FaPenToSquare } from "react-icons/fa6";
 
-// Import the separate modal components
 import AddAddressModal from "@/components/settings/AddAddressModal";
 import EditAddressModal from "@/components/settings/EditAddressModal";
-// Import the DeletePopup component
 import DeletePopup from "@/components/Popup/DeletePopup";
+
+import { fetchData } from "@/lib/fetchData";
 
 interface Address {
   _id: string;
@@ -25,53 +25,33 @@ interface Address {
 export default function SettingsPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  const backendUrl =
-    process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3000";
 
-  // Profile state
   const { user, isAuthenticated, loading } = useAuth();
-  const [username, setUsername] = useState("");
+  const [username, setUsername] = useState(user?.username ?? "");
   const [email, setEmail] = useState("");
   const [phone, setPhone] = useState("");
   const [error, setError] = useState("");
   const [success, setSuccess] = useState("");
 
-  // States for update messages (for address updates)
   const [addressUpdateSuccess, setAddressUpdateSuccess] = useState("");
   const [addressUpdateError, setAddressUpdateError] = useState("");
 
-  // New states for address addition messages
   const [addressAddSuccess, setaddressAddSuccess] = useState("");
   const [addressAddError, setaddressAddError] = useState("");
 
-  // Addresses
   const [addresses, setAddresses] = useState<Address[]>([]);
   const [addressesLoading, setAddressesLoading] = useState(true);
   const [addressesError, setAddressesError] = useState("");
 
-  // State for controlling the delete popup with the selected address for deletion
   const [addressToDelete, setAddressToDelete] = useState<Address | null>(null);
-  // Additional state to store the index of the address to be deleted
   const [deleteIndex, setDeleteIndex] = useState<number | null>(null);
 
-  // Pagination
   const [currentPage, setCurrentPage] = useState(1);
   const addressesPerPage = 4;
 
-  // State for controlling modals (add & edit)
   const [isAddressModalOpen, setIsAddressModalOpen] = useState(false);
   const [selectedAddress, setSelectedAddress] = useState<Address | null>(null);
 
-  // Update profile fields when user data loads
-  useEffect(() => {
-    if (user) {
-      setUsername(user.username ?? "");
-      setEmail(user.email ?? "");
-      setPhone(user.phone ?? "");
-    }
-  }, [user]);
-
-  // Redirect if not authenticated
   useEffect(() => {
     if (!loading && !isAuthenticated) {
       const redirectTo = searchParams.get("redirectTo") || "/";
@@ -79,20 +59,17 @@ export default function SettingsPage() {
     }
   }, [loading, isAuthenticated, router, searchParams]);
 
-  // Memoized function to fetch addresses
   const fetchAddresses = useCallback(async () => {
     try {
       setAddressesLoading(true);
-      const res = await fetch(`${backendUrl}/api/client/address/getAddress`, {
-        method: "GET",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-      });
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Failed to fetch addresses.");
-      }
-      const addressesData = (await res.json()) as Address[];
+      const addressesData = await fetchData<Address[]>(
+        "/client/address/getAddress",
+        {
+          method: "GET",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+        }
+      );
       setAddresses(addressesData);
       setCurrentPage(1);
     } catch (err: unknown) {
@@ -105,7 +82,7 @@ export default function SettingsPage() {
     } finally {
       setAddressesLoading(false);
     }
-  }, [backendUrl]);
+  }, []);
 
   useEffect(() => {
     if (!loading && isAuthenticated) {
@@ -117,18 +94,14 @@ export default function SettingsPage() {
     try {
       await fetchAddresses();
       setAddressUpdateSuccess("Address updated successfully!");
-      setTimeout(() => {
-        setAddressUpdateSuccess("");
-      }, 3000);
+      setTimeout(() => setAddressUpdateSuccess(""), 3000);
     } catch (err: unknown) {
       if (err instanceof Error) {
         setAddressUpdateError(err.message);
       } else {
         setAddressUpdateError("An unexpected error occurred");
       }
-      setTimeout(() => {
-        setAddressUpdateError("");
-      }, 3000);
+      setTimeout(() => setAddressUpdateError(""), 3000);
     }
   }, [fetchAddresses]);
 
@@ -136,38 +109,33 @@ export default function SettingsPage() {
     try {
       await fetchAddresses();
       setaddressAddSuccess("Address added successfully!");
-      setTimeout(() => {
-        setaddressAddSuccess("");
-      }, 3000);
+      setTimeout(() => setaddressAddSuccess(""), 3000);
     } catch (err: unknown) {
       if (err instanceof Error) {
         setaddressAddError(err.message);
       } else {
         setaddressAddError("An unexpected error occurred");
       }
-      setTimeout(() => {
-        setaddressAddError("");
-      }, 3000);
+      setTimeout(() => setaddressAddError(""), 3000);
     }
   }, [fetchAddresses]);
 
-  // Handle profile update
   const handleProfileSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setError("");
     setSuccess("");
     try {
-      const res = await fetch(`${backendUrl}/api/clientSetting/update`, {
+      const updatedUser = await fetchData<{
+        username: string;
+        email: string;
+        phone?: string;
+      }>("/clientSetting/update", {
         method: "PUT",
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ username, email, phone }),
       });
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Failed to update profile.");
-      }
-      const updatedUser = await res.json();
+
       setSuccess("Profile updated successfully!");
       setUsername(updatedUser.username);
       setEmail(updatedUser.email);
@@ -181,26 +149,16 @@ export default function SettingsPage() {
     }
   };
 
-  // Handle deletion of an address (called from DeletePopup)
   const handleDeleteAddress = async (id: string) => {
     try {
-      const res = await fetch(
-        `${backendUrl}/api/client/address/deleteAddress/${id}`,
-        {
-          method: "DELETE",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-        }
-      );
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Failed to delete address.");
-      }
-      await res.json();
+      await fetchData<unknown>(`/client/address/deleteAddress/${id}`, {
+        method: "DELETE",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+      });
+
       setAddressUpdateSuccess("Address deleted successfully!");
-      setTimeout(() => {
-        setAddressUpdateSuccess("");
-      }, 3000);
+      setTimeout(() => setAddressUpdateSuccess(""), 3000);
       await fetchAddresses();
     } catch (err: unknown) {
       if (err instanceof Error) {
@@ -208,22 +166,17 @@ export default function SettingsPage() {
       } else {
         setAddressUpdateError("An unexpected error occurred");
       }
-      setTimeout(() => {
-        setAddressUpdateError("");
-      }, 3000);
+      setTimeout(() => setAddressUpdateError(""), 3000);
     } finally {
-      // After deletion, close the delete popup and reset its index
       setAddressToDelete(null);
       setDeleteIndex(null);
     }
   };
 
-  // When the edit button is clicked, open the edit modal with the selected address.
   const handleUpdateClick = (addr: Address) => {
     setSelectedAddress(addr);
   };
 
-  // Pagination calculations
   const indexOfLastAddress = currentPage * addressesPerPage;
   const indexOfFirstAddress = currentPage * addressesPerPage - addressesPerPage;
   const displayedAddresses = addresses.slice(
@@ -306,7 +259,6 @@ export default function SettingsPage() {
           </button>
         </div>
 
-        {/* Address Addition & Update Messages */}
         <div className="w-full flex justify-center h-14">
           {addressAddSuccess && (
             <p className="text-green-500 my-2">{addressAddSuccess}</p>
@@ -398,26 +350,21 @@ export default function SettingsPage() {
         />
       </div>
 
-      {/* The AddAddressModal rendered here */}
       <AddAddressModal
         isOpen={isAddressModalOpen}
         onClose={() => setIsAddressModalOpen(false)}
-        backendUrl={backendUrl}
         onAddressAdd={onAddressAdd}
       />
 
-      {/* The EditAddressModal rendered when an address is selected */}
       {selectedAddress && (
         <EditAddressModal
           isOpen={true}
           onClose={() => setSelectedAddress(null)}
-          backendUrl={backendUrl}
           address={selectedAddress}
           onAddressUpdated={onAddressUpdated}
         />
       )}
 
-      {/* The DeletePopup rendered when an address is selected for deletion */}
       {addressToDelete && (
         <DeletePopup
           handleClosePopup={() => {

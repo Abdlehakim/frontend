@@ -1,10 +1,10 @@
 "use client";
 import React, { useState, useEffect } from "react";
+import { fetchData } from "@/lib/fetchData";
 
 interface EditAddressModalProps {
   isOpen: boolean;
   onClose: () => void;
-  backendUrl: string;
   address: {
     _id: string;
     Name: string;
@@ -20,7 +20,6 @@ interface EditAddressModalProps {
 export default function EditAddressModal({
   isOpen,
   onClose,
-  backendUrl,
   address,
   onAddressUpdated,
 }: EditAddressModalProps) {
@@ -33,7 +32,6 @@ export default function EditAddressModal({
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
 
-  // Update state if the address prop changes
   useEffect(() => {
     setName(address.Name);
     setStreetAddress(address.StreetAddress);
@@ -48,35 +46,25 @@ export default function EditAddressModal({
     setError("");
     setLoading(true);
     try {
-      const res = await fetch(
-        `${backendUrl}/api/client/address/updateAddress/${address._id}`,
-        {
-          method: "PUT",
-          credentials: "include",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            Name: name,
-            StreetAddress: streetAddress,
-            Country: country,
-            Province: province,
-            City: city,
-            PostalCode: postalCode,
-          }),
-        }
-      );
-      if (!res.ok) {
-        const errorData = await res.json();
-        throw new Error(errorData.error || "Failed to update address.");
-      }
-      await res.json();
-      await onAddressUpdated(); // Refresh address list in parent
-      onClose(); // Close the modal
+      await fetchData<unknown>(`/client/address/updateAddress/${address._id}`, {
+        method: "PUT",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          Name: name,
+          StreetAddress: streetAddress,
+          Country: country,
+          Province: province,
+          City: city,
+          PostalCode: postalCode,
+        }),
+      });
+
+      await onAddressUpdated();
+      onClose();
     } catch (err: unknown) {
-      if (err instanceof Error) {
-        setError(err.message);
-      } else {
-        setError("An unexpected error occurred");
-      }
+      if (err instanceof Error) setError(err.message);
+      else setError("An unexpected error occurred");
     } finally {
       setLoading(false);
     }
@@ -85,9 +73,7 @@ export default function EditAddressModal({
   if (!isOpen) return null;
 
   return (
-    <div
-      className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30"
-    >
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-30">
       <div
         className="bg-white p-6 rounded shadow max-w-2xl w-full"
         onClick={(e) => e.stopPropagation()}
