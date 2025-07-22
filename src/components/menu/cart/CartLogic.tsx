@@ -124,7 +124,9 @@ const CartLogic = () => {
           ref={cartModalWrapperRef}
         >
           <div className="relative my-auto mx-2">
-            <SlBag size={40} />
+            <SlBag size={40} className= {`${
+                bump ? "scale-125 text-secondary" : "scale-100"
+              }`} />
             <span
               className={`absolute -top-1 -right-1 w-5 h-5 flex items-center justify-center text-xs rounded-full bg-secondary text-white transition-transform duration-300 ${
                 bump ? "scale-125" : "scale-100"
