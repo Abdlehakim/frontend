@@ -128,7 +128,7 @@ const CartModal: React.FC<CartModalProps> = ({ items, onClose }) => {
                     Quantity: {item.quantity}
                   </p>
                   <p className="text-gray-800 text-xs">
-                    Price Unit: TND {unitPrice.toFixed(2)}
+                  <span className='max-md:hidden'>Price Unit:</span> TND {unitPrice.toFixed(2)}
                   </p>
                 </div>
 
