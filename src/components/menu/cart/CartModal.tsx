@@ -169,7 +169,7 @@ const CartModal: React.FC<CartModalProps> = ({ items, onClose }) => {
             Total: TND {totalPrice.toFixed(2)}
           </p>
 
-          <Link href="/checkout" passHref>
+          <Link href="/checkout">
             <button
               aria-label="checkout"
               className="w-fit mx-auto px-6 h-10 rounded-full border-2 border-secondary hover:bg-secondary flex items-center justify-center my-2 hover:text-white text-secondary"
