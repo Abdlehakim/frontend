@@ -47,10 +47,9 @@ const Checkout: React.FC = () => {
     if (selectedAddressId) localStorage.setItem("selectedAddress", selectedAddressId);
   }, [selectedAddressId]);
 
-  /* ▼ optional redirect like SettingsPage */
   useEffect(() => {
     if (!loading && !isAuthenticated) {
-      const redirectTo = searchParams.get("redirectTo") || "/checkout";
+      const redirectTo = searchParams.get("redirectTo") || "/";
       router.push(`/signin?redirectTo=${redirectTo}`);
     }
   }, [loading, isAuthenticated, router, searchParams]);
