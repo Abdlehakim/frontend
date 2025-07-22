@@ -127,14 +127,19 @@ const CartModalOnscroll: React.FC<CartModalOnscrollProps> = ({
             <div
               key={item._id}
               className="flex items-center justify-between py-2 max-md:mx-[10%] border-b-2"
-            >
-              <Image
-                className="object-cover"
-                src={item.mainImageUrl || "/path/to/default-image.jpg"}
-                alt={item.name}
-                width={60}
-                height={60}
-              />
+            > 
+                <div className="relative h-16 aspect-[16/16]  bg-gray-200">
+                              <Image
+                                className="object-cover"
+                                src={item.mainImageUrl  ?? ""}
+                                alt={item.name}
+                                quality={75}
+                                placeholder="empty"
+                                priority
+                                sizes="(max-width: 600px) 100vw, 600px"
+                                fill
+                              />  </div>
+              
 
               <div className="text-black flex flex-col gap-[8px]">
                 <p className="text-sm font-bold">{item.name}</p>
