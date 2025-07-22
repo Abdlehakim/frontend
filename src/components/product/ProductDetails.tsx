@@ -72,12 +72,16 @@ const ProductDetails: FC<Props> = ({ description, productDetails }) => {
 
               {/* optional image */}
               {currentRow.image && (
-                <div className="relative max-md:max-w-full max-w-[500px] min-h-[400px] aspect-[16/2]">
+                <div className="relative w-[400px] max-lg:w-full max-h-[300px] aspect-[16/16] max-lg:max-h-[400px] max-lg:">
                   <Image
                     src={currentRow.image}
                     alt={currentRow.name}
-                    fill
-                    className="object-contain"
+                    quality={75}
+                  placeholder="empty"
+                  priority
+                  sizes="(max-width: 600px) 100vw, 600px"
+                  fill
+                  className="object-cover"
                   />
                 </div>
               )}

@@ -166,7 +166,7 @@ const ProductAction: React.FC<ProductActionProps> = ({
           const isColor = g.type === "color";
           return (
             <div key={g.id} className="flex flex-col gap-4 h-28">
-              <p className="flex gap-4">
+              <p className="flex gap-4 max-lg:text-sm">
                 <span className="font-bold">{g.label} :</span>
                 {isColor && (
                   <span className="text-gray-700">{selected[g.id]}</span>
@@ -189,13 +189,18 @@ const ProductAction: React.FC<ProductActionProps> = ({
                         title={v.label}
                       >
                         {v.image ? (
-                          <Image
-                            src={v.image}
-                            alt={v.label}
-                            width={56}
-                            height={56}
-                            className="object-cover w-full h-full"
-                          />
+                          <div className="relative aspect-[16/16]  bg-gray-200">
+                            <Image
+                              src={v.image}
+                              alt={v.label}
+                              quality={75}
+                              placeholder="empty"
+                              priority
+                              sizes="(max-width: 600px) 100vw, 600px"
+                              fill
+                              className="object-cover"
+                            />
+                          </div>
                         ) : (
                           <div
                             className="w-full h-full"
@@ -240,7 +245,7 @@ const ProductAction: React.FC<ProductActionProps> = ({
       {loading ? (
         <Skel className="h-8 w-32 mx-auto" />
       ) : (
-        <div className="flex items-center justify-center gap-4 max-lg:flex-col">
+        <div className="flex items-center justify-center gap-4 max-lg:flex-col max-lg:gap-2">
           <p className="text-primary text-2xl font-bold">
             {finalPrice.toFixed(2)} TND
           </p>

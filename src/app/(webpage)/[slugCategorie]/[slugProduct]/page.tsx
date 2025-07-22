@@ -102,7 +102,7 @@ export default async function ProductPage({
 
   /* ----- render --------------------------------------------------- */
   return (
-    <div className="flex flex-col w-[90%] gap-16 mx-auto">
+    <div className="flex flex-col w-[90%] gap-16 max-lg:gap-4 mx-auto">
       <MainProductSection initialProduct={initialProduct} />
 
 <ProductDetails

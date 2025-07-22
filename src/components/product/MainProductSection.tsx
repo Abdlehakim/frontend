@@ -77,7 +77,7 @@ const MainProductSection: React.FC<Props> = ({ initialProduct }) => {
       name: p.name,
       reference: p.reference,
       price: p.price,
-      tva: p.tva, // 🆕  required field
+      tva: p.tva, // required field
       mainImageUrl: p.mainImageUrl,
       discount: p.discount ?? 0,
       slug: p.slug,
@@ -91,15 +91,11 @@ const MainProductSection: React.FC<Props> = ({ initialProduct }) => {
   /* ---------- derived ---------- */
   const loading = !("_id" in product);
 
-  /* memo-ise thumb list so eslint is happy */
-  const thumbs = useMemo(
-    () => product.extraImagesUrl ?? [],
-    [product.extraImagesUrl]
-  );
+  const thumbs = useMemo(() => product.extraImagesUrl ?? [], [product.extraImagesUrl]);
 
   /* ---------- thumbnail track refs & scroll helpers ---------- */
   const trackRef = useRef<HTMLDivElement>(null);
-  const pageSize = 5; // 5 thumbs visible
+  const pageSize = 6;
 
   const scroll = (dir: "left" | "right") => {
     const node = trackRef.current;
@@ -120,9 +116,11 @@ const MainProductSection: React.FC<Props> = ({ initialProduct }) => {
             <Image
               src={selectedImage}
               alt={product.name ?? "product"}
-              fill
+              quality={75}
+              placeholder="empty"
               priority
-              className="object-cover"
+              sizes="(max-width: 600px) 100vw, 600px"
+              fill
             />
           ) : (
             <Skel className="w-full h-full" />
@@ -135,7 +133,7 @@ const MainProductSection: React.FC<Props> = ({ initialProduct }) => {
           <button
             onClick={() => scroll("left")}
             disabled={loading}
-            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-6 h-16 flex items-center justify-center disabled:opacity-30 border-2 border-primary hover:bg-primary hover:text-white"
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-10 w-6 h-16 flex items-center justify-center disabled:opacity-30 border-2 border-primary hover:bg-primary hover:text-white rounded-lg"
           >
             <IoChevronBackSharp size={22} />
           </button>
@@ -143,29 +141,43 @@ const MainProductSection: React.FC<Props> = ({ initialProduct }) => {
           {/* track */}
           <div
             ref={trackRef}
-            className="mx-8 flex gap-4 overflow-x-hidden scroll-smooth"
+            className="mx-8 flex gap-4 max-lg:gap-2 overflow-x-hidden scroll-smooth"
           >
             {loading
               ? Array.from({ length: pageSize }).map((_, i) => (
                   <Skel key={i} className="min-w-[6rem] h-16" />
                 ))
-              : thumbs.map((img, idx) => (
-                  <button
-                    key={idx}
-                    type="button"
-                    onClick={() => handleImageClick(img)}
-                    className="relative min-w-[6rem] h-16 overflow-hidden"
-                  >
-                    <Image src={img} alt="" fill className="object-cover" />
-                  </button>
-                ))}
+              : thumbs.map((img, idx) => {
+                  const isSelected = img === selectedImage;
+                  return (
+                    <button
+                      key={idx}
+                      type="button"
+                      onClick={() => handleImageClick(img)}
+                      className={`relative min-w-[6rem] h-16 overflow-hidden rounded-lg ${
+                        isSelected ? "border-2 border-primary" : ""
+                      }`}
+                    >
+                      <Image
+                        src={img}
+                        alt=""
+                        className="object-cover p-1 rounded-lg"
+                        quality={75}
+                        placeholder="empty"
+                        priority
+                        sizes="(max-width: 600px) 100vw, 600px"
+                        fill
+                      />
+                    </button>
+                  );
+                })}
           </div>
 
           {/* ▶ arrow */}
           <button
             onClick={() => scroll("right")}
             disabled={loading}
-            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-6 h-16 flex items-center justify-center disabled:opacity-30 border-2 border-primary hover:bg-primary hover:text-white"
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-10 w-6 h-16 flex items-center justify-center disabled:opacity-30 border-2 border-primary hover:bg-primary hover:text-white rounded-lg"
           >
             <IoChevronForwardSharp size={22} />
           </button>
@@ -173,7 +185,7 @@ const MainProductSection: React.FC<Props> = ({ initialProduct }) => {
       </div>
 
       {/* -------- details -------- */}
-      <div className="w-1/2 max-md:w-full flex flex-col gap-4 px-4 ">
+      <div className="w-1/2 max-md:w-full flex flex-col gap-4 max-lg:gap-2 px-4 ">
         {/* name */}
         {product.name ? (
           <h1 className="text-3xl font-bold uppercase">{product.name}</h1>
@@ -223,13 +235,14 @@ const MainProductSection: React.FC<Props> = ({ initialProduct }) => {
           addToCartHandler={addToCartHandler}
           onImageSelect={(img) => img && setSelectedImage(img)}
         />
+
         {/* disponibilité */}
         {loading ? (
           <Skel className="h-6 w-48" />
         ) : (
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 max-lg:text-sm">
             <p className="font-bold">Disponibilité&nbsp;:</p>
-            <span className="font-semibold">
+            <span>
               {product.boutique?.name ?? "Disponible en magasin"}
             </span>
           </div>
