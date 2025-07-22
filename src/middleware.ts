@@ -11,7 +11,6 @@ export function middleware(request: NextRequest) {
   // if the user is not signed in (no token), redirect to /signin
   if (
     (
-      pathname.startsWith("/settings") ||
       pathname.startsWith("/orderhistory")) &&
     !token
   ) {
@@ -31,5 +30,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/settings", "/orderhistory/:path*", "/signin"],
+  matcher: [ "/orderhistory/:path*", "/signin"],
 };
