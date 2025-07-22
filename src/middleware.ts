@@ -10,7 +10,7 @@ export function middleware(request: NextRequest) {
   // Handle protected routes:
   // if the user is not signed in (no token), redirect to /signin
   if (
-    (pathname.startsWith("/checkout") ||
+    (
       pathname.startsWith("/settings") ||
       pathname.startsWith("/orderhistory")) &&
     !token
@@ -31,5 +31,5 @@ export function middleware(request: NextRequest) {
 }
 
 export const config = {
-  matcher: ["/settings", "/orderhistory/:path*", "/checkout/:path*", "/signin"],
+  matcher: ["/settings", "/orderhistory/:path*", "/signin"],
 };
