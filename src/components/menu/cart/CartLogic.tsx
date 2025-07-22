@@ -135,7 +135,7 @@ const CartLogic = () => {
 
             {/* ▼▼ DO NOT SCALE THIS DROPDOWN ▼▼ */}
             <div
-              className="absolute max-md:fixed shadow-xl z-30 flex gap-[8px] flex-col top-12 left-1/2 -translate-x-1/3 max-md:-translate-x-1/2 max-md:top-16 max-md:w-full transition-all duration-900 ease-in-out transform-none"
+              className="absolute max-lg:fixed shadow-xl z-30 flex gap-[8px] flex-col top-12 left-1/2 -translate-x-1/3 max-lg:-translate-x-1/2 max-lg:top-16 max-lg:w-full transition-all duration-900 ease-in-out transform-none"
               style={{ transform: "none" }} // force no scaling if parent scales
               onClick={(e) => e.stopPropagation()}
             >
@@ -146,7 +146,7 @@ const CartLogic = () => {
           </div>
 
           <div className="flex flex-col">
-            <p className="text-text text-sm max-2xl:text-xs max-md:hidden">
+            <p className="text-text text-sm max-2xl:text-xs max-lg:hidden">
               Mon Panier
             </p>
             <Total totalPrice={totalPrice} />
@@ -175,8 +175,7 @@ const CartLogic = () => {
 
             {/* ▼▼ DO NOT SCALE THIS ONE EITHER ▼▼ */}
             <div
-              className="absolute max-md:fixed shadow-lg z-30 flex gap-[8px] top-12 right-0 flex-col max-md:top-[90px] max-md:right-[50%] max-md:transform max-md:translate-x-1/2 transition-all duration-900 ease-in-out transform-none"
-              style={{ transform: "none" }}
+              className="absolute max-md:fixed shadow-lg z-30 flex gap-[8px] top-12 right-0 flex-col max-md:top-[90px] max-md:right-[50%] max-md:transform max-md:translate-x-1/2 transition-all duration-900 ease-in-out rounded-lg"
               onClick={(e) => e.stopPropagation()}
             >
               {isCartModalOnscroll && items.length > 0 && (
