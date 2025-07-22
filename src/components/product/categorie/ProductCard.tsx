@@ -19,14 +19,16 @@ interface ProductCardProps {
   products: Product[];
 }
 
+type BtnState = "loading" | "success";
+
 const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
   const dispatch = useDispatch();
   const wishlistItems = useSelector((state: RootState) => state.wishlist.items);
   const isInWishlist = (slug: string) =>
     wishlistItems.some((w) => w.slug === slug);
 
-  /* 🔥 NEW: track which product buttons are in "loading" state */
-  const [loadingIds, setLoadingIds] = useState<Record<string, boolean>>({});
+  /* 🔥 track button states per product */
+  const [btnStates, setBtnStates] = useState<Record<string, BtnState | undefined>>({});
 
   const handleWishlistClick = (product: Product) => {
     if (!product.categorie) return;
@@ -46,12 +48,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
   };
 
   const handleAddToCart = (product: Product, isOutOfStock: boolean) => {
-    if (isOutOfStock || loadingIds[product._id]) return;
+    if (isOutOfStock || btnStates[product._id] === "loading") return;
 
-    /* show loader 3s */
-    setLoadingIds((prev) => ({ ...prev, [product._id]: true }));
+    /* show loader */
+    setBtnStates((p) => ({ ...p, [product._id]: "loading" }));
 
-    /* add to cart immediately (or after delay if you prefer) */
+    /* add to cart immediately */
     const base: Omit<CartItem, "quantity"> = {
       _id: product._id,
       name: product.name,
@@ -76,13 +78,17 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
     };
     dispatch(addItem({ item: base, quantity: 1 }));
 
+    /* 0.5s spinner → then 0.5s success text */
     setTimeout(() => {
-      setLoadingIds((prev) => {
-        const clone = { ...prev };
-        delete clone[product._id];
-        return clone;
-      });
-    }, 500);
+      setBtnStates((p) => ({ ...p, [product._id]: "success" }));
+      setTimeout(() => {
+        setBtnStates((p) => {
+          const clone = { ...p };
+          delete clone[product._id];
+          return clone;
+        });
+      }, 500);
+    }, 1000);
   };
 
   return (
@@ -102,7 +108,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
           product.subcategorie?.slug ?? product.categorie?.slug ?? "categorie";
         const productUrl = `/${parentSlug}/${product.slug}`;
 
-        const isLoading = !!loadingIds[product._id];
+        const state = btnStates[product._id];
+        const isLoading = state === "loading";
+        const isSuccess = state === "success";
 
         /* -------- single card -------- */
         return (
@@ -166,12 +174,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
                 disabled={isOutOfStock || isLoading}
                 onClick={() => handleAddToCart(product, isOutOfStock)}
                 className={`AddtoCart relative w-[50%] max-lg:w-[60%] max-md:rounded-[3px] group/box ${
-                  isOutOfStock || isLoading
+                  isOutOfStock || isLoading || isSuccess
                     ? "bg-gray-400 cursor-not-allowed"
                     : "bg-primary text-white hover:bg-[#15335D]"
                 }`}
               >
-                {/* text OR spinner */}
+                {/* text / spinner / success */}
                 {isOutOfStock ? (
                   <p className="absolute inset-0 flex items-center justify-center transition-transform duration-300 text-sm max-md:text-xs">
                     Rupture de stock
@@ -180,14 +188,18 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
                   <div className="absolute inset-0 flex items-center justify-center">
                     <FaSpinner className="w-5 h-5 animate-spin" />
                   </div>
+                ) : isSuccess ? (
+                  <p className="absolute inset-0 flex items-center justify-center text-sm max-md:text-xs">
+                    Produit ajouté
+                  </p>
                 ) : (
                   <p className="absolute inset-0 flex items-center justify-center transition-transform duration-300 lg:group-hover/box:translate-x-[10%] text-sm max-md:text-xs">
                     A. au panier
                   </p>
                 )}
 
-                {/* cart icon slide-in (hide while loading/out-of-stock) */}
-                {!isOutOfStock && !isLoading && (
+                {/* cart icon slide-in (hide while loading/out-of-stock/success) */}
+                {!isOutOfStock && !isLoading && !isSuccess && (
                   <span className="absolute inset-0 flex items-center justify-center -translate-x-full transition-transform duration-300 lg:group-hover/box:translate-x-[-35%]">
                     <FaCartShopping className="w-6 h-6" />
                   </span>
