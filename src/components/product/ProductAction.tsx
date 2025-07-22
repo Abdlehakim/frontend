@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------ */
-/*  ProductAction — now with button-level loader on "Ajouter au panier" */
+/*  ProductAction — button loader + “Produit ajouté” on success       */
 /* ------------------------------------------------------------------ */
 "use client";
 
@@ -93,6 +93,8 @@ interface ProductActionProps {
   onImageSelect?: (img?: string) => void;
 }
 
+type BtnState = "loading" | "success"; // ✅ same pattern as ProductCard
+
 const ProductAction: React.FC<ProductActionProps> = ({
   product,
   addToCartHandler,
@@ -138,14 +140,19 @@ const ProductAction: React.FC<ProductActionProps> = ({
   const inStock =
     product.stockStatus === "in stock" && (product.stock || 0) > 0;
 
-  /* ---------- NEW: loader for add-to-cart button ---------- */
-  const [adding, setAdding] = useState(false);
+  /* ---------- NEW: loader/success state for add-to-cart button ---------- */
+  const [btnState, setBtnState] = useState<BtnState | undefined>(undefined);
 
   const onAddToCart = () => {
-    if (adding) return;
-    setAdding(true);
+    if (btnState === "loading") return;
+    setBtnState("loading");
     addToCartHandler(product, quantity, selected);
-    setTimeout(() => setAdding(false), 500); 
+
+    /* 0.5s spinner → 0.5s “Produit ajouté” → back to normal */
+    setTimeout(() => {
+      setBtnState("success");
+      setTimeout(() => setBtnState(undefined), 500);
+    }, 1000);
   };
 
   /* ------------------------------------------------------------------ */
@@ -282,21 +289,26 @@ const ProductAction: React.FC<ProductActionProps> = ({
                 </div>
 
                 <div className="flex gap-4 w-full">
-                  {/* ---------- ADD TO CART with loader ---------- */}
+                  {/* ---------- ADD TO CART with loader + success ---------- */}
                   <button
                     onClick={onAddToCart}
-                    disabled={adding}
+                    disabled={btnState === "loading"}
                     className={`flex-1 h-10 font-semibold rounded-md max-lg:text-sm relative ${
-                      adding
+                      btnState === "loading"
                         ? "bg-gray-400 cursor-not-allowed text-white border-2"
+                        : btnState === "success"
+                        ? "bg-gray-400 cursor-default text-white border-2"
                         : "bg-white border-primary border-2 text-black hover:bg-primary hover:text-white"
                     }`}
                   >
-                    {/* spinner OR text (no translate animation on spinner) */}
-                    {adding ? (
+                    {btnState === "loading" ? (
                       <div className="absolute inset-0 flex items-center justify-center">
                         <FaSpinner className="w-5 h-5 animate-spin" />
                       </div>
+                    ) : btnState === "success" ? (
+                      <span className="absolute inset-0 flex items-center justify-center">
+                        Produit ajouté
+                      </span>
                     ) : (
                       <span className="absolute inset-0 flex items-center justify-center">
                         Ajouter au panier
