@@ -5,6 +5,7 @@ import React, { useEffect, useRef, useCallback, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { fetchData } from "@/lib/fetchData";
+import { useAuth } from "@/hooks/useAuth"; // ← added
 
 interface DropdownProps {
   userName: string;
@@ -14,10 +15,9 @@ const Dropdown: React.FC<DropdownProps> = ({ userName }) => {
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [dropdownOpen, setDropdownOpen] = useState(true);
   const router = useRouter();
+  const { refresh, logout } = useAuth(); // if your hook exposes these
 
-  const closeDropdown = useCallback(() => {
-    setDropdownOpen(false);
-  }, []);
+  const closeDropdown = useCallback(() => setDropdownOpen(false), []);
 
   const handleClickOutside = useCallback(
     (event: MouseEvent) => {
@@ -28,9 +28,7 @@ const Dropdown: React.FC<DropdownProps> = ({ userName }) => {
     [closeDropdown]
   );
 
-  const handleScroll = useCallback(() => {
-    closeDropdown();
-  }, [closeDropdown]);
+  const handleScroll = useCallback(() => closeDropdown(), [closeDropdown]);
 
   useEffect(() => {
     if (dropdownOpen) {
@@ -48,18 +46,23 @@ const Dropdown: React.FC<DropdownProps> = ({ userName }) => {
 
   const handleSignOut = async () => {
     try {
-      // call your cached fetchData helper; it'll throw if non-2xx
       await fetchData<void>("/auth/logout", {
         method: "POST",
         credentials: "include",
       });
-      // clear any client‑side tokens/storage
+
+      // optional: clear local stuff
+      localStorage.removeItem("rememberedEmail");
+      // if you still store anything custom:
       localStorage.removeItem("token_FrontEnd");
       localStorage.removeItem("userName");
-      document.cookie = "token_FrontEnd=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      document.cookie = "userName=; expires=Thu, 01 Jan 1970 00:00:00 UTC; path=/;";
-      // redirect back to sign‑in (or refresh)
-      router.push("/signin");
+
+      // if your auth hook has a logout/refresh:
+      logout?.();
+      await refresh?.();
+
+      router.replace("/signin");
+      router.refresh(); // ← force revalidation / cookies re-read
     } catch (err) {
       console.error("Logout failed:", err);
     }
