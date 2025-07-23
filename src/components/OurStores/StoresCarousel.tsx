@@ -62,11 +62,11 @@ const StoresCard: React.FC<StoresCardProps> = ({ store, itemsPerSlide }) => (
       />
     )}
 
-    <h2 className="bg-primary absolute top-0 w-full rounded-t-xl h-20 flex items-center justify-center text-2xl font-bold capitalize text-white tracking-wide border-b-8 border-secondary">
+    <h2 className="bg-primary absolute top-0 w-full rounded-t-xl h-20 max-lg:h-10 flex items-center justify-center text-2xl font-bold capitalize text-white tracking-wide border-b-8 border-secondary max-lg:text-sm">
       {store.name}
     </h2>
 
-    <div className="absolute top-20 h-72 w-full p-2 bg-black/80 flex flex-col opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+    <div className="absolute h-72 w-full p-2 bg-black/80 flex flex-col opacity-0 transition-opacity duration-300 group-hover:opacity-100">
       <div className="mt-4 ml-4 w-[90%]">
         <h3 className="font-semibold text-xl text-white">TEMPS OUVERT :</h3>
         <div className="h-[2px] w-full bg-white/40 my-1" />
@@ -118,7 +118,7 @@ const StoresCard: React.FC<StoresCardProps> = ({ store, itemsPerSlide }) => (
       </div>
     </div>
 
-    <div className="bg-primary h-12 absolute bottom-0 w-full flex items-center justify-center gap-4 text-xl text-white tracking-wide rounded-b-xl">
+    <div className="bg-primary h-12 max-lg:h-6 absolute bottom-0 w-full flex items-center justify-center gap-4 text-xl max-lg:text-sm text-white tracking-wide rounded-b-xl">
       <FaMapMarkerAlt size={20} />
       <span className="font-semibold">
         {store.address}, {store.city}

@@ -11,7 +11,6 @@ export default async function SignInPage({
   const params: SP = await (searchParams ?? Promise.resolve({}));
 
   const raw = Array.isArray(params.redirectTo) ? params.redirectTo[0] : params.redirectTo;
-  // decode twice in case it’s double-encoded somewhere in the chain
   const decodedOnce  = typeof raw === "string" ? decodeURIComponent(raw) : undefined;
   const decodedTwice = decodedOnce ? decodeURIComponent(decodedOnce) : undefined;
 

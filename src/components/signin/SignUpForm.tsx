@@ -2,7 +2,6 @@
 "use client";
 
 import React, { useState } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
@@ -15,20 +14,21 @@ interface SignUpFormProps {
 }
 
 export default function SignUpForm({ redirectTo }: SignUpFormProps) {
-  const router = useRouter();
   const { refresh } = useAuth();
 
-  const [username, setUsername] = useState("");
-  const [phone, setPhone] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
+  const [username, setUsername]   = useState("");
+  const [phone, setPhone]         = useState("");
+  const [email, setEmail]         = useState("");
+  const [password, setPassword]   = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  const [error, setError] = useState("");
+  const [error, setError]               = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (isSubmitting) return;
+
     setError("");
     setIsSubmitting(true);
 
@@ -44,8 +44,8 @@ export default function SignUpForm({ redirectTo }: SignUpFormProps) {
       });
 
       await refresh();
-      router.replace(redirectTo);
-      router.refresh(); // ← force cookies/state to update
+      // Hard reload to ensure cookies/state are picked up in prod
+      window.location.assign(redirectTo);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Échec de l’inscription");
       setIsSubmitting(false);
@@ -61,7 +61,7 @@ export default function SignUpForm({ redirectTo }: SignUpFormProps) {
       )}
 
       <div className="flex w-full h-screen items-center">
-        <div className="w-[60%] max-lg:w-full flex justify-center items-center h-full">
+        <div className="w-[60%] max-lg:w/full flex justify-center items-center h-full">
           <div className="px-8 flex flex-col w-[600px] h-full bg-white bg-opacity-80 rounded-xl justify-center gap-[16px] z-10">
             <div className="flex flex-col gap-[8px] items-center">
               <h1 className="text-2xl uppercase font-bold">Créer un compte</h1>
@@ -83,7 +83,7 @@ export default function SignUpForm({ redirectTo }: SignUpFormProps) {
                   value={username}
                   onChange={(e) => setUsername(e.target.value)}
                   required
-                  className="w-full h-12 border  border-gray-300 px-4  rounded-md focus:outline-none text-md"
+                  className="w-full h-12 border border-gray-300 px-4 rounded-md focus:outline-none text-md"
                 />
               </div>
 
@@ -97,7 +97,7 @@ export default function SignUpForm({ redirectTo }: SignUpFormProps) {
                   type="text"
                   value={phone}
                   onChange={(e) => setPhone(e.target.value)}
-                  className="w-full h-12 border  border-gray-300 px-4  rounded-md focus:outline-none text-md"
+                  className="w-full h-12 border border-gray-300 px-4 rounded-md focus:outline-none text-md"
                 />
               </div>
 
@@ -112,7 +112,7 @@ export default function SignUpForm({ redirectTo }: SignUpFormProps) {
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                   required
-                  className="w-full h-12 border  border-gray-300 px-4  rounded-md focus:outline-none text-md"
+                  className="w-full h-12 border border-gray-300 px-4 rounded-md focus:outline-none text-md"
                 />
               </div>
 
@@ -125,9 +125,10 @@ export default function SignUpForm({ redirectTo }: SignUpFormProps) {
                     id="password"
                     placeholder="*******"
                     type={showPassword ? "text" : "password"}
+                    value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     required
-                    className="w-full h-12 border  border-gray-300 px-4  rounded-md focus:outline-none text-md"
+                    className="w-full h-12 border border-gray-300 px-4 rounded-md focus:outline-none text-md"
                   />
                   <button
                     type="button"
