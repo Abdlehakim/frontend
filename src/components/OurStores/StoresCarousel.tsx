@@ -49,10 +49,16 @@ const StoresCard: React.FC<StoresCardProps> = ({ store, itemsPerSlide }) => (
       <Image
         src={store.image}
         alt={store.name}
-        width={640}
-        height={540}
-        sizes="(max-width:768px) 100vw, (max-width:1200px) 50vw, 33vw"
-        className="w-full h-[400px] max-sm:h-[200px] object-cover rounded-xl"
+        className="object-cover"
+        fill
+        priority
+        loading="eager"
+        sizes="(max-width: 768px) 100vw,
+               (max-width: 1280px) 100vw,
+               1280px"
+        quality={75}
+        placeholder="blur"
+        blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA"
       />
     )}
 
