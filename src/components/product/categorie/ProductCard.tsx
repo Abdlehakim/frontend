@@ -181,7 +181,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
               >
                 {/* text / spinner / success */}
                 {isOutOfStock ? (
-                  <p className="absolute inset-0 flex items-center justify-center transition-transform duration-300 text-sm max-md:text-xs">
+                  <p className="absolute inset-0 flex items-center justify-center transition-transform duration-300 text-sm">
                     Rupture de stock
                   </p>
                 ) : isLoading ? (
@@ -189,11 +189,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
                     <FaSpinner className="w-5 h-5 animate-spin" />
                   </div>
                 ) : isSuccess ? (
-                  <p className="absolute inset-0 flex items-center justify-center text-sm max-md:text-xs">
+                  <p className="absolute inset-0 flex items-center justify-center text-sm">
                     Produit ajouté
                   </p>
                 ) : (
-                  <p className="absolute inset-0 flex items-center justify-center transition-transform duration-300 lg:group-hover/box:translate-x-[10%] text-sm max-md:text-xs">
+                  <p className="absolute inset-0 flex items-center justify-center transition-transform duration-300 lg:group-hover/box:translate-x-[10%] text-sm">
                     A. au panier
                   </p>
                 )}
@@ -209,7 +209,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
               {/* view */}
               <Link href={productUrl} className="w-[25%] max-lg:w-[30%]">
                 <button className="AddtoCart relative h-full w-full bg-white text-primary border border-primary max-md:rounded-[3px] group/box">
-                  <span className="absolute inset-0 flex items-center justify-center transition-transform duration-300 lg:group-hover/box:-translate-y-full text-sm max-md:text-xs">
+                  <span className="absolute inset-0 flex items-center justify-center transition-transform duration-300 lg:group-hover/box:-translate-y-full text-sm">
                     Voir
                   </span>
                   <span className="absolute inset-0 flex items-center justify-center -translate-y-full transition-transform duration-300 lg:group-hover/box:translate-y-0">

@@ -2,7 +2,6 @@
 "use client";
 
 import React, { useState, useEffect } from "react";
-import { useRouter } from "next/navigation";
 import Link from "next/link";
 import Image from "next/image";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
@@ -23,7 +22,7 @@ interface SignInFormProps {
 }
 
 export default function SignInForm({ redirectTo }: SignInFormProps) {
-  const router = useRouter();
+
   const { login, refresh } = useAuth();
 
   const [email, setEmail] = useState("");
@@ -56,6 +55,8 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
 
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
+    if (isSubmitting) return;
+
     setError("");
     setIsSubmitting(true);
 
@@ -65,9 +66,8 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
       if (rememberMe) localStorage.setItem("rememberedEmail", email);
       else localStorage.removeItem("rememberedEmail");
 
-      await refresh();                 // update auth context
-      router.replace(redirectTo);      // navigate
-      router.refresh();                // force re-read cookies/server data
+      await refresh(); // update auth context if you rely on it
+      window.location.assign(redirectTo); // hard reload to target page
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Échec de la connexion");
       setIsSubmitting(false);
@@ -75,7 +75,7 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
   }
 
   const handleGoogleSignIn = async (resp: CredentialResponse) => {
-    if (!resp.credential) return;
+    if (!resp.credential || isGoogleLoading) return;
 
     setIsGoogleLoading(true);
     try {
@@ -87,18 +87,13 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
       });
 
       await refresh();
-      router.replace(redirectTo);
-      router.refresh();
+      window.location.assign(redirectTo);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Échec de la connexion Google");
       setIsGoogleLoading(false);
       setIsSubmitting(false);
     }
   };
-
-  useEffect(() => {
-  console.log("redirectTo prop:", redirectTo);
-}, [redirectTo]);
 
   return (
     <>
