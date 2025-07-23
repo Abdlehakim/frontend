@@ -1,3 +1,4 @@
+// src/app/(auth)/signin/page.tsx
 import SignInForm from "@/components/signin/SignInForm";
 
 type SP = Record<string, string | string[] | undefined>;
@@ -10,10 +11,12 @@ export default async function SignInPage({
   const params: SP = await (searchParams ?? Promise.resolve({}));
 
   const raw = Array.isArray(params.redirectTo) ? params.redirectTo[0] : params.redirectTo;
-  const decoded = typeof raw === "string" ? decodeURIComponent(raw) : undefined;
+  // decode twice in case it’s double-encoded somewhere in the chain
+  const decodedOnce  = typeof raw === "string" ? decodeURIComponent(raw) : undefined;
+  const decodedTwice = decodedOnce ? decodeURIComponent(decodedOnce) : undefined;
 
-  // prevent open redirects
-  const redirectTo = decoded && decoded.startsWith("/") ? decoded : "/";
+  const target = decodedTwice || decodedOnce;
+  const redirectTo = target && target.startsWith("/") ? target : "/";
 
   return <SignInForm redirectTo={redirectTo} />;
 }
