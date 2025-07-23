@@ -1,9 +1,16 @@
 import SignInForm from "@/components/signin/SignInForm";
 
-type Search = { [key: string]: string | string[] | undefined };
+type SP = Record<string, string | string[] | undefined>;
 
-export default function SignInPage({ searchParams }: { searchParams: Search }) {
-  const raw = searchParams.redirectTo;
+interface Props {
+  searchParams: SP | Promise<SP>;
+}
+
+export default async function SignInPage({ searchParams }: Props) {
+  // Works for both Promise and non-Promise cases
+  const params: SP = await Promise.resolve(searchParams);
+
+  const raw = params.redirectTo;
   const val = Array.isArray(raw) ? raw[0] : raw;
 
   const redirectTo =

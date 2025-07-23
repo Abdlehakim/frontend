@@ -1,9 +1,15 @@
 import SignUpForm from "@/components/signin/SignUpForm";
 
-type Search = { [key: string]: string | string[] | undefined };
+type SP = Record<string, string | string[] | undefined>;
 
-export default function SignUpPage({ searchParams }: { searchParams: Search }) {
-  const raw = searchParams.redirectTo;
+interface Props {
+  searchParams: SP | Promise<SP>;
+}
+
+export default async function SignUpPage({ searchParams }: Props) {
+  const params: SP = await Promise.resolve(searchParams);
+
+  const raw = params.redirectTo;
   const val = Array.isArray(raw) ? raw[0] : raw;
 
   const redirectTo =
