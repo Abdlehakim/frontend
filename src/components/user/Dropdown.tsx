@@ -60,9 +60,8 @@ const Dropdown: React.FC<DropdownProps> = ({ userName }) => {
       // if your auth hook has a logout/refresh:
       logout?.();
       await refresh?.();
-
-      router.replace("/signin");
-      router.refresh(); // ← force revalidation / cookies re-read
+      router.replace("/");
+      router.refresh();
     } catch (err) {
       console.error("Logout failed:", err);
     }
