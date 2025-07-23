@@ -42,7 +42,7 @@ interface StoresCardProps {
 const StoresCard: React.FC<StoresCardProps> = ({ store, itemsPerSlide }) => (
   /* merged the two .relative wrappers into one */
   <div
-    className="relative group cursor-pointer aspect-[16/11]"
+    className="relative group cursor-pointer w-[90%] aspect-[16/6]"
     style={{ flex: `0 0 ${90 / itemsPerSlide}%` }}
   >
     {store.image && (
@@ -62,16 +62,16 @@ const StoresCard: React.FC<StoresCardProps> = ({ store, itemsPerSlide }) => (
       />
     )}
 
-    <h2 className="bg-primary absolute top-0 w-full rounded-t-xl h-20 max-lg:h-10 flex items-center justify-center text-2xl font-bold capitalize text-white tracking-wide border-b-8 border-secondary max-lg:text-sm">
+    <h2 className="bg-primary relative top-0 w-full rounded-t-xl h-16 max-lg:h-12 flex items-center justify-center text-2xl font-bold capitalize text-white tracking-wide border-b-8 border-secondary max-lg:text-sm z-30">
       {store.name}
     </h2>
 
-    <div className="absolute h-72 w-full p-2 bg-black/80 flex flex-col opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-      <div className="mt-4 ml-4 w-[90%]">
-        <h3 className="font-semibold text-xl text-white">TEMPS OUVERT :</h3>
+    <div className="relative h-72 w-full p-2 bg-black/80 flex flex-col opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+      <div className="my-2 mx-4 max-lg:mx-2 w-[90%]">
+        <h3 className="font-semibold text-xl text-white max-lg:text-sm">TEMPS OUVERT :</h3>
         <div className="h-[2px] w-full bg-white/40 my-1" />
 
-        <ul className="text-sm divide-y divide-white/20">
+        <ul className="text-sm max-lg:text-xs divide-y divide-white/20">
           {Object.entries(store.openingHours).map(([day, hours]) => {
             const ranges =
               Array.isArray(hours) && hours.length
@@ -118,7 +118,7 @@ const StoresCard: React.FC<StoresCardProps> = ({ store, itemsPerSlide }) => (
       </div>
     </div>
 
-    <div className="bg-primary h-12 max-lg:h-6 absolute bottom-0 w-full flex items-center justify-center gap-4 text-xl max-lg:text-sm text-white tracking-wide rounded-b-xl">
+    <div className="bg-primary h-10 max-lg:h-8 relative w-full flex items-center justify-center gap-4 text-md max-lg:text-sm text-white tracking-wide rounded-b-xl z-30">
       <FaMapMarkerAlt size={20} />
       <span className="font-semibold">
         {store.address}, {store.city}
@@ -194,7 +194,7 @@ const StoresCarousel: React.FC<StoresProps> = ({ storesData }) => {
     <div className="py-8 w-full">
       <div className="relative overflow-hidden">
         <div
-          className="flex transition-transform duration-300"
+          className="flex w-[90%] max-md:w-[80%] mx-auto transition-transform duration-300"
           style={{ transform: `translateX(-${currentSlide * 100}%)` }}
         >
           {slides.map((slideItems, i) => (
@@ -218,14 +218,14 @@ const StoresCarousel: React.FC<StoresProps> = ({ storesData }) => {
         <button
           onClick={prev}
           aria-label="Previous slide"
-          className="absolute top-1/2 left-4 -translate-y-1/2 z-10 p-1 text-primary hover:text-secondary hover:scale-110"
+          className="absolute top-1/2 left-4 max-md:left-0 -translate-y-1/2 z-10 p-1 text-primary hover:text-secondary hover:scale-110"
         >
           <FaRegArrowAltCircleLeft size={40} />
         </button>
         <button
           onClick={next}
           aria-label="Next slide"
-          className="absolute top-1/2 right-4 -translate-y-1/2 z-10 p-1 text-primary hover:text-secondary hover:scale-110"
+          className="absolute top-1/2 right-4 max-md:right-0  -translate-y-1/2 z-10 p-1 text-primary hover:text-secondary hover:scale-110"
         >
           <FaRegArrowAltCircleRight size={40} />
         </button>
