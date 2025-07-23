@@ -96,6 +96,10 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
     }
   };
 
+  useEffect(() => {
+  console.log("redirectTo prop:", redirectTo);
+}, [redirectTo]);
+
   return (
     <>
       {(isSubmitting || isGoogleLoading) && (
