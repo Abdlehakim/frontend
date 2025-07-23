@@ -8,35 +8,40 @@ import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
 import { fetchData } from "@/lib/fetchData";
 
-const TIMER_COOKIE = "token_FrontEnd_exp";   // JS-readable expiry (ms timestamp)
-const LOGOUT_PATH  = "/auth/logout";         // fetchData adds /api prefix
-const MAX_DELAY    = 2_147_483_647;          // ~24.8 days: setTimeout max on browsers
+const TIMER_COOKIE = "token_FrontEnd_exp";
+const LOGOUT_PATH  = "/auth/logout";
+const MAX_DELAY    = 2_147_483_647;
 
 export default function useAutoLogout() {
   const router = useRouter();
-  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const bcRef    = useRef<BroadcastChannel | null>(null);
 
+  const routerRef   = useRef(router);
+  const timerRef    = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const intervalRef = useRef<number | null>(null);
+  const bcRef       = useRef<BroadcastChannel | null>(null);
+
+  /* keep router in a ref so we don't need it in deps */
   useEffect(() => {
-    // Clear previous timer
+    routerRef.current = router;
+  }, [router]);
+
+  // run once
+  useEffect(() => {
     if (timerRef.current) clearTimeout(timerRef.current);
-
-    // Close old channel
+    if (intervalRef.current) clearInterval(intervalRef.current);
     bcRef.current?.close();
-    bcRef.current = typeof BroadcastChannel !== "undefined" ? new BroadcastChannel("auth") : null;
 
-    // Read expiry from cookie
     const raw = Cookies.get(TIMER_COOKIE);
     console.log("[autoLogout] exp cookie:", raw);
-    if (!raw) return; 
+    if (!raw) return;
 
     const expMs = Number(raw);
     if (!Number.isFinite(expMs)) return;
 
     const delay = Math.min(Math.max(expMs - Date.now(), 0), MAX_DELAY);
-    // console.log("useAutoLogout: scheduling logout in", delay, "ms");
+    console.log("[autoLogout] delay:", delay);
 
-    const doClientLogout = async (callBackend = true) => {
+    const doClientLogout = async (callBackend: boolean) => {
       try {
         if (callBackend) {
           await fetchData<void>(LOGOUT_PATH, {
@@ -47,35 +52,43 @@ export default function useAutoLogout() {
       } finally {
         Cookies.remove(TIMER_COOKIE);
         bcRef.current?.postMessage({ type: "logout" });
-        router.replace("/signin");
-        router.refresh();
+        routerRef.current.replace("/signin");
+        routerRef.current.refresh();
       }
     };
 
-    console.log("[autoLogout] mounted");
-console.log("[autoLogout] raw cookie:", raw);
-console.log("[autoLogout] delay:", delay);
-
-    // Schedule auto-logout
+    // main timeout
     timerRef.current = setTimeout(() => {
-      // console.log("useAutoLogout: timeout fired");
+      console.log("[autoLogout] timeout fired");
       doClientLogout(true);
     }, delay);
 
-    // Listen for cross-tab logout
+    // safety interval (tab throttle)
+    intervalRef.current = window.setInterval(() => {
+      const r = Cookies.get(TIMER_COOKIE);
+      if (!r) return;
+      if (Date.now() >= Number(r)) {
+        console.log("[autoLogout] interval detected expiry");
+        doClientLogout(true);
+      }
+    }, 15000);
+
+    // cross-tab sync
+    bcRef.current = typeof BroadcastChannel !== "undefined" ? new BroadcastChannel("auth") : null;
     if (bcRef.current) {
       bcRef.current.onmessage = (e) => {
         if (e.data?.type === "logout") {
-          // console.log("useAutoLogout: received broadcast logout");
+          console.log("[autoLogout] broadcast logout received");
           doClientLogout(false);
         }
       };
     }
 
-    // Cleanup
     return () => {
       if (timerRef.current) clearTimeout(timerRef.current);
+      if (intervalRef.current) clearInterval(intervalRef.current);
       bcRef.current?.close();
     };
-  }, [router]);
+  
+  }, []); 
 }
