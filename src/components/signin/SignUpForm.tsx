@@ -1,5 +1,4 @@
 // src/components/signin/SignUpForm.tsx
-
 "use client";
 
 import React, { useState } from "react";
@@ -19,14 +18,12 @@ export default function SignUpForm({ redirectTo }: SignUpFormProps) {
   const router = useRouter();
   const { refresh } = useAuth();
 
-  /* ---------------- form state ---------------- */
   const [username, setUsername] = useState("");
   const [phone, setPhone] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
 
-  /* ---------------- feedback ------------------ */
   const [error, setError] = useState("");
   const [isSubmitting, setIsSubmitting] = useState(false);
 
@@ -36,7 +33,6 @@ export default function SignUpForm({ redirectTo }: SignUpFormProps) {
     setIsSubmitting(true);
 
     try {
-      // POST to /api/auth/signup via your fetchData helper
       await fetchData<{
         message: string;
         user: { id: string; email: string; username: string };
@@ -47,9 +43,9 @@ export default function SignUpForm({ redirectTo }: SignUpFormProps) {
         body: JSON.stringify({ username, phone, email, password }),
       });
 
-      // re‑hydrate your auth context and then redirect
       await refresh();
-      router.push(redirectTo);
+      router.replace(redirectTo);
+      router.refresh(); // ← force cookies/state to update
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Échec de l’inscription");
       setIsSubmitting(false);
@@ -58,7 +54,6 @@ export default function SignUpForm({ redirectTo }: SignUpFormProps) {
 
   return (
     <>
-      {/* full-screen loading overlay */}
       {isSubmitting && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <LoadingDots />
@@ -68,7 +63,6 @@ export default function SignUpForm({ redirectTo }: SignUpFormProps) {
       <div className="flex w-full h-screen items-center">
         <div className="w-[60%] max-lg:w-full flex justify-center items-center h-full">
           <div className="px-8 flex flex-col w-[600px] h-full bg-white bg-opacity-80 rounded-xl justify-center gap-[16px] z-10">
-            {/* Heading */}
             <div className="flex flex-col gap-[8px] items-center">
               <h1 className="text-2xl uppercase font-bold">Créer un compte</h1>
             </div>
@@ -77,7 +71,6 @@ export default function SignUpForm({ redirectTo }: SignUpFormProps) {
               <p className="text-red-500 text-center font-semibold">{error}</p>
             )}
 
-            {/* Form */}
             <form onSubmit={handleSubmit} className="flex flex-col gap-[8px]">
               <div>
                 <label htmlFor="username" className="block mb-1 font-medium">
@@ -172,7 +165,6 @@ export default function SignUpForm({ redirectTo }: SignUpFormProps) {
           </div>
         </div>
 
-        {/* Background image */}
         <div className="fixed inset-0 -z-10">
           <Image
             src="/signin.jpg"

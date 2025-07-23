@@ -1,60 +1,76 @@
-/* ------------------------------------------------------------------ */
-/*  src/hooks/useAutoLogout.ts                                        */
-/* ------------------------------------------------------------------ */
+/* ------------------------------------------------------------------
+   src/hooks/useAutoLogout.ts
+------------------------------------------------------------------ */
 "use client";
 
 import { useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Cookies from "js-cookie";
-import { fetchData } from "@/lib/fetchData";  
+import { fetchData } from "@/lib/fetchData";
 
-const TIMER_COOKIE = "token_FrontEnd_exp";
-const LOGOUT_PATH  = "/auth/logout";   
-const MAX_DELAY    = 2_147_483_647;           
+const TIMER_COOKIE = "token_FrontEnd_exp";   // JS-readable expiry (ms timestamp)
+const LOGOUT_PATH  = "/auth/logout";         // fetchData adds /api prefix
+const MAX_DELAY    = 2_147_483_647;          // ~24.8 days: setTimeout max on browsers
 
 export default function useAutoLogout() {
   const router = useRouter();
-  const timer  = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const timerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+  const bcRef    = useRef<BroadcastChannel | null>(null);
 
   useEffect(() => {
-    /* clear any previous timer (route changes, re‑mounts, etc.) */
-    if (timer.current) clearTimeout(timer.current);
+    // Clear previous timer
+    if (timerRef.current) clearTimeout(timerRef.current);
 
-    /* read expiry from the JS‑readable cookie */
+    // Close old channel
+    bcRef.current?.close();
+    bcRef.current = typeof BroadcastChannel !== "undefined" ? new BroadcastChannel("auth") : null;
+
+    // Read expiry from cookie
     const raw = Cookies.get(TIMER_COOKIE);
-    if (!raw) return;
+    if (!raw) return; // no expiry cookie => nothing to schedule
 
     const expMs = Number(raw);
     if (!Number.isFinite(expMs)) return;
 
-    /* delay = time until expiry but never exceed setTimeout’s max */
     const delay = Math.min(Math.max(expMs - Date.now(), 0), MAX_DELAY);
-console.log("useAutoLogout mounted, raw cookie =", raw);
-    /* cross‑tab logout sync */
-    const bc = new BroadcastChannel("auth");
-console.log("scheduling logout in", delay, "ms");
-    timer.current = setTimeout(async () => {
-       console.log("logout timeout fired");
-      /* hit backend to clear cookies + session */
-      await fetchData(LOGOUT_PATH, {
-        method: "POST",
-        credentials: "include",
-      }).catch(() => {});
-      /* notify other tabs and redirect */
-      bc.postMessage({ type: "logout" });
-      router.replace("/signin");
+    // console.log("useAutoLogout: scheduling logout in", delay, "ms");
+
+    const doClientLogout = async (callBackend = true) => {
+      try {
+        if (callBackend) {
+          await fetchData<void>(LOGOUT_PATH, {
+            method: "POST",
+            credentials: "include",
+          }).catch(() => {});
+        }
+      } finally {
+        Cookies.remove(TIMER_COOKIE);
+        bcRef.current?.postMessage({ type: "logout" });
+        router.replace("/signin");
+        router.refresh();
+      }
+    };
+
+    // Schedule auto-logout
+    timerRef.current = setTimeout(() => {
+      // console.log("useAutoLogout: timeout fired");
+      doClientLogout(true);
     }, delay);
 
-    /* listen for logout from another tab */
-  bc.onmessage = (e) => {
-     console.log("received broadcast:", e.data);
-  if (e.data?.type === "logout") router.replace("/signin");
-};
+    // Listen for cross-tab logout
+    if (bcRef.current) {
+      bcRef.current.onmessage = (e) => {
+        if (e.data?.type === "logout") {
+          // console.log("useAutoLogout: received broadcast logout");
+          doClientLogout(false);
+        }
+      };
+    }
 
-    /* cleanup on unmount */
+    // Cleanup
     return () => {
-      if (timer.current) clearTimeout(timer.current);
-      bc.close();
+      if (timerRef.current) clearTimeout(timerRef.current);
+      bcRef.current?.close();
     };
   }, [router]);
 }
