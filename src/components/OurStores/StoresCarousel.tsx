@@ -41,11 +41,11 @@ interface StoresCardProps {
 /* ---------- card ---------- */
 const StoresCard: React.FC<StoresCardProps> = ({ store, itemsPerSlide }) => {
   const [showHours, setShowHours] = useState(false);
+  const [showAddress, setShowAddress] = useState(false);
 
   return (
-    /* merged the two .relative wrappers into one */
     <div
-      className="relative group cursor-pointer w-[90%] aspect-[16/6]"
+      className="relative group cursor-pointer w-[90%] aspect-[16/14] min-h-96"
       style={{ flex: `0 0 ${90 / itemsPerSlide}%` }}
     >
       {store.image && (
@@ -69,27 +69,63 @@ const StoresCard: React.FC<StoresCardProps> = ({ store, itemsPerSlide }) => {
         {store.name}
       </h2>
 
-      {/* ▼ toggle button */}
-      <button
-        aria-label={showHours ? "Hide horaire" : "Affiche horaire"}
-        onClick={(e) => {
-          e.stopPropagation();
-          setShowHours((s) => !s);
-        }}
-        className="absolute bottom-14  max-md:bottom-12 right-4 z-40 px-3 py-2 bg-white rounded-full text-primary hover:bg-secondary hover:text-white transition flex items-center gap-2"
-      >
-        <FaRegClock size={20} />
-        <span className="text-xs font-semibold uppercase">
-          {showHours ? "Hide horaire" : "Affiche horaire"}
-        </span>
-      </button>
+{/* ▼ toggle buttons (centered) */}
+<div
+  className="absolute bottom-6 max-md:bottom-4 left-1/2 -translate-x-1/2 z-40 flex max-md:flex-col gap-3"
+  onClick={(e) => e.stopPropagation()}
+>
+  <button
+  aria-label={showHours ? "Hide horaire" : "Affiche horaire"}
+  onClick={() => {
+    setShowHours((s) => !s);
+    if (!showHours) setShowAddress(false);
+  }}
+  className="
+    pl-4 pr-3 py-2
+    bg-white rounded-full text-primary
+    hover:bg-secondary hover:text-white
+    transition flex items-center gap-2 justify-start
+    min-w-[170px] whitespace-nowrap
+  "
+>
+  <FaRegClock size={20} />
+  <span className="text-xs font-semibold uppercase">
+    {showHours ? "Hide horaire" : "Affiche horaire"}
+  </span>
+</button>
 
+<button
+  aria-label={showAddress ? "Hide adresse" : "Affiche adresse"}
+  onClick={() => {
+    setShowAddress((s) => !s);
+    if (!showAddress) setShowHours(false);
+  }}
+  className="
+    pl-4 pr-3 py-2
+    bg-white rounded-full text-primary
+    hover:bg-secondary hover:text-white
+    transition flex items-center gap-2 justify-start
+    min-w-[170px] whitespace-nowrap
+  "
+>
+  <FaMapMarkerAlt size={20} />
+  <span className="text-xs font-semibold uppercase">
+    {showAddress ? "Hide adresse" : "Affiche adresse"}
+  </span>
+</button>
+
+</div>
+
+
+
+
+      {/* Horaire panel — positioned relative to the h2 */}
       <div
-        className={`relative h-72 w-full p-2 bg-black/80 flex flex-col transition-opacity duration-300 ${
+        className={`absolute inset-x-0 top-16 max-lg:top-12 bottom-0 p-2 bg-black/80 flex flex-col transition-opacity duration-300 overflow-y-auto z-20 rounded-b-xl ${
           showHours ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
       >
-        <div className="my-6 mx-4 max-lg:mx-2 w-[90%]">
+        <div className="my-2 mx-4 max-lg:mx-2 w-[90%]">
           <h3 className="font-semibold text-xl text-white max-lg:text-sm">
             TEMPS OUVERT :
           </h3>
@@ -111,7 +147,6 @@ const StoresCard: React.FC<StoresCardProps> = ({ store, itemsPerSlide }) => {
                   key={day}
                   className="grid grid-cols-[auto_1fr] items-center gap-x-3 py-1 text-white tabular-nums"
                 >
-                  {/* flattened: removed the inner span */}
                   <span className="flex items-center gap-1.5 font-medium">
                     <FaRegClock size={12} />
                     {day}
@@ -142,11 +177,33 @@ const StoresCard: React.FC<StoresCardProps> = ({ store, itemsPerSlide }) => {
         </div>
       </div>
 
-      <div className="bg-primary h-12 max-lg:h-10 relative w-full flex items-center justify-center gap-4 text-md max-lg:text-sm text-white tracking-wide rounded-b-xl z-30">
-        <FaMapMarkerAlt size={20} />
-        <span className="font-semibold">
-          {store.address}, {store.city}
-        </span>
+      {/* Adresse panel — positioned relative to the h2 */}
+      <div
+        className={`absolute inset-x-0 top-16 max-lg:top-12 bottom-0 p-2 bg-black/80 flex flex-col items-start transition-opacity duration-300 overflow-y-auto z-20 rounded-b-xl ${
+          showAddress ? "opacity-100" : "opacity-0 pointer-events-none"
+        }`}
+      >
+        <div className="text-white my-2 mx-4 max-lg:mx-2 w-[90%]">
+          <h3 className="font-semibold text-xl max-lg:text-sm flex items-center gap-2">
+            <FaMapMarkerAlt size={18} />
+            ADRESSE
+          </h3>
+          <div className="h-[2px] w-full bg-white/40" />
+          <p className="text-sm max-lg:text-xs leading-6">
+            {store.address}, {store.city}
+          </p>
+          {store.localisation && (
+            <a
+              href={store.localisation}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="underline text-xs max-lg:text-[10px]"
+            >
+              Ouvrir dans Google Maps
+            </a>
+          )}
+          <div className="h-[2px] w-full bg-white/40" />
+        </div>
       </div>
     </div>
   );
@@ -182,7 +239,6 @@ const StoresCarousel: React.FC<StoresProps> = ({ storesData }) => {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [itemsPerSlide, setItemsPerSlide] = useState(3);
 
-  /* responsive break-points */
   useEffect(() => {
     const update = () => {
       const w = window.innerWidth;
@@ -195,7 +251,6 @@ const StoresCarousel: React.FC<StoresProps> = ({ storesData }) => {
     return () => window.removeEventListener("resize", update);
   }, []);
 
-  /* slice stores into logical slides */
   const slides = useMemo(() => {
     const out: StoreType[][] = [];
     for (let i = 0; i < storesData.length; i += itemsPerSlide) {
@@ -223,7 +278,6 @@ const StoresCarousel: React.FC<StoresProps> = ({ storesData }) => {
           style={{ transform: `translateX(-${currentSlide * 100}%)` }}
         >
           {slides.map((slideItems, i) => (
-            /* ▶ only the active slide is populated to keep the DOM tiny */
             <div
               key={i}
               className="flex-shrink-0 w-full flex gap-4 justify-center"
