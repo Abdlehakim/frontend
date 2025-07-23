@@ -1,18 +1,17 @@
+// src/(auth)/signup/page.tsx
 import SignUpForm from "@/components/signin/SignUpForm";
 
+type SearchParams = { [key: string]: string | string[] | undefined };
 
-// Next 15 passes `searchParams` as a *Promise* in server components.
-type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+export default function SignUpPage({ searchParams }: { searchParams: SearchParams }) {
+  const raw = searchParams.redirectTo;
+  const val = Array.isArray(raw) ? raw[0] : raw;
 
-export default async function SignUpPage({
-  searchParams,
-}: {
-  searchParams: SearchParams;
-}) {
-  // Wait for the promise to resolve, then extract redirectTo
-  const params = await searchParams;
+  // decode & sanitize to avoid open redirects
   const redirectTo =
-    typeof params.redirectTo === "string" ? params.redirectTo : "/";
+    typeof val === "string" && val.startsWith("/")
+      ? decodeURIComponent(val)
+      : "/";
 
   return <SignUpForm redirectTo={redirectTo} />;
 }

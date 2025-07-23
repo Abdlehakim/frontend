@@ -1,20 +1,17 @@
 // src/(auth)/signin/page.tsx
-
 import SignInForm from "@/components/signin/SignInForm";
 
-type SearchParams = Promise<Record<string, string | string[] | undefined>>;
+type SearchParams = { [key: string]: string | string[] | undefined };
 
-export default async function SignInPage({
-  searchParams,
-}: {
-  searchParams: SearchParams;
-}) {
-  // 1. Await the cookie store, then check for your auth token
+export default function SignInPage({ searchParams }: { searchParams: SearchParams }) {
+  const raw = searchParams.redirectTo;
+  const val = Array.isArray(raw) ? raw[0] : raw;
 
-  // 3. Otherwise parse redirectTo and render the form
-  const params = await searchParams;
+  // decode & sanitize: must start with "/" to avoid open redirects
   const redirectTo =
-    typeof params.redirectTo === "string" ? params.redirectTo : "/";
+    typeof val === "string" && val.startsWith("/")
+      ? decodeURIComponent(val)
+      : "/";
 
   return <SignInForm redirectTo={redirectTo} />;
 }
