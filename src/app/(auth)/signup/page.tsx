@@ -1,13 +1,14 @@
+// src/app/(auth)/signup/page.tsx
 import SignUpForm from "@/components/signin/SignUpForm";
 
-type SP = Record<string, string | string[] | undefined>;
+type SearchParams = Record<string, string | string[] | undefined>;
 
-interface Props {
-  searchParams: SP | Promise<SP>;
-}
-
-export default async function SignUpPage({ searchParams }: Props) {
-  const params: SP = await Promise.resolve(searchParams);
+export default async function SignUpPage({
+  searchParams,
+}: {
+  searchParams: SearchParams | Promise<SearchParams>;
+}) {
+  const params = await Promise.resolve(searchParams);
 
   const raw = params.redirectTo;
   const val = Array.isArray(raw) ? raw[0] : raw;
