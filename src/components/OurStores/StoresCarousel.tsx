@@ -39,93 +39,118 @@ interface StoresCardProps {
 }
 
 /* ---------- card ---------- */
-const StoresCard: React.FC<StoresCardProps> = ({ store, itemsPerSlide }) => (
-  /* merged the two .relative wrappers into one */
-  <div
-    className="relative group cursor-pointer w-[90%] aspect-[16/6]"
-    style={{ flex: `0 0 ${90 / itemsPerSlide}%` }}
-  >
-    {store.image && (
-      <Image
-        src={store.image}
-        alt={store.name}
-        className="object-cover rounded-xl"
-        fill
-        priority
-        loading="eager"
-        sizes="(max-width: 768px) 100vw,
+const StoresCard: React.FC<StoresCardProps> = ({ store, itemsPerSlide }) => {
+  const [showHours, setShowHours] = useState(false);
+
+  return (
+    /* merged the two .relative wrappers into one */
+    <div
+      className="relative group cursor-pointer w-[90%] aspect-[16/6]"
+      style={{ flex: `0 0 ${90 / itemsPerSlide}%` }}
+    >
+      {store.image && (
+        <Image
+          src={store.image}
+          alt={store.name}
+          className="object-cover rounded-xl"
+          fill
+          priority
+          loading="eager"
+          sizes="(max-width: 768px) 100vw,
                (max-width: 1280px) 100vw,
                1280px"
-        quality={75}
-        placeholder="blur"
-        blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA"
-      />
-    )}
+          quality={75}
+          placeholder="blur"
+          blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA"
+        />
+      )}
 
-    <h2 className="bg-primary relative top-0 w-full rounded-t-xl h-16 max-lg:h-12 flex items-center justify-center text-2xl font-bold capitalize text-white tracking-wide border-b-8 border-secondary max-lg:text-sm z-30">
-      {store.name}
-    </h2>
+      <h2 className="bg-primary relative top-0 w-full rounded-t-xl h-16 max-lg:h-12 flex items-center justify-center text-2xl font-bold capitalize text-white tracking-wide border-b-8 border-secondary max-lg:text-sm z-30">
+        {store.name}
+      </h2>
 
-    <div className="relative h-72 w-full p-2 bg-black/80 flex flex-col opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-      <div className="my-2 mx-4 max-lg:mx-2 w-[90%]">
-        <h3 className="font-semibold text-xl text-white max-lg:text-sm">TEMPS OUVERT :</h3>
-        <div className="h-[2px] w-full bg-white/40 my-1" />
+      {/* ▼ toggle button */}
+      <button
+        aria-label={showHours ? "Hide horaire" : "Affiche horaire"}
+        onClick={(e) => {
+          e.stopPropagation();
+          setShowHours((s) => !s);
+        }}
+        className="absolute bottom-14  max-md:bottom-12 right-4 z-40 px-3 py-2 bg-white rounded-full text-primary hover:bg-secondary hover:text-white transition flex items-center gap-2"
+      >
+        <FaRegClock size={20} />
+        <span className="text-xs font-semibold uppercase">
+          {showHours ? "Hide horaire" : "Affiche horaire"}
+        </span>
+      </button>
 
-        <ul className="text-sm max-lg:text-xs divide-y divide-white/20">
-          {Object.entries(store.openingHours).map(([day, hours]) => {
-            const ranges =
-              Array.isArray(hours) && hours.length
-                ? hours
-                    .map(({ open, close }) =>
-                      open || close ? `${open} – ${close}` : ""
-                    )
-                    .filter(Boolean)
-                : [];
+      <div
+        className={`relative h-72 w-full p-2 bg-black/80 flex flex-col transition-opacity duration-300 ${
+          showHours ? "opacity-100" : "opacity-0 pointer-events-none"
+        }`}
+      >
+        <div className="my-6 mx-4 max-lg:mx-2 w-[90%]">
+          <h3 className="font-semibold text-xl text-white max-lg:text-sm">
+            TEMPS OUVERT :
+          </h3>
+          <div className="h-[2px] w-full bg-white/40 my-1" />
 
-            return (
-              <li
-                key={day}
-                className="grid grid-cols-[auto_1fr] items-center gap-x-3 py-1 text-white tabular-nums"
-              >
-                {/* flattened: removed the inner span */}
-                <span className="flex items-center gap-1.5 font-medium">
-                  <FaRegClock size={12} />
-                  {day}
-                </span>
+          <ul className="text-sm max-lg:text-xs divide-y divide-white/20">
+            {Object.entries(store.openingHours).map(([day, hours]) => {
+              const ranges =
+                Array.isArray(hours) && hours.length
+                  ? hours
+                      .map(({ open, close }) =>
+                        open || close ? `${open} – ${close}` : ""
+                      )
+                      .filter(Boolean)
+                  : [];
 
-                {ranges.length ? (
-                  <div className="flex items-center justify-end gap-x-4 whitespace-nowrap">
-                    <span className="flex items-center gap-1.5">
-                      <BsSunFill size={12} />
-                      {ranges[0]}
-                    </span>
-                    {ranges[1] && (
+              return (
+                <li
+                  key={day}
+                  className="grid grid-cols-[auto_1fr] items-center gap-x-3 py-1 text-white tabular-nums"
+                >
+                  {/* flattened: removed the inner span */}
+                  <span className="flex items-center gap-1.5 font-medium">
+                    <FaRegClock size={12} />
+                    {day}
+                  </span>
+
+                  {ranges.length ? (
+                    <div className="flex items-center justify-end gap-x-4 whitespace-nowrap">
                       <span className="flex items-center gap-1.5">
-                        <BsMoonFill size={12} />
-                        {ranges[1]}
+                        <BsSunFill size={12} />
+                        {ranges[0]}
                       </span>
-                    )}
-                  </div>
-                ) : (
-                  <span className="justify-self-end">Fermé</span>
-                )}
-              </li>
-            );
-          })}
-        </ul>
+                      {ranges[1] && (
+                        <span className="flex items-center gap-1.5">
+                          <BsMoonFill size={12} />
+                          {ranges[1]}
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <span className="justify-self-end">Fermé</span>
+                  )}
+                </li>
+              );
+            })}
+          </ul>
 
-        <div className="h-[2px] w-full bg-white/40 my-1" />
+          <div className="h-[2px] w-full bg-white/40 my-1" />
+        </div>
+      </div>
+
+      <div className="bg-primary h-12 max-lg:h-10 relative w-full flex items-center justify-center gap-4 text-md max-lg:text-sm text-white tracking-wide rounded-b-xl z-30">
+        <FaMapMarkerAlt size={20} />
+        <span className="font-semibold">
+          {store.address}, {store.city}
+        </span>
       </div>
     </div>
-
-    <div className="bg-primary h-10 max-lg:h-8 relative w-full flex items-center justify-center gap-4 text-md max-lg:text-sm text-white tracking-wide rounded-b-xl z-30">
-      <FaMapMarkerAlt size={20} />
-      <span className="font-semibold">
-        {store.address}, {store.city}
-      </span>
-    </div>
-  </div>
-);
+  );
+};
 
 /* ---------- indicator with 48-px hit-box ---------- */
 function Dot({
