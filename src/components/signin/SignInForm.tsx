@@ -1,5 +1,4 @@
 // src/components/signin/SignInForm.tsx
-
 "use client";
 
 import React, { useState, useEffect } from "react";
@@ -15,9 +14,7 @@ import LoadingDots from "@/components/LoadingDots";
 
 declare global {
   interface Window {
-    google?: {
-      accounts?: Record<string, unknown>;
-    };
+    google?: { accounts?: Record<string, unknown> };
   }
 }
 
@@ -29,7 +26,6 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
   const router = useRouter();
   const { login, refresh } = useAuth();
 
-  // Form state
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [rememberMe, setRememberMe] = useState(false);
@@ -39,7 +35,6 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
   const [isGoogleLoading, setIsGoogleLoading] = useState(false);
   const [hasGoogleLoaded, setHasGoogleLoaded] = useState(false);
 
-  /** Check when Google Identity Services script is ready */
   useEffect(() => {
     const t = setTimeout(
       () =>
@@ -51,7 +46,6 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
     return () => clearTimeout(t);
   }, []);
 
-  /** On mount, load saved email if “Remember me” was used */
   useEffect(() => {
     const savedEmail = localStorage.getItem("rememberedEmail");
     if (savedEmail) {
@@ -60,33 +54,26 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
     }
   }, []);
 
-  /** Email/password submit handler */
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setError("");
     setIsSubmitting(true);
 
     try {
-      // Perform login
       await login(email, password);
 
-      // Persist or clear saved email based on the checkbox
-      if (rememberMe) {
-        localStorage.setItem("rememberedEmail", email);
-      } else {
-        localStorage.removeItem("rememberedEmail");
-      }
+      if (rememberMe) localStorage.setItem("rememberedEmail", email);
+      else localStorage.removeItem("rememberedEmail");
 
-      // Refresh auth context and redirect
-      await refresh();
-      router.push(redirectTo);
+      await refresh();                 // update auth context
+      router.replace(redirectTo);      // navigate
+      router.refresh();                // force re-read cookies/server data
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Échec de la connexion");
       setIsSubmitting(false);
     }
   }
 
-  /** Google sign-in handler */
   const handleGoogleSignIn = async (resp: CredentialResponse) => {
     if (!resp.credential) return;
 
@@ -100,7 +87,8 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
       });
 
       await refresh();
-      router.push(redirectTo);
+      router.replace(redirectTo);
+      router.refresh();
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Échec de la connexion Google");
       setIsGoogleLoading(false);
@@ -110,7 +98,6 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
 
   return (
     <>
-      {/* full-screen loading overlay */}
       {(isSubmitting || isGoogleLoading) && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <LoadingDots />
@@ -127,7 +114,6 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
             {error && <p className="text-red-500">{error}</p>}
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-2">
-              {/* email */}
               <div className="flex flex-col gap-1">
                 <label htmlFor="email" className="block mb-1 font-medium">
                   E‑mail
@@ -144,7 +130,6 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
                 />
               </div>
 
-              {/* password */}
               <div className="flex flex-col gap-1 relative">
                 <label htmlFor="password" className="block mb-1 font-medium">
                   Mot de passe
@@ -174,7 +159,6 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
                 </div>
               </div>
 
-              {/* submit */}
               <button
                 type="submit"
                 disabled={isSubmitting}
@@ -183,7 +167,6 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
                 Se connecter
               </button>
 
-              {/* remember + forgot */}
               <div className="flex items-center justify-between mt-2 text-sm font-semibold">
                 <label className="inline-flex items-center text-gray-500 max-md:text-xs">
                   <input
@@ -202,14 +185,12 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
                 </Link>
               </div>
 
-              {/* divider */}
               <div className="flex items-center">
                 <hr className="flex-grow border-t border-gray-300" />
                 <span className="mx-2 text-gray-500">ou</span>
                 <hr className="flex-grow border-t border-gray-300" />
               </div>
 
-              {/* Google */}
               <div className="flex flex-col items-center h-20 w-full">
                 {isGoogleLoading || !hasGoogleLoaded ? (
                   <LoadingDots />
@@ -237,7 +218,6 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
 
             <hr className="border-t border-gray-300" />
 
-            {/* socials */}
             <div className="flex gap-4 justify-center">
               {[FaFacebookF, FaInstagram, FaTwitter, FaYoutube].map((Icon, i) => (
                 <a
@@ -253,7 +233,6 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
         </div>
       </div>
 
-      {/* background */}
       <div className="fixed inset-0 -z-10">
         <Image
           src="/signin.jpg"
