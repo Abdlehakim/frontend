@@ -27,7 +27,8 @@ export default function useAutoLogout() {
 
     // Read expiry from cookie
     const raw = Cookies.get(TIMER_COOKIE);
-    if (!raw) return; // no expiry cookie => nothing to schedule
+    console.log("[autoLogout] exp cookie:", raw);
+    if (!raw) return; 
 
     const expMs = Number(raw);
     if (!Number.isFinite(expMs)) return;
@@ -50,6 +51,10 @@ export default function useAutoLogout() {
         router.refresh();
       }
     };
+
+    console.log("[autoLogout] mounted");
+console.log("[autoLogout] raw cookie:", raw);
+console.log("[autoLogout] delay:", delay);
 
     // Schedule auto-logout
     timerRef.current = setTimeout(() => {
