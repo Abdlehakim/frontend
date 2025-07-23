@@ -3,7 +3,13 @@
 /* ------------------------------------------------------------------ */
 "use client";
 
-import React, { useState, useMemo, useCallback, useEffect } from "react";
+import React, {
+  useState,
+  useMemo,
+  useCallback,
+  useEffect,
+  useRef,
+} from "react";
 import Image from "next/image";
 import {
   FaRegClock,
@@ -43,6 +49,25 @@ const StoresCard: React.FC<StoresCardProps> = ({ store, itemsPerSlide }) => {
   const [showHours, setShowHours] = useState(false);
   const [showAddress, setShowAddress] = useState(false);
 
+  /* scroll hint states */
+  const listRef = useRef<HTMLUListElement>(null);
+  const [atTop, setAtTop] = useState(true);
+  const [atBottom, setAtBottom] = useState(true);
+  const [hasOverflow, setHasOverflow] = useState(false);
+
+  useEffect(() => {
+    const el = listRef.current;
+    if (!el) return;
+    const check = () => {
+      setAtTop(el.scrollTop === 0);
+      setAtBottom(el.scrollTop + el.clientHeight >= el.scrollHeight);
+      setHasOverflow(el.scrollHeight > el.clientHeight);
+    };
+    check();
+    el.addEventListener("scroll", check);
+    return () => el.removeEventListener("scroll", check);
+  }, [store.openingHours, showHours]);
+
   return (
     <div
       className="relative group cursor-pointer w-[90%] aspect-[16/14] min-h-96"
@@ -69,109 +94,142 @@ const StoresCard: React.FC<StoresCardProps> = ({ store, itemsPerSlide }) => {
         {store.name}
       </h2>
 
-{/* ▼ toggle buttons (centered) */}
-<div
-  className="absolute bottom-6 max-md:bottom-4 left-1/2 -translate-x-1/2 z-40 flex max-md:flex-col gap-3"
-  onClick={(e) => e.stopPropagation()}
->
-  <button
-  aria-label={showHours ? "Hide horaire" : "Affiche horaire"}
-  onClick={() => {
-    setShowHours((s) => !s);
-    if (!showHours) setShowAddress(false);
-  }}
-  className="
-    pl-4 pr-3 py-2
-    bg-white rounded-full text-primary
-    hover:bg-secondary hover:text-white
-    transition flex items-center gap-2 justify-start
-    min-w-[170px] whitespace-nowrap
-  "
->
-  <FaRegClock size={20} />
-  <span className="text-xs font-semibold uppercase">
-    {showHours ? "Hide horaire" : "Affiche horaire"}
-  </span>
-</button>
+      {/* ▼ toggle buttons (centered) */}
+      <div
+        className="absolute bottom-6 max-md:bottom-4 left-1/2 -translate-x-1/2 z-40 flex max-md:flex-col gap-3"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          aria-label={showHours ? "Hide horaire" : "Affiche horaire"}
+          onClick={() => {
+            setShowHours((s) => !s);
+            if (!showHours) setShowAddress(false);
+          }}
+          className="
+            pl-4 pr-3 py-2
+            bg-white rounded-full text-primary
+            hover:bg-secondary hover:text-white
+            transition flex items-center gap-2 justify-start
+            min-w-[170px] whitespace-nowrap
+          "
+        >
+          <FaRegClock size={20} />
+          <span className="text-xs font-semibold uppercase">
+            {showHours
+              ? "Hide horaire"
+              : hasOverflow
+              ? "Affiche horaire (scroll)"
+              : "Affiche horaire"}
+          </span>
+        </button>
 
-<button
-  aria-label={showAddress ? "Hide adresse" : "Affiche adresse"}
-  onClick={() => {
-    setShowAddress((s) => !s);
-    if (!showAddress) setShowHours(false);
-  }}
-  className="
-    pl-4 pr-3 py-2
-    bg-white rounded-full text-primary
-    hover:bg-secondary hover:text-white
-    transition flex items-center gap-2 justify-start
-    min-w-[170px] whitespace-nowrap
-  "
->
-  <FaMapMarkerAlt size={20} />
-  <span className="text-xs font-semibold uppercase">
-    {showAddress ? "Hide adresse" : "Affiche adresse"}
-  </span>
-</button>
-
-</div>
-
-
-
+        <button
+          aria-label={showAddress ? "Hide adresse" : "Affiche adresse"}
+          onClick={() => {
+            setShowAddress((s) => !s);
+            if (!showAddress) setShowHours(false);
+          }}
+          className="
+            pl-4 pr-3 py-2
+            bg-white rounded-full text-primary
+            hover:bg-secondary hover:text-white
+            transition flex items-center gap-2 justify-start
+            min-w-[170px] whitespace-nowrap
+          "
+        >
+          <FaMapMarkerAlt size={20} />
+          <span className="text-xs font-semibold uppercase">
+            {showAddress ? "Hide adresse" : "Affiche adresse"}
+          </span>
+        </button>
+      </div>
 
       {/* Horaire panel — positioned relative to the h2 */}
       <div
-        className={`absolute inset-x-0 top-16 max-lg:top-12 bottom-0 p-2 bg-black/80 flex flex-col transition-opacity duration-300 overflow-y-auto z-20 rounded-b-xl ${
+        className={`absolute inset-x-0 top-16 max-lg:top-12 bottom-0 p-2 bg-black/80 flex flex-col transition-opacity duration-300 overflow-hidden z-20 rounded-b-xl ${
           showHours ? "opacity-100" : "opacity-0 pointer-events-none"
         }`}
       >
-        <div className="my-2 mx-4 max-lg:mx-2 w-[90%]">
+        <div className="my-2 mx-4 max-lg:mx-2 w-[90%] relative">
           <h3 className="font-semibold text-xl text-white max-lg:text-sm">
             TEMPS OUVERT :
           </h3>
           <div className="h-[2px] w-full bg-white/40 my-1" />
 
-          <ul className="text-sm max-lg:text-xs divide-y divide-white/20">
-            {Object.entries(store.openingHours).map(([day, hours]) => {
-              const ranges =
-                Array.isArray(hours) && hours.length
-                  ? hours
-                      .map(({ open, close }) =>
-                        open || close ? `${open} – ${close}` : ""
-                      )
-                      .filter(Boolean)
-                  : [];
+          {/* scrollable list wrapper */}
+          <div className="relative">
+            <ul
+              ref={listRef}
+              className="
+                text-sm max-lg:text-xs divide-y divide-white/20
+                max-h-56 max-lg:max-h-40 overflow-y-auto pr-2
+                scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/40
+                [scrollbar-color:rgba(255,255,255,.4)_transparent] [scrollbar-width:thin]
+              "
+            >
+              {Object.entries(store.openingHours).map(([day, hours]) => {
+                const ranges =
+                  Array.isArray(hours) && hours.length
+                    ? hours
+                        .map(({ open, close }) =>
+                          open || close ? `${open} – ${close}` : ""
+                        )
+                        .filter(Boolean)
+                    : [];
 
-              return (
-                <li
-                  key={day}
-                  className="grid grid-cols-[auto_1fr] items-center gap-x-3 py-1 text-white tabular-nums"
-                >
-                  <span className="flex items-center gap-1.5 font-medium">
-                    <FaRegClock size={12} />
-                    {day}
-                  </span>
+                return (
+                  <li
+                    key={day}
+                    className="grid grid-cols-[auto_1fr] items-center gap-x-3 py-1 text-white tabular-nums"
+                  >
+                    <span className="flex items-center gap-1.5 font-medium">
+                      <FaRegClock size={12} />
+                      {day}
+                    </span>
 
-                  {ranges.length ? (
-                    <div className="flex items-center justify-end gap-x-4 whitespace-nowrap">
-                      <span className="flex items-center gap-1.5">
-                        <BsSunFill size={12} />
-                        {ranges[0]}
-                      </span>
-                      {ranges[1] && (
+                    {ranges.length ? (
+                      <div className="flex max-md:flex-col items-center max-md:items-end justify-end gap-x-4 whitespace-nowrap">
                         <span className="flex items-center gap-1.5">
-                          <BsMoonFill size={12} />
-                          {ranges[1]}
+                          <BsSunFill size={12} />
+                          {ranges[0]}
                         </span>
-                      )}
-                    </div>
-                  ) : (
-                    <span className="justify-self-end">Fermé</span>
-                  )}
-                </li>
-              );
-            })}
-          </ul>
+                        {ranges[1] && (
+                          <span className="flex items-center gap-1.5">
+                            <BsMoonFill size={12} />
+                            {ranges[1]}
+                          </span>
+                        )}
+                      </div>
+                    ) : (
+                      <span className="justify-self-end">Fermé</span>
+                    )}
+                  </li>
+                );
+              })}
+            </ul>
+
+            {/* top fade */}
+            {!atTop && (
+              <div className="pointer-events-none absolute inset-x-0 top-0 h-6 bg-gradient-to-b from-black/90 to-transparent" />
+            )}
+
+            {/* bottom fade + hint */}
+            {!atBottom && (
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-black/90 to-transparent flex items-end justify-center pb-1">
+                <span className="text-[10px] uppercase tracking-wider text-white/70 animate-pulse flex items-center gap-1">
+                  scroll
+                  <svg
+                    width="10"
+                    height="10"
+                    viewBox="0 0 24 24"
+                    className="opacity-70"
+                  >
+                    <path fill="currentColor" d="M12 16l-6-6h12z" />
+                  </svg>
+                </span>
+              </div>
+            )}
+          </div>
 
           <div className="h-[2px] w-full bg-white/40 my-1" />
         </div>
