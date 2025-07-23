@@ -42,14 +42,14 @@ interface StoresCardProps {
 const StoresCard: React.FC<StoresCardProps> = ({ store, itemsPerSlide }) => (
   /* merged the two .relative wrappers into one */
   <div
-    className="relative group cursor-pointer"
+    className="relative group cursor-pointer aspect-[16/11]"
     style={{ flex: `0 0 ${90 / itemsPerSlide}%` }}
   >
     {store.image && (
       <Image
         src={store.image}
         alt={store.name}
-        className="object-cover"
+        className="object-cover rounded-xl"
         fill
         priority
         loading="eager"
