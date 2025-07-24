@@ -140,7 +140,7 @@ const OrderSummary: React.FC<{ data: string }> = ({ data }) => {
 
         {/* Order summary */}
         <div className="border-t border-gray-300 mt-4 pt-4">
-          <h3 className="text-xl font-semibold mb-2 max-md:text-sm">Résumé de la commande</h3>
+          <h3 className="text-xl font-semibold mb-2 max-md:text-lg">Résumé de la commande :</h3>
           <p className="text-gray-700 max-md:text-xs">
             Votre commande <span className="font-bold">#{order.ref}</span> a été
             réussie.
@@ -196,7 +196,7 @@ const OrderSummary: React.FC<{ data: string }> = ({ data }) => {
           </div>
 
           {/* Meta */}
-          <div className="mt-8 space-y-2 max-md:text-xs border-t border-gray-300 pt-4">
+          <div className="mt-4 space-y-2 max-md:text-xs border-t border-gray-300 pt-4">
             <p className="text-gray-700">
               Mode de paiement :{" "}
               <span className="font-bold">
