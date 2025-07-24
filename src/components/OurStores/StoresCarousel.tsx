@@ -154,7 +154,7 @@ const StoresCard: React.FC<StoresCardProps> = ({ store, itemsPerSlide }) => {
           <h3 className="font-semibold text-xl text-white max-lg:text-sm">
             TEMPS OUVERT :
           </h3>
-          <div className="h-[2px] w-full bg-white/40 my-1" />
+          <div className="h-[2px] w-full bg-white/40 mt-1" />
 
           {/* scrollable list wrapper */}
           <div className="relative">
@@ -231,7 +231,7 @@ const StoresCard: React.FC<StoresCardProps> = ({ store, itemsPerSlide }) => {
             )}
           </div>
 
-          <div className="h-[2px] w-full bg-white/40 my-1" />
+          <div className="h-[2px] w-full bg-white/40 my-4" />
         </div>
       </div>
 
