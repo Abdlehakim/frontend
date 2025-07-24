@@ -1,27 +1,40 @@
+/* ------------------------------------------------------------------
+   src/components/settings/AddAddress.tsx
+------------------------------------------------------------------ */
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { toast } from "react-toastify";
-import { useAuth } from "@/hooks/useAuth"; // Update the path if needed
-import { AiOutlinePlus } from "react-icons/ai"; // ← NEW
+import { useAuth } from "@/hooks/useAuth";
+import { AiOutlinePlus } from "react-icons/ai";
+import { fetchData } from "@/lib/fetchData";
 
+/* ---------- props ---------- */
 interface AddAddressProps {
   isFormVisible: boolean;
-  getAddress(): void; // callback to refresh the address list in the parent
-  toggleForminVisibility(): void; // callback to hide this form
+  getAddress(): void;            // callback pour rafraîchir la liste
+  toggleForminVisibility(): void; // callback pour fermer le modal
 }
 
+/* ---------- component ---------- */
 export default function AddAddress({
   isFormVisible,
   getAddress,
   toggleForminVisibility,
 }: AddAddressProps) {
   const { isAuthenticated, loading: authLoading } = useAuth();
-  // Read backend URL from environment variable
-  const backendUrl =
-    process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3000";
 
-  // Fields matching your Mongoose schema
+  /* ── Bloquer le scroll quand le modal est ouvert ───────────────── */
+  useEffect(() => {
+    if (isFormVisible) {
+      document.body.classList.add("overflow-hidden");
+    } else {
+      document.body.classList.remove("overflow-hidden");
+    }
+    return () => document.body.classList.remove("overflow-hidden");
+  }, [isFormVisible]);
+
+  /* ── State local du formulaire ─────────────────────────────────── */
   const [addressData, setAddressData] = useState({
     Name: "",
     StreetAddress: "",
@@ -31,68 +44,38 @@ export default function AddAddress({
     PostalCode: "",
   });
 
-  // Update local state when inputs change
-  const handleChange = (event: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = event.target;
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
     setAddressData((prev) => ({ ...prev, [name]: value }));
   };
 
-  // Submit form to your /api/client/address/postAddress route
+  /* ── Soumission du formulaire ──────────────────────────────────── */
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
 
-    // Wait until auth is finished checking
     if (authLoading) {
-      toast.info("Checking authentication. Please wait...");
+      toast.info("Vérification de l'authentification. Veuillez patienter...");
       return;
     }
 
-    // User must be authenticated to add addresses
     if (!isAuthenticated) {
-      toast.error("You must be logged in to add an address.");
+      toast.error("Vous devez être connecté pour ajouter une adresse.");
       return;
     }
 
     try {
-      const response = await fetch(
-        `${backendUrl}/api/client/address/postAddress`,
-        {
-          method: "POST",
-          credentials: "include", // send cookies if using cookie-based auth
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify(addressData),
-        }
-      );
+      await fetchData("/client/address/postAddress", {
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(addressData),
+      });
 
-      if (!response.ok) {
-        // Handle server errors
-        const result = await response.json();
-        switch (response.status) {
-          case 400:
-            toast.error(result.message || "All fields are required.");
-            break;
-          case 405:
-            toast.error(
-              result.message || "You have reached the limit of addresses."
-            );
-            break;
-          case 500:
-            toast.error(result.error || "Error creating address.");
-            break;
-          default:
-            toast.error(result.error || "An unexpected error occurred.");
-        }
-        return;
-      }
-
-      // Success!
-      toast.success("Address added successfully!");
-      // Refresh address list in parent
+      toast.success("Adresse ajoutée avec succès !");
       getAddress();
-      // Hide the form
       toggleForminVisibility();
 
-      // Clear out the fields
+      /* Réinitialisation des champs */
       setAddressData({
         Name: "",
         StreetAddress: "",
@@ -102,176 +85,149 @@ export default function AddAddress({
         PostalCode: "",
       });
     } catch (error) {
-      console.error("Error creating address:", error);
-      toast.error(
-        error instanceof Error ? error.message : "Unknown error occurred"
-      );
+      console.error("Erreur lors de la création de l'adresse:", error);
+      const message =
+        error instanceof Error
+          ? error.message
+          : "Une erreur inconnue est survenue";
+      toast.error(message);
     }
   };
 
-  // If form isn't visible, don't render anything
+  /* ── Si le modal est masqué, ne rien rendre ────────────────────── */
   if (!isFormVisible) return null;
 
+  /* ── Render ────────────────────────────────────────────────────── */
   return (
-    <div className="min-w-screen h-screen animated fadeIn faster fixed left-0 top-0 flex justify-center items-center inset-0 z-50 outline-none focus:outline-none bg-no-repeat bg-center bg-cover backdrop-filter backdrop-brightness-75">
-      <div className="absolute opacity-80 inset-0 z-0"></div>
+    <div className="min-w-screen h-screen fixed inset-0 z-50 flex items-center justify-center bg-center bg-cover backdrop-filter backdrop-brightness-75">
+      <div className="absolute inset-0 opacity-80 z-0" />
+
       <form
         onSubmit={handleSubmit}
-        className="space-y-4 w-full max-w-lg p-5 relative mx-auto my-auto rounded-xl shadow-lg bg-white"
+        className="relative mx-auto my-auto w-full max-w-lg space-y-4 rounded-xl bg-white p-5 shadow-lg"
       >
         <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
-          Delivery Details
+          Détails de livraison
         </h2>
 
-        <div className="grid grid-cols-1 gap-[16px] sm:grid-cols-2">
-          {/* Name */}
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {/* Nom */}
           <div className="sm:col-span-2">
             <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
-              Name*
+              Nom*
             </label>
             <input
               name="Name"
               value={addressData.Name}
               onChange={handleChange}
               type="text"
-              placeholder="e.g., Home, Work, Jane's House"
-              className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5
-                         text-sm text-gray-900 focus:border-primary-500 focus:ring-primary-500
-                         dark:border-gray-600 dark:bg-gray-700 dark:text-white 
-                         dark:placeholder:text-gray-400 dark:focus:border-primary-500 
-                         dark:focus:ring-primary-500"
+              placeholder="ex. Maison, Travail, Chez Jane"
+              className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-primary-500 dark:focus:ring-primary-500"
               required
             />
           </div>
 
-          {/* Country */}
+          {/* Pays */}
           <div className="sm:col-span-2">
             <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
-              Country*
+              Pays*
             </label>
             <input
               name="Country"
               value={addressData.Country}
               onChange={handleChange}
               type="text"
-              placeholder="e.g., USA, France, Egypt"
-              className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5
-                         text-sm text-gray-900 focus:border-primary-500 focus:ring-primary-500 
-                         dark:border-gray-600 dark:bg-gray-700 dark:text-white 
-                         dark:placeholder:text-gray-400 dark:focus:border-primary-500 
-                         dark:focus:ring-primary-500"
+              placeholder="ex. Tunisie, France, Canada"
+              className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-primary-500 dark:focus:ring-primary-500"
               required
             />
           </div>
 
-          {/* Province */}
+          {/* Gouvernorat / État */}
           <div>
             <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
-              Province / State*
+              Gouvernorat / État*
             </label>
             <input
               name="Province"
               value={addressData.Province}
               onChange={handleChange}
               type="text"
-              placeholder="e.g., California, Ontario, Bavaria"
-              className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5
-                         text-sm text-gray-900 focus:border-primary-500 focus:ring-primary-500 
-                         dark:border-gray-600 dark:bg-gray-700 dark:text-white 
-                         dark:placeholder:text-gray-400 dark:focus:border-primary-500 
-                         dark:focus:ring-primary-500"
+              placeholder="ex. Tunis, Ontario, Bavière"
+              className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-primary-500 dark:focus:ring-primary-500"
               required
             />
           </div>
 
-          {/* City */}
+          {/* Ville */}
           <div>
             <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
-              City*
+              Ville*
             </label>
             <input
               name="City"
               value={addressData.City}
               onChange={handleChange}
               type="text"
-              placeholder="e.g., New York, Paris, Cairo"
-              className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5
-                         text-sm text-gray-900 focus:border-primary-500 focus:ring-primary-500 
-                         dark:border-gray-600 dark:bg-gray-700 dark:text-white 
-                         dark:placeholder:text-gray-400 dark:focus:border-primary-500 
-                         dark:focus:ring-primary-500"
+              placeholder="ex. Tunis, Paris, Montréal"
+              className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-primary-500 dark:focus:ring-primary-500"
               required
             />
           </div>
 
-          {/* PostalCode */}
+          {/* Code postal */}
           <div>
             <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
-              Postal Code*
+              Code postal*
             </label>
             <input
               name="PostalCode"
               value={addressData.PostalCode}
               onChange={handleChange}
               type="text"
-              placeholder="e.g., 10001, 75000, 11937"
-              className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5
-                         text-sm text-gray-900 focus:border-primary-500 focus:ring-primary-500
-                         dark:border-gray-600 dark:bg-gray-700 dark:text-white 
-                         dark:placeholder:text-gray-400 dark:focus:border-primary-500 
-                         dark:focus:ring-primary-500"
+              placeholder="ex. 1001, 75000, H2X 1Y4"
+              className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-primary-500 dark:focus:ring-primary-500"
               required
             />
           </div>
 
-          {/* StreetAddress */}
+          {/* Adresse */}
           <div className="sm:col-span-2">
             <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
-              Street Address*
+              Adresse*
             </label>
             <input
               name="StreetAddress"
               value={addressData.StreetAddress}
               onChange={handleChange}
               type="text"
-              placeholder="e.g., 123 Main Street, Apt 4B"
-              className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5
-                         text-sm text-gray-900 focus:border-primary-500 focus:ring-primary-500 
-                         dark:border-gray-600 dark:bg-gray-700 dark:text-white
-                         dark:placeholder:text-gray-400 dark:focus:border-primary-500 
-                         dark:focus:ring-primary-500"
+              placeholder="ex. 123 rue Principale, Appt 4B"
+              className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-primary-500 dark:focus:ring-primary-500"
               required
             />
           </div>
 
-          <div className="sm:col-span-2 flex justify-start gap-[8px]">
+        
+          </div>
+            {/* Boutons */}
+          <div className="w-full flex gap-4 justify-end">
             {/* Submit */}
             <button
               type="submit"
-              className="flex w-full items-center justify-center gap-[8px] 
-                         rounded-lg border text-white border-primary bg-primary 
-                         px-5 py-2.5 text-sm font-medium hover:bg-[#15335E] 
-                         hover:border-[#15335E]"
+              className="mt-2 rounded-md border border-gray-300 px-2 py-2 text-sm text-black hover:text-white hover:bg-primary max-md:text-xs max-md:w-full text-center flex gap-4"
             >
               <AiOutlinePlus className="h-5 w-5" />
-              Add address
+              Ajouter l’adresse
             </button>
 
             {/* Cancel */}
             <button
-              onClick={toggleForminVisibility}
               type="button"
-              className="flex w-full items-center justify-center gap-[8px] 
-                         rounded-lg border border-gray-200 bg-white px-5 py-2.5 
-                         text-sm font-medium text-gray-900 hover:bg-gray-100 
-                         hover:text-primary-700 focus:z-10 focus:outline-none 
-                         focus:ring-4 focus:ring-gray-100 dark:border-gray-600 
-                         dark:bg-gray-800 dark:text-gray-400 dark:hover:bg-gray-700 
-                         dark:hover:text-white dark:focus:ring-gray-700"
+              onClick={toggleForminVisibility}
+              className="mt-2 rounded-md border border-gray-300 px-2 py-2 text-sm text-black hover:text-white hover:bg-primary max-md:text-xs max-md:w-full text-center"
             >
-              Cancel
+              Annuler
             </button>
-          </div>
         </div>
       </form>
     </div>

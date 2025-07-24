@@ -102,14 +102,7 @@ body {
   transition-timing-function: cubic-bezier(0, 0, 0.2, 1);
 }
 
-/* ---------- tables ---------- */
-th, td {
-  border: 1px solid #ffffff;
-  padding: 3px;
-  text-align: left;
-  font-weight: 400;
-}
-th { color: #ffffff; }
+
 
 
 /* globals.css (optional scrollbar utilities if you don't have them) */

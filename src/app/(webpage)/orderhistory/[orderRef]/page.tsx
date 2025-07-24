@@ -41,7 +41,7 @@ interface OrderItem {
 
 interface Order {
   ref: string;
-  address: Address;
+  address: Address | null;
   orderItems: OrderItem[];
   paymentMethod: string;
   deliveryMethod: string;
@@ -63,6 +63,22 @@ const frDate = (iso: string) =>
   });
 
 const fmt = (n: number) => n.toFixed(2) + " TND";
+
+/**
+ * Construit l’adresse complète en ignorant tout champ vide / absent.
+ * Retourne une chaîne vide si aucune info valide.
+ */
+const formatAddress = (addr?: Partial<Address> | null): string =>
+  !addr
+    ? ""
+    : [
+        addr.Name,
+        addr.StreetAddress,
+        [addr.City, addr.Province].filter(Boolean).join(", "),
+        [addr.PostalCode, addr.Country].filter(Boolean).join(" - "),
+      ]
+        .filter(Boolean)
+        .join(", ");
 
 /* ---------- composant ---------- */
 export default function OrderByRef() {
@@ -191,16 +207,7 @@ export default function OrderByRef() {
             <div className="flex-1 md:pl-6 space-y-1">
               <p className="text-xs text-gray-400">Lieu de livraison</p>
               <p className="text-sm">
-                {[
-                  order.address.Name,
-                  order.address.StreetAddress,
-                  [order.address.City, order.address.Province]
-                    .filter(Boolean)
-                    .join(", "),
-                  `${order.address.PostalCode} - ${order.address.Country}`,
-                ]
-                  .filter(Boolean)
-                  .join(", ")}
+                {formatAddress(order.address) || "—"}
               </p>
             </div>
           </div>
