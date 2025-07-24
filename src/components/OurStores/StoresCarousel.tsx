@@ -48,7 +48,7 @@ interface StoresCardProps {
 const StoresCard: React.FC<StoresCardProps> = ({ store, itemsPerSlide }) => {
   const [showHours, setShowHours] = useState(false);
   const [showAddress, setShowAddress] = useState(false);
-
+const EPS = 10;  
   /* scroll hint states */
   const listRef = useRef<HTMLUListElement>(null);
   const [atTop, setAtTop] = useState(true);
@@ -60,7 +60,7 @@ const StoresCard: React.FC<StoresCardProps> = ({ store, itemsPerSlide }) => {
     if (!el) return;
     const check = () => {
       setAtTop(el.scrollTop === 0);
-      setAtBottom(el.scrollTop + el.clientHeight >= el.scrollHeight);
+      setAtBottom(el.scrollTop + el.clientHeight >= el.scrollHeight - EPS);
       setHasOverflow(el.scrollHeight > el.clientHeight);
     };
     check();
@@ -215,7 +215,7 @@ const StoresCard: React.FC<StoresCardProps> = ({ store, itemsPerSlide }) => {
 
             {/* bottom fade + hint */}
             {!atBottom && (
-              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-black/90 to-transparent flex items-end justify-center pb-1">
+              <div className="pointer-events-none absolute inset-x-0 bottom-0 h-10 bg-gradient-to-t from-black/95 to-transparent flex items-end justify-center">
                 <span className="text-[10px] uppercase tracking-wider text-white/70 animate-pulse flex items-center gap-1">
                   scroll
                   <svg
@@ -231,7 +231,7 @@ const StoresCard: React.FC<StoresCardProps> = ({ store, itemsPerSlide }) => {
             )}
           </div>
 
-          <div className="h-[2px] w-full bg-white/40 my-4" />
+          <div className="h-[2px] w-full bg-white/40 my-1" />
         </div>
       </div>
 
