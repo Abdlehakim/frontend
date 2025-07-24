@@ -1,62 +1,70 @@
 /* ------------------------------------------------------------------
-   src/app/order/[orderRef]/page.tsx   (client component)
+   src/app/order/[orderRef]/page.tsx
 ------------------------------------------------------------------ */
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useState, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import Image from "next/image";
 import { MdOutlineArrowForwardIos } from "react-icons/md";
+import { FiDownload } from "react-icons/fi";
 import Breadcrumb from "@/components/order/Breadcrumb";
 import { fetchData } from "@/lib/fetchData";
 
-/* ---------- interfaces ---------- */
+/* ---------- skeleton ---------- */
+const Skel = ({ className = "" }: { className?: string }) => (
+  <div className={`animate-pulse bg-gray-200 rounded ${className}`} />
+);
+
+/* ---------- types ---------- */
 interface Address {
-  _id: string;
   Name: string;
   StreetAddress: string;
   Country: string;
   Province?: string;
   City: string;
   PostalCode: string;
-  createdAt?: string;
-  updatedAt?: string;
 }
 
 interface OrderItem {
   _id: string;
   reference: string;
-  product: string;
   name: string;
   tva: number;
+  discount: number;
   quantity: number;
   mainImageUrl: string;
-  discount: number;
   price: number;
 }
 
-interface User {
-  username: string;
-  phone: number;
-}
-
 interface Order {
-  _id: string;
-  user: User;
   ref: string;
   address: Address;
   orderItems: OrderItem[];
   paymentMethod: string;
+  deliveryMethod: string;
   deliveryCost: number;
   total: number;
   orderStatus: string;
-  statustimbre: boolean;
   createdAt: string;
 }
 
-/* ---------- component ---------- */
+interface DeliveryOption    { id?: string; _id?: string; name: string }
+interface PaymentMethodApi { key?: string; id?: string; label?: string; name?: string }
+
+/* ---------- utils ---------- */
+const frDate = (iso: string) =>
+  new Date(iso).toLocaleDateString("fr-FR", {
+    day: "2-digit",
+    month: "short",
+    year: "numeric",
+  });
+
+const fmt = (n: number) => n.toFixed(2) + " TND";
+
+/* ---------- composant ---------- */
 export default function OrderByRef() {
   const router = useRouter();
   const { orderRef } = useParams() as { orderRef: string };
@@ -64,187 +72,232 @@ export default function OrderByRef() {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
 
-  /* fetch order once */
+  const [deliveryMap, setDeliveryMap] = useState<Record<string, string>>({});
+  const [paymentMap,  setPaymentMap]  = useState<Record<string, string>>({});
+
+  /* ──────────────────────────────── */
+  /* 1) récupération de la commande   */
+  /* ──────────────────────────────── */
   useEffect(() => {
     (async () => {
       try {
         const data = await fetchData<Order>(
           `/client/order/getOrderByRef/${orderRef}`,
-          { method: "GET", credentials: "include" }
+          { credentials: "include" }
         );
         setOrder(data);
       } catch (err) {
-        console.error("Error fetching order:", err);
+        console.error(err);
       } finally {
         setLoading(false);
       }
     })();
   }, [orderRef]);
 
-  /* ---------- pdf helpers ---------- */
-  const generatePDF = (openInNewTab = false) => {
-    const el = document.getElementById("invoice-content");
-    if (!el) return;
+  /* ──────────────────────────────── */
+  /* 2) récupération des libellés     */
+  /* ──────────────────────────────── */
+  useEffect(() => {
+    (async () => {
+      try {
+        const [deliveries, payments] = await Promise.all([
+          fetchData<DeliveryOption[]>("/checkout/delivery-options?limit=100"),
+          fetchData<PaymentMethodApi[]>("/checkout/payment-methods"),
+        ]);
 
+        const dMap: Record<string, string> = {};
+        deliveries.forEach((d) => {
+          const key = d.id ?? d._id;
+          if (key) dMap[key] = d.name;
+        });
+
+        const pMap: Record<string, string> = {};
+        payments.forEach((p) => {
+          const key   = p.key ?? p.id;
+          const label = p.label ?? p.name;
+          if (key && label) pMap[key] = label;
+        });
+
+        setDeliveryMap(dMap);
+        setPaymentMap(pMap);
+      } catch (err) {
+        console.error("Erreur lors du chargement des libellés :", err);
+      }
+    })();
+  }, []);
+
+  /* ----- PDF ----- */
+  const telechargerPDF = useCallback(() => {
+    const el = document.getElementById("invoice-card");
+    if (!el) return;
     html2canvas(el).then((canvas) => {
-      const pdf = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+      const pdf = new jsPDF({ unit: "mm", format: "a4" });
       const imgW = 210;
       const imgH = (canvas.height * imgW) / canvas.width;
-      const pages = Math.ceil(imgH / 297);
-
-      for (let i = 0; i < pages; i++) {
-        pdf.addImage(canvas.toDataURL("image/png"), "PNG", 0, -i * 297, imgW, imgH);
-        if (i < pages - 1) pdf.addPage();
-      }
-
-      if (openInNewTab) {
-        window.open(URL.createObjectURL(pdf.output("blob")));
-      } else {
-        pdf.save(`INVOICE-${order?.ref.replace("ORDER-", "")}.pdf`);
-      }
+      pdf.addImage(canvas.toDataURL("image/png"), "PNG", 0, 0, imgW, imgH);
+      pdf.save(`FACTURE-${order?.ref.replace("ORDER-", "")}.pdf`);
     });
-  };
+  }, [order]);
 
-  const handleDownloadPDF = () => generatePDF(false);
-  const handlePrint = () => generatePDF(true);
-
-  /* ---------- loading & error ---------- */
-  if (loading) return <div>Loading…</div>;
-  if (!order) return <div>No order found.</div>;
-
-  /* ---------- jsx ---------- */
+  /* ---------- UI ---------- */
   return (
     <div className="w-[90%] md:w-[70%] mx-auto pt-16">
+      {/* fil d’Ariane */}
       <Breadcrumb
-        homeElement="Home"
+        homeElement="Accueil"
         separator={<MdOutlineArrowForwardIos size={13} className="mt-1.5" />}
         containerClasses="flex gap-1 text-gray-500"
         activeClasses="uppercase underline font-semibold text-black"
         capitalizeLinks
       />
 
-      {/* invoice wrapper */}
-      <div id="invoice-content" className="flex flex-col gap-12 pt-10">
-        {/* order ref */}
-        <h2 className="text-5xl font-semibold text-center">{order.ref}</h2>
-
-        {/* headers */}
-        <div className="lg:flex w-full gap-2">
-          {/* recipient */}
-          <div className="border border-gray-200 p-2 rounded-md w-full">
-            <h3 className="text-lg font-semibold mb-1">DESTINATAIRE:</h3>
-            <dl className="flex gap-4">
-              <div className="font-semibold space-y-1">
-                <dt>Nom:</dt>
-                <dt>Rue:</dt>
-                <dt>Pays:</dt>
-                <dt>Province:</dt>
-                <dt>Ville:</dt>
-                <dt>Code Postal:</dt>
-              </div>
-              <div className="text-gray-500 space-y-1">
-                <dd>{order.address.Name}</dd>
-                <dd>{order.address.StreetAddress}</dd>
-                <dd>{order.address.Country}</dd>
-                <dd>{order.address.Province ?? "-"}</dd>
-                <dd>{order.address.City}</dd>
-                <dd>{order.address.PostalCode}</dd>
-              </div>
-            </dl>
-          </div>
-
-          {/* order meta */}
-          <div className="border border-gray-200 p-2 rounded-md w-full space-y-1">
-            <h3 className="text-lg font-semibold mb-1">ORDER DETAILS:</h3>
-            <dl className="flex gap-4">
-              <div className="font-semibold space-y-1">
-                <dt>Date:</dt>
-                <dt>Payment:</dt>
-                <dt>Delivery Cost:</dt>
-                <dt>Status:</dt>
-              </div>
-              <div className="text-gray-500 space-y-1">
-                <dd>
-                  {new Date(order.createdAt).toLocaleDateString("en-US", {
-                    year: "numeric",
-                    month: "numeric",
-                    day: "numeric",
-                  })}
-                </dd>
-                <dd>{order.paymentMethod}</dd>
-                <dd>{order.deliveryCost.toFixed(3)} TND</dd>
-                <dd>{order.orderStatus}</dd>
-              </div>
-            </dl>
-          </div>
-        </div>
-
-        {/* items table */}
-        <section className="space-y-4">
-          <h3 className="text-4xl font-bold">Products</h3>
-          <div className="text-center space-y-4">
-            <hr />
-            <div className="flex justify-between lg:px-32 font-bold uppercase">
-              <span>Image</span>
-              <span>Ref</span>
-              <span>Name</span>
-              <span>Qty</span>
-              <span>Prix Tot</span>
-            </div>
-            <hr />
-
-            {order.orderItems.map((item) => (
-              <div key={item._id} className="flex justify-between lg:px-32">
-                <Image
-                  src={item.mainImageUrl || "/placeholder.png"}
-                  alt={item.name}
-                  width={50}
-                  height={50}
-                  className="rounded-lg object-cover"
-                />
-                <span>{item.reference}</span>
-                <span>{item.name}</span>
-                <span>{item.quantity}</span>
-                <span>
-                  {(item.price / (1 + item.tva / 100)).toFixed(3)} TND
-                </span>
-              </div>
-            ))}
-
-            <hr />
-            <div className="flex justify-end gap-4 text-xl font-bold">
-              <span>Total Price:</span>
-              <span>{order.total.toFixed(3)} TND</span>
-            </div>
-            <hr />
-          </div>
-        </section>
-      </div>
-
-      {/* footer actions */}
-      <div className="flex justify-between mt-6 gap-2">
-        <button
-          onClick={() => router.back()}
-          className="py-2 px-3 text-sm font-medium rounded-lg border bg-white text-gray-800 shadow-sm hover:bg-gray-50"
+      {/* carte de la commande -------------------------------------- */}
+      {loading ? (
+        /* ── skeleton SEULEMENT pour la carte ── */
+        <Skel className="bg-gray-100 border border-gray-200 rounded-xl p-6 mt-10 space-y-6 h-[632px]" />
+      ) : !order ? (
+        /* ── état erreur/absente ── */
+        <p className="pt-16 text-center">Aucune commande trouvée.</p>
+      ) : (
+        /* ── contenu réel ── */
+        <div
+          id="invoice-card"
+          className="bg-gray-100 border border-gray-200 rounded-xl p-6 mt-10 space-y-6 max-md:p-2"
         >
-          Close
-        </button>
+          {/* en‑tête */}
+          <div className="md:flex md:divide-x divide-gray-200 text-center md:text-left">
+            <div className="flex-1 pb-4 md:pb-0 space-y-1">
+              <p className="text-xs text-gray-400">N° de commande</p>
+              <p className="text-sm font-medium">
+                #{order.ref.replace("ORDER-", "")}
+              </p>
+            </div>
+            <div className="flex-1 pb-4 md:pb-0 md:pl-6 space-y-1">
+              <p className="text-xs text-gray-400">Date de commande</p>
+              <p className="text-sm">{frDate(order.createdAt)}</p>
+            </div>
+            <div className="flex-1 pb-4 md:pb-0 md:pl-6 space-y-1">
+              <p className="text-xs text-gray-400">Méthode de livraison</p>
+              <p className="text-sm">
+                {deliveryMap[order.deliveryMethod] ?? order.deliveryMethod}
+              </p>
+            </div>
+            <div className="flex-1 pb-4 md:pb-0 md:pl-6 space-y-1">
+              <p className="text-xs text-gray-400">Moyen de paiement</p>
+              <p className="text-sm">
+                {paymentMap[order.paymentMethod] ?? order.paymentMethod}
+              </p>
+            </div>
+            <div className="flex-1 md:pl-6 space-y-1">
+              <p className="text-xs text-gray-400">Lieu de livraison</p>
+              <p className="text-sm">
+                {[
+                  order.address.Name,
+                  order.address.StreetAddress,
+                  [order.address.City, order.address.Province]
+                    .filter(Boolean)
+                    .join(", "),
+                  `${order.address.PostalCode} - ${order.address.Country}`,
+                ]
+                  .filter(Boolean)
+                  .join(", ")}
+              </p>
+            </div>
+          </div>
 
-        <div className="flex gap-2">
+          <hr className="border-2" />
+
+          {/* articles : 2 colonnes, 8 visibles puis scroll */}
+          <div className="relative">
+            {/* trait vertical centré, visible ≥ sm */}
+            <span
+              aria-hidden
+              className="hidden sm:block absolute inset-y-0 left-1/2 w-px bg-gray-200"
+            />
+
+            {/* conteneur déroulant : hauteur fixe */}
+            <div className="h-[420px] overflow-y-auto px-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-6 sm:gap-x-12">
+                {order.orderItems.map((it) => {
+                  const unit =
+                    it.discount > 0
+                      ? it.price - (it.price * it.discount) / 100
+                      : it.price;
+                  const lineTotal = unit * it.quantity;
+
+                  return (
+                    <div
+                      key={it._id}
+                      className="flex items-start justify-between gap-4"
+                    >
+                      <div className="relative w-20 h-20 rounded-lg">
+                        <Image
+                          src={it.mainImageUrl || "/placeholder.png"}
+                          alt={it.name}
+                          className="object-cover"
+                          fill
+                          priority
+                          loading="eager"
+                          sizes="(max-width: 768px) 100vw,
+                                 (max-width: 1280px) 100vw,
+                                 1280px"
+                          quality={75}
+                          placeholder="blur"
+                          blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA"
+                        />
+                      </div>
+
+                      <div className="flex-1 max-md:text-xs">
+                        <h4 className="font-semibold">{it.name}</h4>
+                        <p className="text-sm text-gray-500 max-md:text-xs">
+                          Réf :&nbsp;{it.reference}
+                        </p>
+                        <p className="text-sm text-gray-500 max-md:text-xs">
+                          Quantité :&nbsp;{it.quantity}
+                        </p>
+                      </div>
+
+                      <p className="font-semibold whitespace-nowrap max-md:text-xs">
+                        {fmt(lineTotal)}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          </div>
+
+          <hr className="border-2" />
+
+          {/* total */}
+          <div className="flex justify-between flex-wrap items-center max-md:justify-center">
+            <p className="text-gray-500 font-medium">
+              Montant total :&nbsp;
+              <span className="text-black font-semibold">
+                {fmt(order.total)}
+              </span>
+            </p>
+          </div>
+        </div>
+      )}
+
+      {/* actions (uniquement si la commande est chargée) */}
+      {!loading && order && (
+        <div className="flex justify-between mt-4 gap-4">
           <button
-            onClick={handleDownloadPDF}
-            className="py-2 px-3 text-sm font-bold rounded-lg border bg-white text-[#15335E] shadow-sm hover:bg-gray-50"
+            onClick={() => router.back()}
+            className="mt-2 rounded-md border border-gray-300 px-2 py-2 text-sm text-black hover:text-white hover:bg-primary max-md:text-xs max-md:w-full text-center"
           >
-            Télécharger PDF
+            Retour
           </button>
           <button
-            onClick={handlePrint}
-            className="py-2 px-3 w-32 flex justify-center text-sm font-medium rounded-lg bg-primary text-white hover:bg-[#15335E]"
+            onClick={telechargerPDF}
+            className="mt-2 rounded-md border border-gray-300 px-2 py-2 text-sm text-black hover:text-white hover:bg-primary max-md:text-xs max-md:w-full text-center flex gap-4 justify-center"
           >
-            Imprimer
+            <FiDownload /> Télécharger la facture
           </button>
         </div>
-      </div>
+      )}
     </div>
   );
 }

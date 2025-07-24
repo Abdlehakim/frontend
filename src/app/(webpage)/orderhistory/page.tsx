@@ -1,204 +1,231 @@
+/* ------------------------------------------------------------------
+   src/app/(client)/orderhistory/page.tsx
+------------------------------------------------------------------ */
 "use client";
 
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
+import { MdOutlineArrowForwardIos } from "react-icons/md";
 import { useAuth } from "@/hooks/useAuth";
 import Pagination from "@/components/PaginationClient";
 import Breadcrumb from "@/components/order/Breadcrumb";
-import { MdOutlineArrowForwardIos } from "react-icons/md";
+import { fetchData } from "@/lib/fetchData";
 
-interface Address {
-  _id: string;
-  governorate: string;
-  city: string;
-  zipcode: string;
-  address: string;
-}
+/* ---------- tiny skeleton helper ---------- */
+const Skel = ({ className = "" }: { className?: string }) => (
+  <div className={`animate-pulse bg-gray-200 rounded ${className}`} />
+);
 
-interface OrderItem {
-  _id: string;
-  product: string;
-  name: string;
-  quantity: number;
-  image: string;
-  discount: number;
-  price: number;
-}
-
+/* ---------- modèles de données ---------- */
 interface Order {
   _id: string;
-  user: string;
   ref: string;
-  address: Address;
-  orderItems: OrderItem[];
-  paymentMethod: string;
-  deliveryCost: number;
-  deliveryMethod: string;
+  paymentMethod: string;      // clé (ex. « stripe »)
+  deliveryMethod: string;     // id  (ex. « 68750d59… »)
   total: number;
-  orderStatus: string;
   createdAt: string;
 }
 
+interface DeliveryOption    { id?: string; _id?: string; name: string }
+interface PaymentMethodApi { key?: string; id?: string; label?: string; name?: string }
+
+/* ---------- composant ---------- */
 export default function OrderHistory() {
-  const router = useRouter();
+  const router                       = useRouter();
   const { isAuthenticated, loading } = useAuth();
 
-  const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3000";
-
-  const [orders, setOrders] = useState<Order[]>([]);
+  /* commandes */
+  const [orders, setOrders]               = useState<Order[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(true);
-  const [ordersError, setOrdersError] = useState("");
+  const [ordersError, setOrdersError]     = useState("");
 
-  // Pagination
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const ordersPerPage = 5;
+  /* correspondances noms */
+  const [deliveryMap, setDeliveryMap] = useState<Record<string, string>>({});
+  const [paymentMap,  setPaymentMap]  = useState<Record<string, string>>({});
 
-  /**
-   * 1) Redirect if user is not authenticated
-   */
+  /* pagination */
+  const PAR_PAGE                        = 5;
+  const [courante, setCourante]         = useState(1);
+  const [pages, setPages]               = useState(1);
+
+  /* ────────────────────────────────────────────────────────── */
+  /* 1) redirection si non authentifié                         */
+  /* ────────────────────────────────────────────────────────── */
   useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      // Replace this path with wherever you want to redirect if unauthenticated
-      router.push("/signin");
-    }
+    if (!loading && !isAuthenticated) router.push("/signin");
   }, [loading, isAuthenticated, router]);
 
-  /**
-   * 2) Fetch orders from your backend once the user is authenticated
-   */
+  /* ────────────────────────────────────────────────────────── */
+  /* 2) récupération des commandes                             */
+  /* ────────────────────────────────────────────────────────── */
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const res = await fetch(`${backendUrl}/api/client/order/getOrdersByClient`, {
-          method: "GET",
-          credentials: "include", // important for cookie-based auth
-          headers: { "Content-Type": "application/json" },
-        });
-        if (!res.ok) {
-          const errorData = await res.json();
-          throw new Error(errorData.error || "Failed to fetch orders.");
-        }
-        const data = (await res.json()) as Order[];
+        const data = await fetchData<Order[]>(
+          "/client/order/getOrdersByClient",
+          {
+            credentials: "include",
+            headers: { "Content-Type": "application/json" },
+          }
+        );
         setOrders(data);
-        setTotalPages(Math.ceil(data.length / ordersPerPage));
+        setPages(Math.ceil(data.length / PAR_PAGE));
       } catch (err: unknown) {
-        if (err instanceof Error) {
-          setOrdersError(err.message);
-        } else {
-          setOrdersError("An unexpected error occurred");
-        }
+        setOrdersError(
+          err instanceof Error ? err.message : "Erreur inattendue."
+        );
       } finally {
         setOrdersLoading(false);
       }
     };
 
-    if (!loading && isAuthenticated) {
-      fetchOrders();
-    }
-  }, [loading, isAuthenticated, backendUrl]);
+    if (!loading && isAuthenticated) fetchOrders();
+  }, [loading, isAuthenticated]);
 
-  /**
-   * 3) Helper to format date
-   */
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
+  /* ────────────────────────────────────────────────────────── */
+  /* 3) récupération des libellés (mêmes sources qu’OrderSummary) */
+  /* ────────────────────────────────────────────────────────── */
+  useEffect(() => {
+    (async () => {
+      try {
+        const [deliveries, payments] = await Promise.all([
+          fetchData<DeliveryOption[]>("/checkout/delivery-options?limit=100"),
+          fetchData<PaymentMethodApi[]>("/checkout/payment-methods"),
+        ]);
+
+        const dMap: Record<string, string> = {};
+        deliveries.forEach((d) => {
+          const key = d.id ?? d._id;
+          if (key) dMap[key] = d.name;
+        });
+
+        const pMap: Record<string, string> = {};
+        payments.forEach((p) => {
+          const key   = p.key ?? p.id;
+          const label = p.label ?? p.name;
+          if (key && label) pMap[key] = label;
+        });
+
+        setDeliveryMap(dMap);
+        setPaymentMap(pMap);
+      } catch (err) {
+        console.error("Erreur lors du chargement des libellés :", err);
+      }
+    })();
+  }, []);
+
+  /* ────────────────────────────────────────────────────────── */
+  /* fonctions utilitaires                                     */
+  /* ────────────────────────────────────────────────────────── */
+  const dateFr = (iso: string) =>
+    new Date(iso).toLocaleDateString("fr-FR", {
       year: "numeric",
       month: "long",
       day: "numeric",
     });
+
+  const tronque = () => {
+    const start = (courante - 1) * PAR_PAGE;
+    return orders.slice(start, start + PAR_PAGE);
   };
 
-  /**
-   * 4) Get the slice of orders for the current page
-   */
-  const getCurrentPageOrders = () => {
-    const startIndex = (currentPage - 1) * ordersPerPage;
-    const endIndex = startIndex + ordersPerPage;
-    return orders.slice(startIndex, endIndex);
-  };
-
-  /**
-   * 5) If still checking authentication or fetching data, show a loader
-   */
-  if (loading) {
-    return <p>Loading user data...</p>;
-  }
-
-  /**
-   * 6) Render main component
-   */
+  /* ────────────────────────────────────────────────────────── */
+  /* rendu                                                     */
+  /* ────────────────────────────────────────────────────────── */
   return (
-    <div className="w-full pt-16 flex flex-col gap-4 items-center">
-      <div className='w-[70%] '>
+    <div className="w-full pt-16 flex flex-col items-center">
+      {/* fil d’Ariane */}
+      <div className="w-[70%]">
         <Breadcrumb
-          homeElement="Home"
+          homeElement="Accueil"
           separator={<MdOutlineArrowForwardIos size={13} className="mt-1.5" />}
-          containerClasses=" flex gap-1 text-gray-500 "
-          listClasses=""
-          activeClasses="uppercase underline underline-offset-1 hover:underline font-semibold text-black"
+          containerClasses="flex gap-1 text-gray-500 max-md:justify-center"
+          activeClasses="underline underline-offset-1 hover:underline font-semibold text-black"
           capitalizeLinks
-        /></div>
-      <div className="w-[70%] max-lg:w-[95%] rounded-lg p-8 border-2 flex flex-col gap-2 mt-4">
-        <div className="max-md:flex-col max-md:flex max-md:items-center">
+        />
+      </div>
 
-          <p className="text-2xl font-bold">Order HISTORY</p>
-          <p className="text-gray-400 text-sm max-md:text-center">
-            Check the status of recent orders, manage returns, and download invoices
+      {/* bloc principal */}
+      <div className="w-[70%] max-lg:w-[95%] rounded-lg p-4 border-2 flex flex-col justify-between gap-6 mt-4 h-[70vh] max-md:h-fit">
+          <div className="flex flex-col gap-4">
+        <header className="flex flex-col gap-1 items-start max-md:items-center">
+          <h1 className="text-2xl font-bold uppercase max-md:text-lg">Historique des commandes</h1>
+          <p className="text-gray-400 text-sm max-md:text-center max-md:text-xs">
+            Suivez l’état de vos commandes récentes, gérez les retours et téléchargez vos factures.
           </p>
-        </div>
+        </header>
 
-        {/* 7) Display loading/errors first */}
         {ordersLoading ? (
-          <p>Loading orders...</p>
+          <div className="flex flex-col gap-4">
+            {Array.from({ length: 5 }).map((_, i) => (
+              <Skel key={i} className="w-full h-20 max-md:h-96" />
+            ))}
+          </div>
         ) : ordersError ? (
           <p className="text-red-500">{ordersError}</p>
         ) : orders.length === 0 ? (
-          <p>No orders found.</p>
+          <p>Aucune commande trouvée.</p>
         ) : (
           <>
-            {/* 8) Render orders for the current page */}
-            {getCurrentPageOrders().map((order) => (
-              <div key={order._id} className="flex flex-col gap-4">
-                <div className="bg-[#EFEFEF] rounded-lg p-6 justify-between flex max-md:flex-col max-md:items-center max-md:gap-4">
-                  <div className="max-md:flex max-md:justify-between max-md:w-full">
-                    <p>Date Order</p>
-                    <p>{formatDate(order.createdAt)}</p>
+          
+            {tronque().map((o) => (
+              <div key={o._id} className="flex flex-col gap-4 ">
+                <div className="bg-gray-100 rounded-lg p-6 flex justify-between items-center gap-4 max-md:flex-col max-md:items-start h-20 max-md:h-96">
+                  {/* colonne date */}
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs text-gray-500">Date</span>
+                    <span>{dateFr(o.createdAt)}</span>
                   </div>
-                  <div className="max-md:flex max-md:justify-between max-md:w-full">
-                    <p>Order number</p>
-                    <p>{order.ref}</p>
+
+                  {/* colonne référence */}
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs text-gray-500">Commande n°</span>
+                    <span>{o.ref}</span>
                   </div>
-                  <div className="max-md:flex max-md:justify-between max-md:w-full">
-                    <p>Method Delivery</p>
-                    <p className="uppercase">{order.deliveryMethod}</p>
+
+                  {/* colonne livraison */}
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs text-gray-500">Méthode de livraison</span>
+                    <span>
+                      {deliveryMap[o.deliveryMethod] ?? o.deliveryMethod}
+                    </span>
                   </div>
-                  <div className="max-md:flex max-md:justify-between max-md:w-full">
-                    <p>Total amount</p>
-                    <p>{order.total} TND</p>
+
+                  {/* colonne paiement */}
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs text-gray-500">Moyen de paiement</span>
+                    <span>{paymentMap[o.paymentMethod] ?? o.paymentMethod}</span>
                   </div>
+
+                  {/* colonne total */}
+                  <div className="flex flex-col gap-1">
+                    <span className="text-xs text-gray-500">Total</span>
+                    <span>{o.total.toFixed(2)} TND</span>
+                  </div>
+
+                  {/* action */}
                   <Link
-                    href={`/orderhistory/${order.ref}`}
-                    className="bg-[#F7F7F7] border-2 h-10 w-[15%] max-md:w-full rounded-lg flex items-center justify-center"
+                    href={`/orderhistory/${o.ref}`}
+                    className="mt-2 rounded-md border border-gray-300 px-4 py-2 text-sm text-black hover:text-white hover:bg-primary max-md:text-xs max-md:w-full text-center"
                   >
-                    View
+                    Voir
                   </Link>
                 </div>
               </div>
             ))}
 
-            {/* 9) Render Pagination if more than one page exists */}
-            {totalPages > 1 && (
-              <Pagination
-                currentPage={currentPage}
-                totalPages={totalPages}
-                onPageChange={setCurrentPage}
-              />
-            )}
+            
+            
           </>
         )}
+</div>
+        {pages > 1 && (
+              <Pagination
+                currentPage={courante}
+                totalPages={pages}
+                onPageChange={setCourante}
+              /> )}
       </div>
     </div>
   );
