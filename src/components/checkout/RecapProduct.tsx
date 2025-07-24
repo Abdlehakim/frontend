@@ -6,7 +6,7 @@
 
 import Image from "next/image";
 import React from "react";
-import { RxCross1 } from "react-icons/rx";   /* keep ❌ icon */
+import { RxCross1 } from "react-icons/rx"; /* keep ❌ icon */
 import { CartItem } from "@/store/cartSlice";
 
 interface RecapProductProps {
@@ -32,12 +32,12 @@ const RecapProduct: React.FC<RecapProductProps> = ({
               ? (item.price * (100 - item.discount)) / 100
               : item.price;
 
-          const factor   = 1 + item.tva / 100;
-          const unitHt   = priceTtc / factor;
-          const unitTva  = priceTtc - unitHt;
-          const lineHt   = unitHt  * item.quantity;
-          const lineTva  = unitTva * item.quantity;
-          const lineTtc  = lineHt  + lineTva;
+          const factor = 1 + item.tva / 100;
+          const unitHt = priceTtc / factor;
+          const unitTva = priceTtc - unitHt;
+          const lineHt = unitHt * item.quantity;
+          const lineTva = unitTva * item.quantity;
+          const lineTtc = lineHt + lineTva;
 
           return (
             <div
@@ -59,31 +59,31 @@ const RecapProduct: React.FC<RecapProductProps> = ({
               </div>
 
               {/* ---------------- info ---------------- */}
-              <div className="flex flex-col justify-center w-2/5 max-lg:w-full gap-2">
-                <div className="flex flex-col">
-                  <p className="text-xl font-bold break-words">{item.name}</p>
-                  <p className="text-gray-600 uppercase text-xs">
+              <div className="flex flex-col justify-center max-lg:items-center w-2/5 max-lg:w-full gap-2">
+              <p className="text-gray-600 uppercase text-xs">
                     REF&nbsp;: {item.reference}
                   </p>
-                </div>
-
-                {item.categorie && (
-                  <p className="text-gray-500 uppercase">
-                    {item.categorie.name}
-                    {item.subcategorie && ` ▸ ${item.subcategorie.name}`}
+                <div className="flex gap-2 items-center">                            
+                  {item.categorie && (
+                    <p className="text-gray-500 uppercase text-sm">
+                      {item.categorie.name}
+                      {item.subcategorie && ` ▸ ${item.subcategorie.name}`} :
+                    </p>
+                  )}
+                    <p className="text-sm font-bold break-words">
+                    {item.name}
                   </p>
-                )}
-
-                <p className="font-semibold">
-                  {priceTtc.toFixed(2)} DT TTC
+                </div>
+                <p className="font-semibold  flex gap-2">
                   {item.discount && item.discount > 0 && (
                     <span className="line-through text-gray-500 ml-2">
                       {item.price.toFixed(2)} DT
                     </span>
                   )}
+                  {priceTtc.toFixed(2)} DT TTC
                 </p>
 
-                <p className="text-sm text-gray-600">
+                <p className="text-sm max-lg:text-xs text-gray-600">
                   HT&nbsp;: {unitHt.toFixed(2)} DT • TVA&nbsp;({item.tva}%)
                   &nbsp;: {unitTva.toFixed(2)} DT
                 </p>
@@ -112,17 +112,17 @@ const RecapProduct: React.FC<RecapProductProps> = ({
 
               {/* ---------------- totals ---------------- */}
               <div className="flex flex-col items-end justify-center w-1/5 max-lg:w-full max-lg:items-center">
-                <p className="font-semibold">TTC&nbsp;{lineTtc.toFixed(2)} DT</p>
+                <p className="font-semibold">
+                  TTC&nbsp;{lineTtc.toFixed(2)} DT
+                </p>
                 <p className="text-xs text-gray-500">
                   TVA&nbsp;{lineTva.toFixed(2)} DT
                 </p>
-                <p className="text-xs font-medium">
-                  {lineHt.toFixed(2)} DT HT
-                </p>
+                <p className="text-xs text-gray-500"> HT {lineHt.toFixed(2)} DT</p>
               </div>
 
               {/* ---------------- remove ---------------- */}
-               <div className="flex justify-end w-1/12 max-lg:w-full max-lg:order-first max-lg:mb-2 max-lg:items-end">
+              <div className="flex justify-end w-1/12 max-lg:w-full max-lg:order-first max-lg:mb-2 max-lg:items-end">
                 <RxCross1
                   className="cursor-pointer"
                   onClick={() => removeCartHandler(item._id)}
