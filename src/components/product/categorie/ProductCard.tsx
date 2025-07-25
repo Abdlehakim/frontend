@@ -10,7 +10,10 @@ import { FaEye, FaRegHeart, FaHeart, FaCartShopping } from "react-icons/fa6";
 import { FaSpinner } from "react-icons/fa";
 import { useDispatch, useSelector } from "react-redux";
 import { addItem, type CartItem } from "@/store/cartSlice";
-import { addToWishlist } from "@/store/wishlistSlice";
+import {
+  addToWishlist,
+  removeFromWishlist,        // ⬅️ NEW
+} from "@/store/wishlistSlice";
 import ReviewClient from "@/components/product/reviews/ReviewClient";
 import { RootState } from "@/store";
 import { Product } from "@/types/Product";
@@ -22,31 +25,38 @@ interface ProductCardProps {
 type BtnState = "loading" | "success";
 
 const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
-  const dispatch = useDispatch();
-  const wishlistItems = useSelector((state: RootState) => state.wishlist.items);
-  const isInWishlist = (slug: string) =>
-    wishlistItems.some((w) => w.slug === slug);
+  const dispatch   = useDispatch();
+  const wishlist   = useSelector((state: RootState) => state.wishlist.items);
+  const isInWishlist = (slug: string) => wishlist.some((w) => w.slug === slug);
 
   /* 🔥 track button states per product */
   const [btnStates, setBtnStates] = useState<Record<string, BtnState | undefined>>({});
 
+  /* -------- wishlist toggle -------- */
   const handleWishlistClick = (product: Product) => {
     if (!product.categorie) return;
 
-    dispatch(
-      addToWishlist({
-        name: product.name,
-        mainImageUrl: product.mainImageUrl,
-        price: product.price,
-        categorie: {
-          name: product.categorie.name,
-          slug: product.categorie.slug,
-        },
-        slug: product.slug,
-      })
-    );
+    if (isInWishlist(product.slug)) {
+      // retire de la wishlist
+      dispatch(removeFromWishlist(product.slug));
+    } else {
+      // ajoute à la wishlist
+      dispatch(
+        addToWishlist({
+          name: product.name,
+          mainImageUrl: product.mainImageUrl,
+          price: product.price,
+          categorie: {
+            name: product.categorie.name,
+            slug: product.categorie.slug,
+          },
+          slug: product.slug,
+        }),
+      );
+    }
   };
 
+  /* -------- add to cart -------- */
   const handleAddToCart = (product: Product, isOutOfStock: boolean) => {
     if (isOutOfStock || btnStates[product._id] === "loading") return;
 
@@ -78,7 +88,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
     };
     dispatch(addItem({ item: base, quantity: 1 }));
 
-    /* 0.5s spinner → then 0.5s success text */
+    /* 0.5 s spinner → puis 0.5 s texte succès */
     setTimeout(() => {
       setBtnStates((p) => ({ ...p, [product._id]: "success" }));
       setTimeout(() => {
@@ -151,15 +161,15 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
                     {product.discount ? (
                       <>
                         <p className="text-xl max-md:text-lg font-bold text-primary">
-                          {discountedPrice.toFixed(1)} TND
+                          {discountedPrice.toFixed(1)} TND
                         </p>
                         <p className="text-lg max-md:text-sm font-bold text-gray-500 line-through">
-                          {product.price.toFixed(1)} TND
+                          {product.price.toFixed(1)} TND
                         </p>
                       </>
                     ) : (
                       <p className="text-primary text-xl max-md:text-lg font-bold">
-                        {product.price.toFixed(1)} TND
+                        {product.price.toFixed(1)} TND
                       </p>
                     )}
                   </div>
@@ -169,7 +179,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
 
             {/* actions */}
             <div className="flex justify-between h-[45px] text-lg max-md:text-sm">
-              {/* add-to-cart */}
+              {/* add‑to‑cart */}
               <button
                 disabled={isOutOfStock || isLoading}
                 onClick={() => handleAddToCart(product, isOutOfStock)}
@@ -198,7 +208,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
                   </p>
                 )}
 
-                {/* cart icon slide-in (hide while loading/out-of-stock/success) */}
+                {/* cart icon slide‑in (hide while loading/out‑of‑stock/success) */}
                 {!isOutOfStock && !isLoading && !isSuccess && (
                   <span className="absolute inset-0 flex items-center justify-center -translate-x-full transition-transform duration-300 lg:group-hover/box:translate-x-[-35%]">
                     <FaCartShopping className="w-6 h-6" />
@@ -222,10 +232,15 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
               <button
                 aria-label="wishlist"
                 onClick={() => handleWishlistClick(product)}
-                className="AddtoCart relative w-[15%] bg-white text-primary border border-primary hover:bg-primary hover:text-white max-lg:hidden max-md:rounded-[3px] group/box"
+                className={`
+                  AddtoCart relative w-[15%] bg-white border max-lg:hidden max-md:rounded-[3px] group/box border-primary
+                  ${isInWishlist(product.slug)
+                    ? " text-red-500 hover:bg-red-500 hover:text-white"
+                    : " text-primary hover:bg-primary hover:text-white"}
+                `}
               >
                 {isInWishlist(product.slug) ? (
-                  <FaHeart className="w-5 h-5 text-red-500" />
+                  <FaHeart className="w-5 h-5" />
                 ) : (
                   <FaRegHeart className="w-5 h-5" />
                 )}
