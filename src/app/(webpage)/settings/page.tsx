@@ -27,7 +27,7 @@ export default function SettingsPage() {
 
   /* ---------- rendu ---------- */
   return (
-    <div className="py-4 flex flex-col w-[90%] gap-4  h-fit">
+    <div className="py-4 flex flex-col items-center justify-center w-[90%] gap-4 h-fit mx-auto">
       <ProfileDetails />
       <AddressList />
     </div>

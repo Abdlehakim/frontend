@@ -6,10 +6,8 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { MdOutlineArrowForwardIos } from "react-icons/md";
 import { useAuth } from "@/hooks/useAuth";
 import Pagination from "@/components/PaginationClient";
-import Breadcrumb from "@/components/order/Breadcrumb";
 import { fetchData } from "@/lib/fetchData";
 
 /* ---------- tiny skeleton helper ---------- */
@@ -134,27 +132,16 @@ export default function OrderHistory() {
   /* rendu                                                     */
   /* ────────────────────────────────────────────────────────── */
   return (
-    <div className="w-full pt-16 flex flex-col items-center">
-      {/* fil d’Ariane */}
-      <div className="w-[70%]">
-        <Breadcrumb
-          homeElement="Accueil"
-          separator={<MdOutlineArrowForwardIos size={13} className="mt-1.5" />}
-          containerClasses="flex gap-1 text-gray-500 max-md:justify-center"
-          activeClasses="underline underline-offset-1 hover:underline font-semibold text-black"
-          capitalizeLinks
-        />
-      </div>
-
+    <div className="w-[80%] mx-auto flex flex-col lg:flex-row gap-10 border-b-2 py-10">
       {/* bloc principal */}
-      <div className="w-[70%] max-lg:w-[95%] rounded-lg p-4 border-2 flex flex-col justify-between gap-6 mt-4 h-[70vh] max-md:h-fit">
+      <div className="w-full max-lg:w-[95%] rounded-lg p-4 flex flex-col justify-between gap-6 h-[70vh] max-md:h-fit">
           <div className="flex flex-col gap-4">
-        <header className="flex flex-col gap-1 items-start max-md:items-center">
-          <h1 className="text-2xl font-bold uppercase max-md:text-lg">Historique des commandes</h1>
-          <p className="text-gray-400 text-sm max-md:text-center max-md:text-xs">
+        <aside className="space-y-2">
+          <h1 className="text-lg font-semibold text-black">Historique des commandes</h1>
+          <p className="text-sm text-gray-400">
             Suivez l’état de vos commandes récentes, gérez les retours et téléchargez vos factures.
           </p>
-        </header>
+        </aside>
 
         {ordersLoading ? (
           <div className="flex flex-col gap-4">
