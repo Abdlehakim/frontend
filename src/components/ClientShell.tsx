@@ -15,8 +15,6 @@ export default function ClientShell({ children }: Props) {
   useAutoLogout(); 
   
   return (
-    <div className="flex h-screen">
-      <main className="flex-1 overflow-y-auto">{children}</main>
-    </div>
+      <main>{children}</main>
   );
 }

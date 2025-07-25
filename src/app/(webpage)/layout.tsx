@@ -6,7 +6,7 @@ import StoreProviders from "@/components/Provider/StoreProvider";
 
 const SubLayout = ({ children }: { children: React.ReactNode }) => {
   return (
-    <div className="flex flex-col !scroll-smooth" >
+    <div className="flex flex-col" >
       <StoreProviders>
         <Header />
         {children}

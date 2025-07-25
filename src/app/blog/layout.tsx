@@ -4,7 +4,7 @@ import Footer from "@/components/menu/Footer";
 
 const SubLayout = ({ children }: { children: React.ReactNode }) => {
   return (
-    <div className="flex flex-col !scroll-smooth" >
+    <div className="flex flex-col" >
         <HeaderBlog />
         {children}
         <Footer />

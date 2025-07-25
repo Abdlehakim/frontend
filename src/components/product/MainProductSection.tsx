@@ -141,7 +141,7 @@ const MainProductSection: React.FC<Props> = ({ initialProduct }) => {
           {/* track */}
           <div
             ref={trackRef}
-            className="mx-8 flex gap-4 max-lg:gap-2 overflow-x-hidden scroll-smooth"
+            className="mx-8 flex gap-4 max-lg:gap-2 overflow-x-hidden"
           >
             {loading
               ? Array.from({ length: pageSize }).map((_, i) => (
