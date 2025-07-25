@@ -1,10 +1,15 @@
-/* ------------------------------------------------------------------
-   src/components/checkout/PaymentSummary.tsx
-   (only the totals + buttons block made sticky – everything else untouched)
------------------------------------------------------------------- */
+/* ------------------------------------------------------------------ */
+/*  src/components/checkout/PaymentSummary.tsx                        */
+/* ------------------------------------------------------------------ */
 "use client";
 
-import React, { useEffect, useState, FormEvent } from "react";
+import React, {
+  useEffect,
+  useState,
+  FormEvent,
+  ReactNode,
+  useMemo,
+} from "react";
 import Link from "next/link";
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
@@ -13,6 +18,7 @@ import PaypalButton from "@/components/checkout/PaypalButton";
 import { PaymentMethodId } from "@/components/checkout/PaymentMethode";
 import { fetchData } from "@/lib/fetchData";
 import LoadingDots from "@/components/LoadingDots";
+import Notification, { NotificationType } from "@/components/ui/Notification";
 
 /* ---------- props ---------- */
 interface PaymentSummaryProps {
@@ -27,6 +33,19 @@ interface PaymentSummaryProps {
   onCheckout(): void;
   backcarte(): void;
   handleOrderSummary(ref: string): void;
+}
+
+/* ---------- helpers ---------- */
+/** Retourne a, b et c avec <span> rouge + key pour chaque élément */
+function formattedMissing(list: string[]): ReactNode {
+  return list.map((txt, idx) => (
+    <React.Fragment key={idx}>
+      {/* séparateur */}
+      {idx === 0 ? "" : idx === list.length - 1 ? " et " : ", "}
+      {/* mot surligné */}
+      <span className="font-semibold text-red-600">{txt}</span>
+    </React.Fragment>
+  ));
 }
 
 const PaymentSummary: React.FC<PaymentSummaryProps> = ({
@@ -55,23 +74,26 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
 
   useEffect(() => {
     setTotalWithShipping(totalPrice + deliveryCost);
-
-    const tvaSum = items.reduce((sum, item) => {
-      const ttcUnit =
-        item.discount && item.discount > 0
-          ? (item.price * (100 - item.discount)) / 100
-          : item.price;
-      const unitTva = ttcUnit - ttcUnit / (1 + item.tva / 100);
-      return sum + unitTva * item.quantity;
+    const tvaSum = items.reduce((sum, it) => {
+      const ttc = it.discount ? (it.price * (100 - it.discount)) / 100 : it.price;
+      const unitTva = ttc - ttc / (1 + it.tva / 100);
+      return sum + unitTva * it.quantity;
     }, 0);
-
     setTotalTva(tvaSum);
   }, [items, totalPrice, deliveryCost]);
 
   /* ---------- validity ---------- */
-  const isFormValid = Boolean(
-    addressId && selectedMethod && selectedPaymentMethod
+  const isFormValid = useMemo(
+    () => Boolean(addressId && selectedMethod && selectedPaymentMethod),
+    [addressId, selectedMethod, selectedPaymentMethod]
   );
+
+  /* ---------- notification ---------- */
+  const [notification, setNotification] = useState<{
+    message: ReactNode;
+    type: NotificationType;
+  } | null>(null);
+  const hideNotification = () => setNotification(null);
 
   /* ---------- helpers ---------- */
   const sendMail = async (ref: string) => {
@@ -87,17 +109,8 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
   };
 
   const postOrder = async () => {
-    const orderLines = items.map(
-      ({
-        _id,
-        reference,
-        name,
-        quantity,
-        tva,
-        mainImageUrl,
-        discount,
-        price,
-      }) => ({
+    const lines = items.map(
+      ({ _id, reference, name, quantity, tva, mainImageUrl, discount, price }) => ({
         _id,
         reference,
         name,
@@ -116,7 +129,7 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
       deliveryCost,
       totalDiscount,
       totalWithShipping,
-      items: orderLines,
+      items: lines,
     };
 
     const { ref } = await fetchData<{ ref: string }>(
@@ -130,23 +143,41 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
     );
 
     await sendMail(ref);
-    toast.success("Order submitted successfully!");
+    toast.success("Commande envoyée avec succès !");
     dispatch(clearCart());
     handleOrderSummary(ref);
   };
 
   const handleOrderSubmit = async (e?: FormEvent) => {
     e?.preventDefault();
+
+    /* ----- popup détaillée si formulaire incomplet ----- */
     if (!isFormValid) {
-      toast.error("Select address, delivery and payment method.");
+      const missing: string[] = [];
+      if (!addressId) missing.push("l’adresse de livraison");
+      if (!selectedMethod) missing.push("la méthode de livraison");
+      if (!selectedPaymentMethod) missing.push("le moyen de paiement");
+
+      setNotification({
+        message: (
+          <>
+            Veuillez sélectionner {formattedMissing(missing)}.
+          </>
+        ),
+        type: "error",
+      });
       return;
     }
+    /* --------------------------------------------------- */
 
     setIsSubmittingOrder(true);
     try {
       await postOrder();
     } catch (err) {
-      toast.error("Failed to submit order. Please try again.");
+      setNotification({
+        message: "Échec de l’envoi de la commande. Veuillez réessayer.",
+        type: "error",
+      });
       console.error(err);
       setIsSubmittingOrder(false);
     }
@@ -157,6 +188,14 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
   /* ---------- JSX ---------- */
   return (
     <>
+      {notification && (
+        <Notification
+          message={notification.message}
+          type={notification.type}
+          onClose={hideNotification}
+        />
+      )}
+
       {isSubmittingOrder && (
         <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
           <LoadingDots />
@@ -164,54 +203,79 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
       )}
 
       <div className="bg-gray-100 rounded-md p-4 w-[30%] max-lg:w-full">
-        
-
-        {/* ▼▼▼ STICKY WRAPPER STARTS HERE ▼▼▼ */}
         <div className="mt-8 sticky top-4 space-y-8">
-          {/* Promo code */}
-        <div className="flex border border-[#15335E] overflow-hidden rounded-md">
-          <input
-            type="text"
-            placeholder="Promo code"
-            className="w-full bg-white px-4 py-2.5 text-sm"
-          />
-          <button className="bg-primary px-4 text-sm font-semibold text-white">
-            Apply
-          </button>
-        </div>
-        
-          {/* Totals */}
+          {/* Code promo */}
+          <div className="flex border border-[#15335E] overflow-hidden rounded-md">
+            <input
+              type="text"
+              placeholder="Code promo"
+              className="w-full bg-white px-4 py-2.5 text-sm"
+            />
+            <button className="bg-primary px-4 text-sm font-semibold text-white">
+              Appliquer
+            </button>
+          </div>
+
+          {/* Totaux */}
           <ul className="space-y-4 text-gray-800">
             <li className="flex justify-between text-base">
-              <span>Discount</span>
-              <span className="font-bold">{totalDiscount.toFixed(2)} TND</span>
+              <span>Remise</span>
+              <span className="font-bold">{totalDiscount.toFixed(2)} TND</span>
             </li>
             <li className="flex justify-between text-base">
-              <span>Shipping</span>
-              <span className="font-bold">{deliveryCost.toFixed(2)} TND</span>
+              <span>Livraison</span>
+              <span className="font-bold">{deliveryCost.toFixed(2)} TND</span>
             </li>
             <li className="flex justify-between text-base">
               <span>TVA</span>
-              <span className="font-bold">{totalTva.toFixed(2)} TND</span>
+              <span className="font-bold">{totalTva.toFixed(2)} TND</span>
             </li>
             <li className="flex justify-between text-base font-bold">
               <span>Total</span>
-              <span>{totalWithShipping.toFixed(2)} TND</span>
+              <span>{totalWithShipping.toFixed(2)} TND</span>
             </li>
           </ul>
 
-          {/* Step 1: cart */}
-          {currentStep === "cart" && (
+          {/* Étape Checkout */}
+          {currentStep === "checkout" && (
             <div className="space-y-2">
+              {/* Paiement ≠ PayPal */}
+              {selectedPaymentMethod !== "paypal" && (
+                <button
+                  onClick={handleOrderSubmit}
+                  className={`mt-2 w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm ${
+                    isFormValid
+                      ? "text-black hover:bg-primary hover:text-white"
+                      : "bg-gray-200 text-gray-400"
+                  }`}
+                >
+                  Confirmer la commande
+                </button>
+              )}
+
+              {/* Paiement PayPal */}
+              {selectedPaymentMethod === "paypal" &&
+                (isFormValid ? (
+                  <PaypalButton
+                    amount={totalWithShipping.toFixed(2)}
+                    onSuccess={handlePayPalSuccess}
+                  />
+                ) : (
+                  <button
+                    onClick={handleOrderSubmit}
+                    className="mt-2 w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm bg-gray-200 text-gray-400"
+                  >
+                    PayPal
+                  </button>
+                ))}
+
               <button
-                onClick={onCheckout}
-                disabled={items.length === 0}
-                className={`mt-2 w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm text-black hover:text-white ${
-                  items.length ? " hover:bg-primary" : "cursor-not-allowed"
-                }`}
+                onClick={backcarte}
+                className="mt-2 w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm hover:bg-primary hover:text-white"
               >
-                Continue
+                Retourner
               </button>
+
               <Link href="/">
                 <button className="mt-2 w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm hover:bg-primary hover:text-white">
                   Annuler
@@ -220,44 +284,27 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
             </div>
           )}
 
-          {/* Step 2: checkout */}
-          {currentStep === "checkout" && (
+          {/* Étape Panier */}
+          {currentStep === "cart" && (
             <div className="space-y-2">
-              {selectedPaymentMethod !== "paypal" ? (
-                <button
-                  onClick={handleOrderSubmit}
-                  disabled={!isFormValid}
-                  className={`mt-2 w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm text-black  ${
-                    isFormValid
-                      ? " hover:bg-primary hover:text-white"
-                      : "cursor-not-allowed"
-                  }`}
-                >
-                  Confirm Order
-                </button>
-              ) : (
-                <PaypalButton
-                  amount={totalWithShipping.toFixed(2)}
-                  onSuccess={handlePayPalSuccess}
-                />
-              )}
-
               <button
-                onClick={backcarte}
-                className="mt-2 w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm hover:bg-primary hover:text-white"
+                onClick={onCheckout}
+                className={`mt-2 w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm ${
+                  items.length
+                    ? "text-black hover:bg-primary hover:text-white"
+                    : "bg-gray-200 text-gray-400 cursor-not-allowed pointer-events-none"
+                }`}
               >
-                Retournez
+                Continuer
               </button>
-
-                <Link href="/">
-                  <button className="mt-2 w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm hover:bg-primary hover:text-white">
-                    Annuler
-                  </button>
-                </Link>
+              <Link href="/">
+                <button className="mt-2 w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm hover:bg-primary hover:text-white">
+                  Annuler
+                </button>
+              </Link>
             </div>
           )}
         </div>
-        {/* ▲▲▲ STICKY WRAPPER ENDS HERE ▲▲▲ */}
       </div>
     </>
   );

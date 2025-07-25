@@ -197,21 +197,21 @@ const OrderSummary: React.FC<{ data: string }> = ({ data }) => {
 
           {/* Meta */}
           <div className="mt-4 space-y-2 max-md:text-xs border-t border-gray-300 pt-4">
-            <p className="text-gray-700">
+            <p className="font-bold">
               Mode de paiement :{" "}
-              <span className="font-bold">
+              <span className="text-gray-700 font-normal">
                 {paymentMap[order.paymentMethod] ?? order.paymentMethod}
               </span>
             </p>
-            <p className="text-gray-700">
+            <p className="text-gray-700 font-bold">
               Méthode de livraison :{" "}
-              <span className="font-bold">
+              <span className=" font-normal">
                 {deliveryMap[order.deliveryMethod] ?? order.deliveryMethod}
               </span>
             </p>
-            <p className="text-gray-700">
+            <p className="font-bold">
               Adresse de livraison:{" "}
-              <span className="font-bold">{fullAddress}</span>
+              <span className="text-gray-700 font-normal">{fullAddress}</span>
             </p>
             
           </div>
