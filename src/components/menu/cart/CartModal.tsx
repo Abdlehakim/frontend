@@ -174,12 +174,12 @@ const CartModal: React.FC<CartModalProps> = ({ items, onClose }) => {
               aria-label="checkout"
               className="w-fit mx-auto px-6 h-10 rounded-full border-2 border-secondary hover:bg-secondary flex items-center justify-center my-2 hover:text-white text-secondary"
             >
-              <span className="text-xl font-semibold tracking-wide"> Poursuivre au paiement</span>
+              <span className="text-xl font-semibold tracking-wide max-md:text-base"> Poursuivre au paiement</span>
             </button>
           </Link>
 
           <button
-            className="w-full text-center text-black hover:underline cursor-pointer mb-2 hover:text-primary"
+            className="w-full text-center text-black hover:underline cursor-pointer mb-2 hover:text-primary max-md:text-base"
             onClick={(e) => {
               e.stopPropagation();
               onClose();

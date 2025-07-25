@@ -92,7 +92,7 @@ const SubmitReview: React.FC<{ product: Product | null }> = ({ product }) => {
 };
 
   return (
-    <main className="bg-blue-50 desktop max-lg:w-[95%] my-10  rounded-lg flex flex-col gap-20  ">
+    <div className="bg-blue-50 desktop max-lg:w-[95%] my-10  rounded-lg flex flex-col gap-20  ">
       {/* top */}
       <div className="flex max-xl:flex-col justify-between">
         <CustomerReview  productId={productId} key={key} />
@@ -182,7 +182,7 @@ const SubmitReview: React.FC<{ product: Product | null }> = ({ product }) => {
       </div>
       {/* mid */}
       
-    </main>
+    </d>
   );
 };
 
