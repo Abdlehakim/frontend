@@ -37,6 +37,12 @@ body {
   @apply flex flex-col justify-start gap-10;
 }
 
+html {
+  scroll-behavior: smooth !important;
+  scroll-padding-bottom: 400px !important;
+  scroll-padding-top: 400px !important;
+}
+
 /* ---------- transitions / animations ---------- */
 .page-transition {
   opacity: 0;
