@@ -32,7 +32,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html
       lang="fr"
-      className={`${poppins.className} !scroll-smooth font-sans`}
+      className={`${poppins.className} font-sans`}
     >
       <body>
         <Providers>
