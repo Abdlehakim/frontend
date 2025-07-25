@@ -61,8 +61,8 @@ export default function SignUpForm({ redirectTo }: SignUpFormProps) {
       )}
 
       <div className="flex w-full h-screen items-center">
-        <div className="w-[60%] max-lg:w/full flex justify-center items-center h-full">
-          <div className="px-8 flex flex-col w-[600px] h-full bg-white bg-opacity-80 rounded-xl justify-center gap-[16px] z-10">
+        <div className="w-[60%] max-lg:w-[100%] flex justify-center items-center h-full">
+          <div className="px-8 flex flex-col w-[600px] h-full bg-white bg-opacity-80 rounded-xl max-md:rounded-none justify-center gap-4 z-10">
             <div className="flex flex-col gap-[8px] items-center">
               <h1 className="text-2xl uppercase font-bold">Créer un compte</h1>
             </div>
@@ -167,13 +167,13 @@ export default function SignUpForm({ redirectTo }: SignUpFormProps) {
         </div>
 
         <div className="fixed inset-0 -z-10">
-          <Image
-            src="/signin.jpg"
-            alt="Arrière-plan d’inscription"
-            fill
-            className="object-cover"
-          />
-        </div>
+                <Image
+                  src="/signin.jpg"
+                  alt="Arrière-plan de connexion"
+                  fill
+                  className="object-cover"
+                />
+              </div>
       </div>
     </>
   );
