@@ -169,7 +169,7 @@ const ProductsFilter: React.FC<Props> = ({
 
         {/* price */}
         <div className="flex flex-col gap-2">
-          <label className="font-bold">Prix :</label>
+          <label className="font-bold max-md:text-sm">Prix :</label>
           <div className="flex gap-2 mb-2">
             <input
               type="number"
@@ -203,15 +203,15 @@ const ProductsFilter: React.FC<Props> = ({
 
         {/* sort */}
         <div className="flex flex-col gap-2">
-          <label htmlFor="sort" className="font-bold">Trier par prix :</label>
+          <label htmlFor="sort" className="font-bold max-md:text-sm">Trier par prix :</label>
           <select
             id="sort"
-            className="w-full border rounded p-2"
+            className="w-full border rounded p-2 max-md:text-sm"
             value={sortDraft}
             onChange={(e) => setSortDraft(e.target.value as "asc" | "desc")}
           >
-            <option value="asc">Du moins cher</option>
-            <option value="desc">Du plus cher</option>
+            <option value="asc max-md:text-sm">Du moins cher</option>
+            <option value="desc max-md:text-sm">Du plus cher</option>
           </select>
         </div>
       </div>
@@ -221,16 +221,16 @@ const ProductsFilter: React.FC<Props> = ({
   return (
     <>
       {/* mobile toggle */}
-      <div className="xl:hidden flex w-full justify-end max-lg:justify-center">
+      <div className="xl:hidden flex w-full justify-center">
         <button className="py-2 rounded w-60 border" onClick={() => setOpenMobile(true)}>Filtres</button>
       </div>
 
       {openMobile && (
         <div className="fixed inset-0 bg-black/50 flex items-end xl:hidden z-50">
-          <div className="bg-white absolute top-8 left-1/2 transform -translate-x-1/2 w-[90%] p-8 rounded-2xl">
-            <button className="text-blue-600 font-bold w-full text-right mb-4" onClick={() => setOpenMobile(false)}>Fermer ✕</button>
+          <div className="bg-white absolute top-1/2 -translate-y-1/2 left-1/2 transform -translate-x-1/2 w-[90%] h-fit p-4 rounded-2xl">
+            <button className="text-blue-600 font-bold w-full text-right mb-4 text-sm" onClick={() => setOpenMobile(false)}>Fermer ✕</button>
             <div className="flex flex-col gap-4">{renderFilters()}</div>
-            <button className="mt-6 w-full bg-primary text-white py-2 rounded" onClick={applyFilters}>Appliquer</button>
+            <button className="text-sm mt-6 w-full bg-primary text-white py-2 rounded" onClick={applyFilters}>Appliquer</button>
           </div>
         </div>
       )}
@@ -255,8 +255,8 @@ interface SelectProps {
 }
 const Select: React.FC<SelectProps> = ({ id, label, value, onChange, options = [], placeholder }) => (
   <div className="flex flex-col gap-2">
-    <label htmlFor={id} className="font-bold">{label} :</label>
-    <select id={id} className="w-full p-2 border rounded" value={value ?? ""} onChange={(e) => onChange(e.target.value || null)}>
+    <label htmlFor={id} className="font-bold max-md:text-sm">{label} :</label>
+    <select id={id} className="w-full p-2 border rounded max-md:text-sm" value={value ?? ""} onChange={(e) => onChange(e.target.value || null)}>
       <option value="">{placeholder}</option>
       {options.map((o) => (
         <option key={o._id} value={o._id}>{o.name}</option>

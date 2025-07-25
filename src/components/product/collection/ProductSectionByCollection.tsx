@@ -159,9 +159,12 @@ export default function ProductSectionByCollection() {
 
       <div className="flex flex-col flex-1 items-center gap-16">
         {loadingInit ? (
-          <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-4 gap-10">
+          <div className="grid grid-cols-4 gap-10 max-md:grid-cols-1">
             {Array.from({ length: itemsPerBatch }).map((_, i) => (
-              <div key={i} className="w-[280px] h-[400px] bg-gray-200 rounded animate-pulse" />
+              <div
+                key={i}
+                className="h-[400px] w-[280px] bg-gray-200 rounded animate-pulse"
+              />
             ))}
           </div>
         ) : products.length ? (
