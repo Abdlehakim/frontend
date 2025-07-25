@@ -51,7 +51,7 @@ export default async function Stores() {
           {titles.HPboutiqueTitle || "Nos boutiques"}
         </h3>
         {titles.HPboutiqueSubTitle && (
-          <p className="text-base text-[#525566]">{titles.HPboutiqueSubTitle}</p>
+          <p className="test-base max-md:text-sm text-[#525566] text-center">{titles.HPboutiqueSubTitle}</p>
         )}
       </div>
 

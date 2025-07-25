@@ -47,7 +47,7 @@ export default async function CategoriesPage() {
         <h2 className="font-bold text-2xl text-HomePageTitles capitalize">
           {categorieTitles.HPcategorieTitle ?? ""}
         </h2>
-        <p className="text-base text-[#525566]">
+        <p className="test-base max-md:text-sm text-[#525566] text-center">
           {categorieTitles.HPcategorieSubTitle ?? ""}
         </p>
       </div>

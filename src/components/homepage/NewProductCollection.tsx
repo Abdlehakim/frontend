@@ -29,7 +29,7 @@ export default async function NewProductCollection() {
         <h2 className="font-bold text-2xl text-HomePageTitles capitalize text-center max-md:text-lg">
           {productData.HPNewProductTitle}
         </h2>
-        <p className="text-base text-[#525566]">
+        <p className="test-base max-md:text-sm text-[#525566] text-center">
           {productData.HPNewProductSubTitle}
         </p>
         <div className="absolute max-lg:justify-center max-lg:static w-full flex justify-end mt-2">

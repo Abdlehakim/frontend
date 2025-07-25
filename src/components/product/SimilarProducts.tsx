@@ -78,7 +78,7 @@ export default function SimilarProducts({
         <h2 className="font-bold text-2xl text-HomePageTitles capitalize">
           {SPTitle}
         </h2>
-        <p className="text-base text-[#525566]">{SPSubTitle}</p>
+        <p className="test-base max-md:text-sm text-[#525566] text-center">{SPSubTitle}</p>
       </div>
 
       <div className="flex w-full max-lg:flex-col max-lg:h-fit h-[450px] justify-center items-center gap-4">

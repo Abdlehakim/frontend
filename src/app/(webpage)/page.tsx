@@ -28,7 +28,7 @@ export default async function HomePage() {
   const image = bannerData.HPbannerImgUrl?.trim() ?? "";
 
   return (
-    <main className="homepage flex flex-col justify-start gap-10">
+    <main className="homepage flex flex-col justify-start gap-10 max-md:gap-4 items-center">
       {title && image && <Banner title={title} imageBanner={image} />}
 
       {/* Static sections */}
