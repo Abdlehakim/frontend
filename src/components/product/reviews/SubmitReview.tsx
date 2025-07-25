@@ -182,7 +182,7 @@ const SubmitReview: React.FC<{ product: Product | null }> = ({ product }) => {
       </div>
       {/* mid */}
       
-    </d>
+    </div>
   );
 };
 
