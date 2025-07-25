@@ -15,6 +15,6 @@ export default function ClientShell({ children }: Props) {
   useAutoLogout(); 
   
   return (
-      <main>{children}</main>
+      <>{children}</>
   );
 }
