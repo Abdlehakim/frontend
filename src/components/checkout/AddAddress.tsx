@@ -99,18 +99,18 @@ export default function AddAddress({
 
   /* ── Render ────────────────────────────────────────────────────── */
   return (
-    <div className="min-w-screen h-screen fixed inset-0 z-50 flex items-center justify-center bg-center bg-cover backdrop-filter backdrop-brightness-75">
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-center bg-cover backdrop-filter backdrop-brightness-75">
       <div className="absolute inset-0 opacity-80 z-0" />
 
       <form
         onSubmit={handleSubmit}
-        className="relative mx-auto my-auto w-full max-w-lg space-y-4 rounded-xl bg-white p-5 shadow-lg"
+        className="relative mx-auto my-auto max-md:w-[90%] rounded-xl bg-white p-5 shadow-lg"
       >
-        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+        <h2 className="text-xl max-md:text-lg text-center font-semibold text-gray-900 dark:text-white">
           Détails de livraison
         </h2>
 
-        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <div className="grid grid-cols-1 gap-4 max-md:gap-2  sm:grid-cols-2">
           {/* Nom */}
           <div className="sm:col-span-2">
             <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
@@ -210,7 +210,7 @@ export default function AddAddress({
         
           </div>
             {/* Boutons */}
-          <div className="w-full flex gap-4 justify-end">
+          <div className="w-full flex gap-4 justify-end mt-4">
             {/* Submit */}
             <button
               type="submit"
