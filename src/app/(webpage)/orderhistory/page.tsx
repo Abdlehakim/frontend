@@ -132,7 +132,7 @@ export default function OrderHistory() {
   /* rendu                                                     */
   /* ────────────────────────────────────────────────────────── */
   return (
-    <div className="w-[80%] mx-auto flex flex-col lg:flex-row gap-10 border-b-2 py-10">
+    <div className="w-[90%] mx-auto flex flex-col lg:flex-row gap-10 border-b-2 py-10">
       {/* bloc principal */}
       <div className="w-full max-lg:w-[95%] rounded-lg p-4 flex flex-col justify-between gap-6 h-[70vh] max-md:h-fit">
           <div className="flex flex-col gap-4">

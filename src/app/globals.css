@@ -26,6 +26,7 @@ body {
   transition-timing-function: ease-in-out;
   transition-duration: 300ms;
   letter-spacing: 1px;
+   scrollbar-gutter: stable;
 }
 
 
@@ -40,6 +41,7 @@ body {
 html {
   scroll-behavior: smooth !important;
   scroll-padding-bottom: 400px !important;
+  overflow-y: scroll;
 }
 
 /* ---------- transitions / animations ---------- */

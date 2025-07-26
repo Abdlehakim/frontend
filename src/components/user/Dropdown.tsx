@@ -72,7 +72,7 @@ const Dropdown: React.FC<DropdownProps> = ({ userName }) => {
   return (
     <div
       ref={dropdownRef}
-      className="flex flex-col w-[200px] max-md:w-[180px] border-[#15335D] border-4 rounded-lg bg-white z-30"
+      className="flex flex-col w-[220px] max-md:w-[180px] border-[#15335D] border-4 rounded-lg bg-white z-30"
     >
       <div className="px-4 py-2 text-sm text-gray-900">
         <div className="font-bold">{userName}</div>

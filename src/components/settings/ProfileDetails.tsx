@@ -46,7 +46,7 @@ export default function ProfileDetails() {
 
   /* ---------- rendu ---------- */
   return (
-    <section className="w-[80%] mx-auto flex flex-col lg:flex-row gap-10 border-b-2 py-10">
+    <section className="w-[90%] mx-auto flex flex-col lg:flex-row gap-10 border-b-2 py-10">
       {/* Colonne gauche — titre + description */}
       <aside className="lg:w-1/5 space-y-2">
         <h2 className="text-lg font-semibold text-black">
@@ -66,7 +66,7 @@ export default function ProfileDetails() {
         
 
         {/* Grille des champs */}
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div className="grid grid-cols-1  gap-6">
           {/* Nom d’utilisateur */}
           <div className="space-y-2 md:col-span-2">
             <label htmlFor="username" className="text-sm font-medium text-black">

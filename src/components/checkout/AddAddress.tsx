@@ -1,5 +1,6 @@
 /* ------------------------------------------------------------------
-   src/components/settings/AddAddress.tsx
+   src/components/checkout/AddAddress.tsx
+   Composant unique pour ajout et édition d’adresse
 ------------------------------------------------------------------ */
 "use client";
 
@@ -9,32 +10,44 @@ import { useAuth } from "@/hooks/useAuth";
 import { AiOutlinePlus } from "react-icons/ai";
 import { fetchData } from "@/lib/fetchData";
 
-/* ---------- props ---------- */
 interface AddAddressProps {
   isFormVisible: boolean;
-  getAddress(): void;            // callback pour rafraîchir la liste
-  toggleForminVisibility(): void; // callback pour fermer le modal
+  getAddress(): void;
+  toggleForminVisibility(): void;
+  editAddress?: {
+    _id: string;
+    Name: string;
+    StreetAddress: string;
+    Country: string;
+    Province?: string;
+    City: string;
+    PostalCode: string;
+  };
 }
 
-/* ---------- component ---------- */
 export default function AddAddress({
   isFormVisible,
   getAddress,
   toggleForminVisibility,
+  editAddress,
 }: AddAddressProps) {
   const { isAuthenticated, loading: authLoading } = useAuth();
 
-  /* ── Bloquer le scroll quand le modal est ouvert ───────────────── */
+  // Bloquer le scroll de <body> et <html> quand le modal est ouvert
   useEffect(() => {
     if (isFormVisible) {
       document.body.classList.add("overflow-hidden");
+      document.documentElement.classList.add("overflow-hidden");
     } else {
       document.body.classList.remove("overflow-hidden");
+      document.documentElement.classList.remove("overflow-hidden");
     }
-    return () => document.body.classList.remove("overflow-hidden");
+    return () => {
+      document.body.classList.remove("overflow-hidden");
+      document.documentElement.classList.remove("overflow-hidden");
+    };
   }, [isFormVisible]);
 
-  /* ── State local du formulaire ─────────────────────────────────── */
   const [addressData, setAddressData] = useState({
     Name: "",
     StreetAddress: "",
@@ -44,38 +57,18 @@ export default function AddAddress({
     PostalCode: "",
   });
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value } = e.target;
-    setAddressData((prev) => ({ ...prev, [name]: value }));
-  };
-
-  /* ── Soumission du formulaire ──────────────────────────────────── */
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault();
-
-    if (authLoading) {
-      toast.info("Vérification de l'authentification. Veuillez patienter...");
-      return;
-    }
-
-    if (!isAuthenticated) {
-      toast.error("Vous devez être connecté pour ajouter une adresse.");
-      return;
-    }
-
-    try {
-      await fetchData("/client/address/postAddress", {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(addressData),
+  // Pré-remplir le formulaire en mode édition
+  useEffect(() => {
+    if (editAddress) {
+      setAddressData({
+        Name: editAddress.Name,
+        StreetAddress: editAddress.StreetAddress,
+        Country: editAddress.Country,
+        Province: editAddress.Province || "",
+        City: editAddress.City,
+        PostalCode: editAddress.PostalCode,
       });
-
-      toast.success("Adresse ajoutée avec succès !");
-      getAddress();
-      toggleForminVisibility();
-
-      /* Réinitialisation des champs */
+    } else {
       setAddressData({
         Name: "",
         StreetAddress: "",
@@ -84,36 +77,68 @@ export default function AddAddress({
         City: "",
         PostalCode: "",
       });
-    } catch (error) {
-      console.error("Erreur lors de la création de l'adresse:", error);
-      const message =
-        error instanceof Error
-          ? error.message
-          : "Une erreur inconnue est survenue";
-      toast.error(message);
+    }
+  }, [editAddress]);
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setAddressData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+
+    if (authLoading) {
+      toast.info("Vérification de l'authentification…");
+      return;
+    }
+    if (!isAuthenticated) {
+      toast.error("Vous devez être connecté pour continuer.");
+      return;
+    }
+
+    try {
+      if (editAddress) {
+        await fetchData(`/client/address/updateAddress/${editAddress._id}`, {
+          method: "PUT",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(addressData),
+        });
+        toast.success("Adresse mise à jour avec succès !");
+      } else {
+        await fetchData("/client/address/postAddress", {
+          method: "POST",
+          credentials: "include",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify(addressData),
+        });
+        toast.success("Adresse ajoutée avec succès !");
+      }
+      getAddress();
+      toggleForminVisibility();
+    } catch (err) {
+      console.error(err);
+      toast.error(err instanceof Error ? err.message : "Erreur inattendue");
     }
   };
 
-  /* ── Si le modal est masqué, ne rien rendre ────────────────────── */
   if (!isFormVisible) return null;
 
-  /* ── Render ────────────────────────────────────────────────────── */
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-center bg-cover backdrop-filter backdrop-brightness-75">
       <div className="absolute inset-0 opacity-80 z-0" />
-
       <form
         onSubmit={handleSubmit}
         className="relative mx-auto my-auto max-md:w-[90%] rounded-xl bg-white p-5 shadow-lg"
       >
-        <h2 className="text-xl max-md:text-lg text-center font-semibold text-gray-900 dark:text-white">
-          Détails de livraison
+        <h2 className="text-xl max-md:text-lg text-center font-semibold text-gray-900">
+          {editAddress ? "Modifier l’adresse" : "Nouvelle adresse"}
         </h2>
 
-        <div className="grid grid-cols-1 gap-4 max-md:gap-2  sm:grid-cols-2">
-          {/* Nom */}
+        <div className="grid grid-cols-1 gap-4 max-md:gap-2 sm:grid-cols-2">
           <div className="sm:col-span-2">
-            <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
+            <label className="mb-2 block text-sm font-medium text-gray-900">
               Nom*
             </label>
             <input
@@ -122,14 +147,13 @@ export default function AddAddress({
               onChange={handleChange}
               type="text"
               placeholder="ex. Maison, Travail, Chez Jane"
-              className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-primary-500 dark:focus:ring-primary-500"
+              className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm focus:border-primary-500 focus:ring-primary-500"
               required
             />
           </div>
 
-          {/* Pays */}
           <div className="sm:col-span-2">
-            <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
+            <label className="mb-2 block text-sm font-medium text-gray-900">
               Pays*
             </label>
             <input
@@ -138,14 +162,13 @@ export default function AddAddress({
               onChange={handleChange}
               type="text"
               placeholder="ex. Tunisie, France, Canada"
-              className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-primary-500 dark:focus:ring-primary-500"
+              className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm focus:border-primary-500 focus:ring-primary-500"
               required
             />
           </div>
 
-          {/* Gouvernorat / État */}
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
+            <label className="mb-2 block text-sm font-medium text-gray-900">
               Gouvernorat / État*
             </label>
             <input
@@ -154,14 +177,13 @@ export default function AddAddress({
               onChange={handleChange}
               type="text"
               placeholder="ex. Tunis, Ontario, Bavière"
-              className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-primary-500 dark:focus:ring-primary-500"
+              className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm focus:border-primary-500 focus:ring-primary-500"
               required
             />
           </div>
 
-          {/* Ville */}
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
+            <label className="mb-2 block text-sm font-medium text-gray-900">
               Ville*
             </label>
             <input
@@ -170,14 +192,13 @@ export default function AddAddress({
               onChange={handleChange}
               type="text"
               placeholder="ex. Tunis, Paris, Montréal"
-              className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-primary-500 dark:focus:ring-primary-500"
+              className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm focus:border-primary-500 focus:ring-primary-500"
               required
             />
           </div>
 
-          {/* Code postal */}
           <div>
-            <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
+            <label className="mb-2 block text-sm font-medium text-gray-900">
               Code postal*
             </label>
             <input
@@ -185,15 +206,14 @@ export default function AddAddress({
               value={addressData.PostalCode}
               onChange={handleChange}
               type="text"
-              placeholder="ex. 1001, 75000, H2X 1Y4"
-              className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-primary-500 dark:focus:ring-primary-500"
+              placeholder="ex. 1001, 75000, H2X 1Y4"
+              className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm focus:border-primary-500 focus:ring-primary-500"
               required
             />
           </div>
 
-          {/* Adresse */}
           <div className="sm:col-span-2">
-            <label className="mb-2 block text-sm font-medium text-gray-900 dark:text-white">
+            <label className="mb-2 block text-sm font-medium text-gray-900">
               Adresse*
             </label>
             <input
@@ -201,33 +221,28 @@ export default function AddAddress({
               value={addressData.StreetAddress}
               onChange={handleChange}
               type="text"
-              placeholder="ex. 123 rue Principale, Appt 4B"
-              className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm text-gray-900 focus:border-primary-500 focus:ring-primary-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white dark:placeholder-gray-400 dark:focus:border-primary-500 dark:focus:ring-primary-500"
+              placeholder="ex. 123 rue Principale, Appt 4B"
+              className="block w-full rounded-lg border border-gray-300 bg-gray-50 p-2.5 text-sm focus:border-primary-500 focus:ring-primary-500"
               required
             />
           </div>
+        </div>
 
-        
-          </div>
-            {/* Boutons */}
-          <div className="w-full flex gap-4 justify-end mt-4">
-            {/* Submit */}
-            <button
-              type="submit"
-              className="mt-2 rounded-md border border-gray-300 px-2 py-2 text-sm text-black hover:text-white hover:bg-primary max-md:text-xs max-md:w-full text-center flex gap-4"
-            >
-              <AiOutlinePlus className="h-5 w-5" />
-              Ajouter l’adresse
-            </button>
-
-            {/* Cancel */}
-            <button
-              type="button"
-              onClick={toggleForminVisibility}
-              className="mt-2 rounded-md border border-gray-300 px-2 py-2 text-sm text-black hover:text-white hover:bg-primary max-md:text-xs max-md:w-full text-center"
-            >
-              Annuler
-            </button>
+        <div className="w-full flex gap-4 justify-end mt-4">
+          <button
+            type="submit"
+            className="mt-2 rounded-md border border-gray-300 px-2 py-2 text-sm text-black hover:text-white hover:bg-primary max-md:text-xs max-md:w-full flex items-center gap-2 justify-center"
+          >
+            <AiOutlinePlus className="h-5 w-5" />
+            {editAddress ? "Enregistrer" : "Ajouter l’adresse"}
+          </button>
+          <button
+            type="button"
+            onClick={toggleForminVisibility}
+            className="mt-2 rounded-md border border-gray-300 px-2 py-2 text-sm text-black hover:text-white hover:bg-primary max-md:text-xs max-md:w-full text-center"
+          >
+            Annuler
+          </button>
         </div>
       </form>
     </div>
