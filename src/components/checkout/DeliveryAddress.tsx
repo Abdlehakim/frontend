@@ -113,33 +113,22 @@ export default function DeliveryAddress({
     <>
       {error && <p className="text-red-500 py-2">{error}</p>}
 
-      <div className="flex flex-col gap-4">
-        <h3 className="text-xl font-semibold max-lg:text-sm max-lg:text-center">
+      <div className="flex flex-col items-end gap-4">
+        <h3 className="text-xl font-semibold max-lg:text-sm max-lg:text-center w-full">
           Sélectionnez votre adresse ou ajoutez‑en une nouvelle&nbsp;:
         </h3>
-    {/* bouton d’ajout d’adresse */}
-        <button
-          type="button"
-          onClick={() => setShowForm(true)}
-          disabled={!isAuthenticated}
-          className="flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-5 py-2.5 text-sm font-medium
-                     hover:bg-primary hover:text-white disabled:opacity-50 max-lg:text-xs"
-        >
-          <AiOutlinePlus className="h-5 w-5" />
-          Ajouter une nouvelle adresse
-        </button>
+    
         {authLoading || loading ? (
-          <Skel className="h-12 w-full" />
+          <Skel className="h-12 w-full min-w-0" />
         ) : (
           /* --- D R O P D O W N   C U S T O M --- */
           <div className="relative w-full" ref={dropdownRef}>
             <button
               type="button"
               onClick={() => setOpen((prev) => !prev)}
-              className="w-full h-12 flex items-center justify-between rounded-md border border-gray-300 bg-white
-                         px-4 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/50 max-lg:text-xs"
+              className="w-full h-12 flex items-center justify-between rounded-md border border-gray-300 bg-white px-4 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/50 max-lg:text-xs"
             >
-              <span className={selected ? "truncate" : "text-gray-400 truncate"}>
+              <span className={selected ? "block w-full truncate" : "text-gray-400 block w-full truncate"}>
                 {selected
                   ? formatAddress(selected)
                   : "-- Choisir une adresse --"}
@@ -182,7 +171,16 @@ export default function DeliveryAddress({
             )}
           </div>
         )}
-
+{/* bouton d’ajout d’adresse */}
+        <button
+          type="button"
+          onClick={() => setShowForm(true)}
+          disabled={!isAuthenticated}
+          className="w-fit rounded-md border border-gray-300 px-4 py-2.5 text-sm hover:bg-primary hover:text-white flex items-center gap-4"
+        >
+          <AiOutlinePlus className="h-5 w-5" />
+          Ajouter une nouvelle adresse
+        </button>
     
       </div>
 

@@ -202,7 +202,7 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
         </div>
       )}
 
-      <div className="bg-gray-100 rounded-md p-4 w-[30%] max-lg:w-full">
+      <div className="bg-gray-100 rounded-md p-4 w-[420px] max-lg:w-full">
         <div className="mt-8 sticky top-4 space-y-8">
           {/* Code promo */}
           <div className="flex border border-[#15335E] overflow-hidden rounded-md">

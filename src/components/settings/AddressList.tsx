@@ -149,11 +149,11 @@ export default function AddressList() {
                 .map((_, idx) => (
                   <div
                     key={idx}
-                    className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm flex max-md:flex-col justify-between gap-2 h-68"
+                    className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm flex max-md:flex-col justify-between gap-2 h-64"
                   >
-                    <div className="space-y-2 max-md:text-sm flex-1">
+                
                       <Skel className="h-full w-full" />          
-                    </div>
+                  
                   </div>
                 ))
             : addressesError
@@ -163,7 +163,7 @@ export default function AddressList() {
             : shown.map((addr, i) => (
                 <div
                   key={addr._id}
-                  className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm flex max-md:flex-col justify-between gap-2 h-68"
+                  className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm flex max-md:flex-col justify-between gap-2 h-64"
                 >
                   <div className="space-y-1 max-md:text-sm">
                     <p><span className="font-semibold">N° :</span> {firstIndex + i + 1}</p>

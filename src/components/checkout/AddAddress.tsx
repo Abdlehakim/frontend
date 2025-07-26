@@ -122,12 +122,13 @@ export default function AddAddress({
       }
 
       setShowSuccess(true);
+      // Success message now stays visible for 3 seconds
       setTimeout(() => {
         setShowSuccess(false);
         toggleForminVisibility();
         getAddress();
         setIsSubmitting(false);
-      }, 1500);
+      }, 3000);
     } catch (err) {
       console.error(err);
       toast.error(err instanceof Error ? err.message : "Erreur inattendue");
@@ -145,15 +146,16 @@ export default function AddAddress({
       >
         {/* Loading + Success Overlay */}
         {(isSubmitting || showSuccess) && (
-          <div className="absolute inset-0 bg-white bg-opacity-75 z-10 flex flex-col items-center justify-center rounded-xl space-y-4">
-            {showSuccess && (
-              <h2 className="text-green-500">
-  {editAddress
-    ? "Adresse mise à jour avec succès !"
-    : "Adresse ajoutée avec succès !"}
-</h2>
-            )}
-            {isSubmitting && <LoadingDots />}
+          <div className="absolute inset-0 bg-white bg-opacity-75 z-10 flex items-center justify-center rounded-xl">
+            <LoadingDots
+              loadingMessage="Chargement en cours…"
+              successMessage={
+                editAddress
+                  ? "Adresse mise à jour avec succès !"
+                  : "Adresse ajoutée avec succès !"
+              }
+              isSuccess={showSuccess}
+            />
           </div>
         )}
 
