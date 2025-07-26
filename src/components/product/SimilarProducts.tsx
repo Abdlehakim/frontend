@@ -51,7 +51,6 @@ export default function SimilarProducts({
 
     fetchData<Product[]>(url)
       .then((data) => {
-        console.log("SimilarProducts fetched data:", data); // <-- LOG HERE
         setProducts(data);
       })
       .catch((err) => {
@@ -61,12 +60,6 @@ export default function SimilarProducts({
       .finally(() => setLoading(false));
   }, [key, excludeSlug, refresh]);
 
-  // Optional: log whenever products state changes
-  useEffect(() => {
-    if (!loading) {
-      console.log("SimilarProducts state products:", products);
-    }
-  }, [products, loading]);
 
   if (!loading && products.length === 0) {
     return <p className="w-full text-center py-10">No similar product.</p>;

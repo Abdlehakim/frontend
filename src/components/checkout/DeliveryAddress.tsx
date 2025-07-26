@@ -28,6 +28,7 @@ export interface Address {
   Province?: string;
   City: string;
   PostalCode: string;
+  Phone?: string;
 }
 
 /* ---------- props ---------- */
@@ -36,9 +37,17 @@ interface Props {
   onAddressChange(id: string): void;
 }
 
-/** Build a clean, comma‑separated address string */
+/** Build a clean, comma‑separated address string (includes phone) */
 const formatAddress = (a: Address) =>
-  [a.Name, a.StreetAddress, a.City, a.Province, a.PostalCode, a.Country]
+  [
+    a.Name,
+    a.StreetAddress,
+    a.City,
+    a.Province,
+    a.PostalCode,
+    a.Country,
+    a.Phone && `Tel: ${a.Phone}`,
+  ]
     .filter(Boolean)
     .join(", ");
 
@@ -51,7 +60,7 @@ export default function DeliveryAddress({
   const [error, setError] = useState("");
 
   const [showForm, setShowForm] = useState(false);
-  const [open, setOpen]   = useState(false);
+  const [open, setOpen] = useState(false);
 
   const { isAuthenticated, loading: authLoading } = useAuth();
   const dropdownRef = useRef<HTMLDivElement | null>(null);
@@ -83,7 +92,11 @@ export default function DeliveryAddress({
   /* ---------- fermer le menu au clic extérieur ---------- */
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
-      if (open && dropdownRef.current && !dropdownRef.current.contains(e.target as Node)) {
+      if (
+        open &&
+        dropdownRef.current &&
+        !dropdownRef.current.contains(e.target as Node)
+      ) {
         setOpen(false);
       }
     }
@@ -92,7 +105,8 @@ export default function DeliveryAddress({
   }, [open]);
 
   /* ---------- helpers ---------- */
-  const selected = addresses.find((a) => a._id === selectedAddressId) ?? null;
+  const selected =
+    addresses.find((a) => a._id === selectedAddressId) ?? null;
 
   /* ---------- render ---------- */
   return (
@@ -103,7 +117,17 @@ export default function DeliveryAddress({
         <h3 className="text-xl font-semibold max-lg:text-sm max-lg:text-center">
           Sélectionnez votre adresse ou ajoutez‑en une nouvelle&nbsp;:
         </h3>
-
+    {/* bouton d’ajout d’adresse */}
+        <button
+          type="button"
+          onClick={() => setShowForm(true)}
+          disabled={!isAuthenticated}
+          className="flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-5 py-2.5 text-sm font-medium
+                     hover:bg-primary hover:text-white disabled:opacity-50 max-lg:text-xs"
+        >
+          <AiOutlinePlus className="h-5 w-5" />
+          Ajouter une nouvelle adresse
+        </button>
         {authLoading || loading ? (
           <Skel className="h-12 w-full" />
         ) : (
@@ -116,10 +140,12 @@ export default function DeliveryAddress({
                          px-4 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/50 max-lg:text-xs"
             >
               <span className={selected ? "truncate" : "text-gray-400 truncate"}>
-                {selected ? formatAddress(selected) : "-- Choisir une adresse --"}
+                {selected
+                  ? formatAddress(selected)
+                  : "-- Choisir une adresse --"}
               </span>
               {open ? (
-                <AiOutlineUp  className="h-4 w-4 text-gray-500 shrink-0" />
+                <AiOutlineUp className="h-4 w-4 text-gray-500 shrink-0" />
               ) : (
                 <AiOutlineDown className="h-4 w-4 text-gray-500 shrink-0" />
               )}
@@ -137,38 +163,27 @@ export default function DeliveryAddress({
                 )}
 
                 {addresses.map((addr) => (
-                  <>
                   <li
                     key={addr._id}
                     onClick={() => {
                       onAddressChange(addr._id);
                       setOpen(false);
                     }}
-                    className={`cursor-pointer select-none px-4 py-2 hover:bg-primary/10 hover:bg-primary hover:text-white  ${
-                      addr._id === selectedAddressId ? "bg-primary/5 font-medium" : ""
+                    className={`cursor-pointer select-none px-4 py-2 hover:bg-primary/10 hover:bg-primary hover:text-white ${
+                      addr._id === selectedAddressId
+                        ? "bg-primary/5 font-medium"
+                        : ""
                     }`}
                   >
                     {formatAddress(addr)}
-                    
                   </li>
-                  </>
                 ))}
               </ul>
             )}
           </div>
         )}
 
-        {/* bouton d’ajout d’adresse */}
-        <button
-          type="button"
-          onClick={() => setShowForm(true)}
-          disabled={!isAuthenticated}
-          className="flex items-center justify-center gap-2 rounded-lg border border-gray-200 bg-white px-5 py-2.5 text-sm font-medium
-                     hover:bg-primary hover:text-white disabled:opacity-50 max-lg:text-xs"
-        >
-          <AiOutlinePlus className="h-5 w-5" />
-          Ajouter une nouvelle adresse
-        </button>
+    
       </div>
 
       {/* modal d’ajout */}

@@ -26,14 +26,12 @@ export default function useAutoLogout() {
     cleanup(); // clear leftovers on remounts (dev/strict mode, etc.)
 
     const raw = Cookies.get(TIMER_COOKIE);
-    console.log("[autoLogout] exp cookie:", raw);
     if (!raw) return;
 
     const expMs = Number(raw);
     if (!Number.isFinite(expMs)) return;
 
     const delay = Math.min(Math.max(expMs - Date.now(), 0), MAX_DELAY);
-    console.log("[autoLogout] delay:", delay);
 
     const doClientLogout = async (callBackend = true) => {
       try {
@@ -53,7 +51,6 @@ export default function useAutoLogout() {
 
     // Main timeout
     timerRef.current = setTimeout(() => {
-      console.log("[autoLogout] timeout fired");
       doClientLogout(true);
     }, delay);
 
@@ -62,7 +59,6 @@ export default function useAutoLogout() {
       const r = Cookies.get(TIMER_COOKIE);
       if (!r) return;
       if (Date.now() >= Number(r)) {
-        console.log("[autoLogout] interval detected expiry");
         doClientLogout(true);
       }
     }, 15_000);
@@ -74,7 +70,6 @@ export default function useAutoLogout() {
     if (bcRef.current) {
       bcRef.current.onmessage = (e) => {
         if (e.data?.type === "logout") {
-          console.log("[autoLogout] broadcast logout received");
           doClientLogout(false);
         }
         if (e.data?.type === "refresh-exp" && typeof e.data.exp === "number") {

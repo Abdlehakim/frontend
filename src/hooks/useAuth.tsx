@@ -19,6 +19,7 @@ export interface User {
   email: string;
   username?: string;
   phone?: string;
+  isGoogleAccount: boolean;
 }
 interface AuthContextValue {
   user: User | null;

@@ -8,9 +8,7 @@ import { useRouter, useParams } from "next/navigation";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
 import Image from "next/image";
-import { MdOutlineArrowForwardIos } from "react-icons/md";
 import { FiDownload } from "react-icons/fi";
-import Breadcrumb from "@/components/order/Breadcrumb";
 import { fetchData } from "@/lib/fetchData";
 
 /* ---------- skeleton ---------- */
@@ -158,19 +156,11 @@ export default function OrderByRef() {
   /* ---------- UI ---------- */
   return (
     <div className="w-[90%] md:w-[70%] mx-auto pt-16">
-      {/* fil d’Ariane */}
-      <Breadcrumb
-        homeElement="Accueil"
-        separator={<MdOutlineArrowForwardIos size={13} className="mt-1.5" />}
-        containerClasses="flex gap-1 text-gray-500"
-        activeClasses="uppercase underline font-semibold text-black"
-        capitalizeLinks
-      />
 
       {/* carte de la commande -------------------------------------- */}
       {loading ? (
         /* ── skeleton SEULEMENT pour la carte ── */
-        <Skel className="bg-gray-100 border border-gray-200 rounded-xl p-6 mt-10 space-y-6 h-[632px]" />
+        <Skel className="bg-gray-100 border border-gray-200 rounded-xl p-6 space-y-6 h-[632px]" />
       ) : !order ? (
         /* ── état erreur/absente ── */
         <p className="pt-16 text-center">Aucune commande trouvée.</p>
@@ -178,7 +168,7 @@ export default function OrderByRef() {
         /* ── contenu réel ── */
         <div
           id="invoice-card"
-          className="bg-gray-100 border border-gray-200 rounded-xl p-6 mt-10 space-y-6 max-md:p-2"
+          className="bg-gray-100 border border-gray-200 rounded-xl p-6 space-y-6 max-md:p-2"
         >
           {/* en‑tête */}
           <div className="md:flex md:divide-x divide-gray-200 text-center md:text-left">
