@@ -1,7 +1,7 @@
 // app/components/Headertop.tsx (Server Component)
 
 import React from "react";
-import { FaFacebookF, FaTwitter, FaLinkedinIn } from "react-icons/fa";
+import { FaFacebookF, FaInstagram, FaLinkedinIn } from "react-icons/fa";
 import { fetchData } from "@/lib/fetchData";
 
 export interface HeaderData {
@@ -46,8 +46,17 @@ export default async function Headertop() {
       : str;
   };
 
-  const { address, zipcode, city, governorate, phone, email, facebook, twitter, linkedin } =
-    data;
+  const {
+    address,
+    zipcode,
+    city,
+    governorate,
+    phone,
+    email,
+    facebook,
+    instagram,
+    linkedin,
+  } = data;
 
   return (
     <div className="w-full h-[40px] flex bg-primary max-lg:hidden justify-center">
@@ -76,18 +85,20 @@ export default async function Headertop() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Visit our Facebook page"
+              className="text-white transition transform duration-200 hover:scale-110 hover:text-secondary"
             >
-              <FaFacebookF className="text-white hover:text-blue-500 transition-colors" />
+              <FaFacebookF size={18} />
             </a>
           )}
-          {twitter && (
+          {instagram && (
             <a
-              href={twitter}
+              href={instagram}
               target="_blank"
               rel="noopener noreferrer"
-              aria-label="Visit our Twitter profile"
+              aria-label="Visit our Instagram profile"
+              className="text-white transition transform duration-200 hover:scale-110 hover:text-secondary"
             >
-              <FaTwitter className="text-white hover:text-blue-400 transition-colors" />
+              <FaInstagram size={18} />
             </a>
           )}
           {linkedin && (
@@ -96,8 +107,9 @@ export default async function Headertop() {
               target="_blank"
               rel="noopener noreferrer"
               aria-label="Visit our LinkedIn profile"
+              className="text-white transition transform duration-200 hover:scale-110 hover:text-secondary"
             >
-              <FaLinkedinIn className="text-white hover:text-blue-600 transition-colors" />
+              <FaLinkedinIn size={18} />
             </a>
           )}
         </div>
