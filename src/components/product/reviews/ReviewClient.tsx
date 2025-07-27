@@ -95,7 +95,7 @@ const ReviewClient: React.FC<ReviewsProps> = ({ productId, summary = false }) =>
   if (loading) {
     return (
       <div className="reviews-summary flex items-center gap-[8px]">
-        <div className="stars flex text-secondary text-sm">
+        <div className="stars flex text-secondary text-xs">
           {Array.from({ length: 5 }, (_, index) => (
             <FaStar key={index} className="animate-pulse" />
           ))}
