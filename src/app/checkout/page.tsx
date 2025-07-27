@@ -1,9 +1,6 @@
-/* ------------------------------------------------------------------ */
-/*  src/app/checkout/page.tsx                                         */
-/* ------------------------------------------------------------------ */
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { RootState } from "@/store";
 import { CartItem, removeItem, updateItemQuantity } from "@/store/cartSlice";
@@ -27,15 +24,23 @@ const Checkout: React.FC = () => {
   const searchParams = useSearchParams();
 
   /* ----- step navigation ----- */
-  const [currentStep, setCurrentStep] = useState<"cart" | "checkout" | "order-summary">("cart");
+  const [currentStep, setCurrentStep] = useState<
+    "cart" | "checkout" | "order-summary"
+  >("cart");
   const [refOrder, setRefOrder] = useState("");
 
   /* ----- selections (no localStorage) ----- */
   const [selectedAddressId, setSelectedAddressId] = useState<string>("");
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<PaymentMethodId | "">("");
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
+    PaymentMethodId | ""
+  >("");
   const [selectedMethod, setSelectedMethod] = useState<string>("");
   const [deliveryCost, setDeliveryCost] = useState(0);
 
+  /* ‣ NEW: ref to scroll to */
+  const addressSectionRef = useRef<HTMLDivElement>(null);
+
+  /* ----- redirect if not logged in ----- */
   useEffect(() => {
     if (!loading && !isAuthenticated) {
       const redirectTo = searchParams.get("redirectTo") || "/";
@@ -43,15 +48,28 @@ const Checkout: React.FC = () => {
     }
   }, [loading, isAuthenticated, router, searchParams]);
 
+  /* ‣ NEW: scroll into view when entering checkout step */
+  useEffect(() => {
+    if (currentStep === "checkout" && addressSectionRef.current) {
+      addressSectionRef.current.scrollIntoView({
+        behavior: "auto"
+      });
+    }
+  }, [currentStep]);
+
   /* ----- totals ----- */
   const totalPrice = items.reduce((sum, item) => {
-    const ttc = item.discount ? (item.price * (100 - item.discount)) / 100 : item.price;
+    const ttc = item.discount
+      ? (item.price * (100 - item.discount)) / 100
+      : item.price;
     return sum + ttc * item.quantity;
   }, 0);
 
   const totalDiscount = items.reduce((sum, item) => {
     const full = item.price * item.quantity;
-    const disc = item.discount ? ((item.price * (100 - item.discount)) / 100) * item.quantity : full;
+    const disc = item.discount
+      ? ((item.price * (100 - item.discount)) / 100) * item.quantity
+      : full;
     return sum + (full - disc);
   }, 0);
 
@@ -59,8 +77,10 @@ const Checkout: React.FC = () => {
   const incrementHandler = (it: CartItem) =>
     dispatch(updateItemQuantity({ _id: it._id, quantity: it.quantity + 1 }));
   const decrementHandler = (it: CartItem) =>
-    it.quantity > 1 && dispatch(updateItemQuantity({ _id: it._id, quantity: it.quantity - 1 }));
-  const removeCartHandler = (id: string) => dispatch(removeItem({ _id: id }));
+    it.quantity > 1 &&
+    dispatch(updateItemQuantity({ _id: it._id, quantity: it.quantity - 1 }));
+  const removeCartHandler = (id: string) =>
+    dispatch(removeItem({ _id: id }));
 
   /* ----- address & delivery handlers ----- */
   const handleAddressChange = (id: string) => setSelectedAddressId(id);
@@ -78,7 +98,6 @@ const Checkout: React.FC = () => {
     setCurrentStep("order-summary");
   };
 
-  /* ---------- render ---------- */
   return (
     <div className="my-8 flex flex-col gap-4">
       <CheckoutNav currentStep={currentStep} />
@@ -109,7 +128,11 @@ const Checkout: React.FC = () => {
 
       {currentStep === "checkout" && (
         <div className="mx-auto w-[80%] flex max-lg:flex-col gap-4">
-          <div className="w-[70%] p-4 flex flex-col gap-8 bg-gray-100 rounded-md max-lg:w-full max-lg:gap-4">
+          {/* ‣ Attach the ref here */}
+          <div
+            ref={addressSectionRef}
+            className="w-[70%] p-4 flex flex-col gap-8 bg-gray-100 rounded-md max-lg:w-full max-lg:gap-4"
+          >
             <DeliveryAddressSelect
               selectedAddressId={selectedAddressId}
               onAddressChange={handleAddressChange}

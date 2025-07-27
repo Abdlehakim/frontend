@@ -100,7 +100,7 @@ const MainProductSection: React.FC<Props> = ({ initialProduct }) => {
   const scroll = (dir: "left" | "right") => {
     const node = trackRef.current;
     if (!node) return;
-    const thumbWidth = 6.5 * 16; // w-24 (6rem) + 0.5rem gap = 6.5rem ≈ px
+    const thumbWidth = 6.5 * 16;
     const step = pageSize * thumbWidth;
     node.scrollBy({ left: dir === "left" ? -step : step, behavior: "smooth" });
   };
