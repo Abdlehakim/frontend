@@ -1,7 +1,3 @@
-/* ------------------------------------------------------------------
-   src/components/checkout/OrderSummary.tsx
-   (mainImageUrl everywhere, fetchData helper intact)
------------------------------------------------------------------- */
 "use client";
 
 import React, { Key, useEffect, useState } from "react";
@@ -19,6 +15,7 @@ interface Address {
   Province?: string;
   City: string;
   PostalCode: string;
+  Phone?: string;
   createdAt?: string;
   updatedAt?: string;
 }
@@ -140,20 +137,22 @@ const OrderSummary: React.FC<{ data: string }> = ({ data }) => {
 
         {/* Order summary */}
         <div className="border-t border-gray-300 mt-4 pt-4">
-          <h3 className="text-xl font-semibold mb-2 max-md:text-lg">Résumé de la commande :</h3>
+          <h3 className="text-xl font-semibold mb-2 max-md:text-lg">
+            Résumé de la commande :
+          </h3>
           <p className="text-gray-700 max-md:text-xs">
             Votre commande <span className="font-bold">#{order.ref}</span> a été
             réussie.
           </p>
           <div className="mt-4">
             <p className="text-base font-bold">
-              Total : <span>{fmt(order.total)}</span>
+              Total : <span>{fmt(order.total)}</span>
             </p>
           </div>
 
           {/* Items */}
           <div className="mt-6">
-            <p className="font-semibold text-lg mb-2">Article(s) :</p>
+            <p className="font-semibold text-lg mb-2">Article(s) :</p>
             <div className="flex flex-col divide-y divide-gray-200">
               {order.orderItems.length ? (
                 order.orderItems.map((item) => {
@@ -205,15 +204,22 @@ const OrderSummary: React.FC<{ data: string }> = ({ data }) => {
             </p>
             <p className="text-gray-700 font-bold">
               Méthode de livraison :{" "}
-              <span className=" font-normal">
+              <span className="font-normal">
                 {deliveryMap[order.deliveryMethod] ?? order.deliveryMethod}
               </span>
             </p>
             <p className="font-bold">
-              Adresse de livraison:{" "}
-              <span className="text-gray-700 font-normal">{fullAddress}</span>
+              Adresse de livraison :{" "}
+              <span className="text-gray-700 font-normal">
+                {fullAddress}
+                {order.address.Phone && (
+                  <>
+                    , <span className="font-semibold">Tél:</span>{" "}
+                    {order.address.Phone}
+                  </>
+                )}
+              </span>
             </p>
-            
           </div>
         </div>
 
@@ -221,13 +227,13 @@ const OrderSummary: React.FC<{ data: string }> = ({ data }) => {
         <div className="flex justify-between gap-2 border-t border-gray-300 mt-4 pt-4">
           <button
             onClick={() => router.push("/")}
-            className="mt-2 w-full rounded-md border border-gray-300 px-2 py-2 text-sm text-black hover:text-white  hover:bg-primary"
+            className="mt-2 w-full rounded-md border border-gray-300 px-2 py-2 text-sm text-black hover:text-white hover:bg-primary"
           >
             Accueil
           </button>
           <button
             onClick={() => router.push("/orderhistory")}
-            className="mt-2 w-full rounded-md border border-gray-300 px-2 py-2 text-sm text-black hover:text-white  hover:bg-primary max-md:text-xs"
+            className="mt-2 w-full rounded-md border border-gray-300 px-2 py-2 text-sm text-black hover:text-white hover:bg-primary max-md:text-xs"
           >
             Suivre ma commande
           </button>

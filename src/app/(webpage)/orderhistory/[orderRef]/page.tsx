@@ -24,6 +24,7 @@ interface Address {
   Province?: string;
   City: string;
   PostalCode: string;
+  Phone?: string;
 }
 
 interface OrderItem {
@@ -135,7 +136,7 @@ export default function OrderByRef() {
         setDeliveryMap(dMap);
         setPaymentMap(pMap);
       } catch (err) {
-        console.error("Erreur lors du chargement des libellés :", err);
+        console.error("Erreur lors du chargement des libellés :", err);
       }
     })();
   }, []);
@@ -173,13 +174,13 @@ export default function OrderByRef() {
           {/* en‑tête */}
           <div className="md:flex md:divide-x divide-gray-200 text-center md:text-left">
             <div className="flex-1 pb-4 md:pb-0 space-y-1">
-              <p className="text-xs text-gray-400">N° de commande</p>
+              <p className="text-xs text-gray-400">N° de commande</p>
               <p className="text-sm font-medium">
                 #{order.ref.replace("ORDER-", "")}
               </p>
             </div>
             <div className="flex-1 pb-4 md:pb-0 md:pl-6 space-y-1">
-              <p className="text-xs text-gray-400">Date de commande</p>
+              <p className="text-xs text-gray-400">Date de commande</p>
               <p className="text-sm">{frDate(order.createdAt)}</p>
             </div>
             <div className="flex-1 pb-4 md:pb-0 md:pl-6 space-y-1">
@@ -195,9 +196,14 @@ export default function OrderByRef() {
               </p>
             </div>
             <div className="flex-1 md:pl-6 space-y-1">
-              <p className="text-xs text-gray-400">Lieu de livraison</p>
+              <p className="text-xs text-gray-400">Lieu de livraison</p>
               <p className="text-sm">
                 {formatAddress(order.address) || "—"}
+                {order.address?.Phone && (
+                  <>
+                    , <span className="font-semibold">Tél. :</span> {order.address.Phone}
+                  </>
+                )}
               </p>
             </div>
           </div>

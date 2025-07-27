@@ -3,11 +3,6 @@ import React, { useEffect, useState } from "react";
 import { FaStar, FaStarHalfAlt, FaRegStar } from "react-icons/fa";
 import { cache } from "react";
 
-// If you want a "review not found" page server-side, you typically do that
-// in server components. Here, because this is a "client" component, we handle
-// the error in the client side. But you *can* use "notFound()" from next/navigation
-// if you throw an error or return null in a server component.
-
 interface Review {
   _id: string;
   user?: {
@@ -48,8 +43,6 @@ const fetchReviews = (productId: string) =>
   fetchData<Review[]>(`/api/Products/ProductReviews/${productId}`);
 
 const ReviewClient: React.FC<ReviewsProps> = ({ productId, summary = false }) => {
-  // We strictly want an array here, so let's initialize with an empty array.
-  // We'll handle "null" results from the fetch function by showing an error or empty array.
   const [reviews, setReviews] = useState<Review[]>([]);
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState<boolean>(true);
@@ -60,7 +53,6 @@ const ReviewClient: React.FC<ReviewsProps> = ({ productId, summary = false }) =>
       try {
         const data = await fetchReviews(productId);
         if (data === null) {
-          // If our fetch returns null, treat it like an error or no data found
           setError("Failed to load reviews.");
         } else {
           setReviews(data);
@@ -88,7 +80,6 @@ const ReviewClient: React.FC<ReviewsProps> = ({ productId, summary = false }) =>
 
   const averageRating = getAverageRating();
 
-  // Renders stars for a given rating, e.g. 3.5 => 3 full stars, 1 half star, 1 empty star
   const renderStars = (rating: number) =>
     Array.from({ length: 5 }, (_, index) => {
       const starValue = index + 1;
@@ -109,7 +100,7 @@ const ReviewClient: React.FC<ReviewsProps> = ({ productId, summary = false }) =>
             <FaStar key={index} className="animate-pulse" />
           ))}
         </div>
-        <p className="text-sm">0.0 / 5 (0)</p>
+        <p className="text-xs">0.0 / 5 (0)</p>
       </div>
     );
   }
@@ -122,10 +113,10 @@ const ReviewClient: React.FC<ReviewsProps> = ({ productId, summary = false }) =>
   if (summary) {
     return (
       <div className="reviews-summary flex items-center gap-[8px]">
-        <div className="stars flex text-secondary text-sm">
+        <div className="stars flex text-secondary text-xs">
           {renderStars(averageRating)}
         </div>
-        <p className="text-sm">
+        <p className="text-xs">
           {averageRating.toFixed(1)} / 5 ({reviews.length})
         </p>
       </div>

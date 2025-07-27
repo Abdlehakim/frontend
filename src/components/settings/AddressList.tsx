@@ -20,6 +20,7 @@ interface Address {
   Province?: string;
   City: string;
   PostalCode: string;
+  Phone?: string;
 }
 
 const addressesPerPage = 2;
@@ -143,58 +144,78 @@ export default function AddressList() {
         </div>
 
         <div className="flex-1 overflow-auto space-y-4">
-          {addressesLoading
-            ? Array(addressesPerPage)
-                .fill(null)
-                .map((_, idx) => (
-                  <div
-                    key={idx}
-                    className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm flex max-md:flex-col justify-between gap-2 h-64"
-                  >
-                
-                      <Skel className="h-full w-full" />          
-                  
-                  </div>
-                ))
-            : addressesError
-            ? <div className="py-6 text-center text-red-500">{addressesError}</div>
-            : shown.length === 0
-            ? <div className="py-6 text-center text-gray-600">Aucune adresse trouvée.</div>
-            : shown.map((addr, i) => (
+          {addressesLoading ? (
+            Array(addressesPerPage)
+              .fill(null)
+              .map((_, idx) => (
                 <div
-                  key={addr._id}
+                  key={idx}
                   className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm flex max-md:flex-col justify-between gap-2 h-64"
                 >
-                  <div className="space-y-1 max-md:text-sm">
-                    <p><span className="font-semibold">N° :</span> {firstIndex + i + 1}</p>
-                    <p><span className="font-semibold">Nom :</span> {addr.Name}</p>
-                    <p><span className="font-semibold">Adresse :</span> {addr.StreetAddress}</p>
-                    <p><span className="font-semibold">Ville :</span> {addr.City}</p>
-                    <p><span className="font-semibold">Gouvernorat :</span> {addr.Province || "—"}</p>
-                    <p><span className="font-semibold">Code postal :</span> {addr.PostalCode}</p>
-                    <p><span className="font-semibold">Pays :</span> {addr.Country}</p>
-                  </div>
-                  <div className="flex flex-col max-md:flex-row max-md:justify-end gap-2">
-                    <button
-                      onClick={() => {
-                        setAddrEdit(addr);
-                        setIsAddModalOpen(true);
-                      }}
-                      className="h-9 w-9 flex items-center justify-center border rounded text-secondary hover:bg-primary hover:text-white"
-                      title="Modifier"
-                    >
-                      <FaPenToSquare size={16} />
-                    </button>
-                    <button
-                      onClick={() => setAddrToDelete(addr)}
-                      className="h-9 w-9 flex items-center justify-center border rounded text-secondary hover:bg-primary hover:text-white"
-                      title="Supprimer"
-                    >
-                      <FaTrash size={16} />
-                    </button>
-                  </div>
+                  <Skel className="h-full w-full" />
                 </div>
-              ))}
+              ))
+          ) : addressesError ? (
+            <div className="py-6 text-center text-red-500">{addressesError}</div>
+          ) : shown.length === 0 ? (
+            <div className="py-6 text-center text-gray-600">Aucune adresse trouvée.</div>
+          ) : (
+            shown.map((addr, i) => (
+              <div
+                key={addr._id}
+                className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm flex max-md:flex-col justify-between gap-2 h-64"
+              >
+                <div className="space-y-1 max-md:text-sm">
+                  <p>
+                    <span className="font-semibold">N° :</span> {firstIndex + i + 1}
+                  </p>
+                  <p>
+                    <span className="font-semibold">Nom :</span> {addr.Name}
+                  </p>
+                  <p>
+                    <span className="font-semibold">Adresse :</span> {addr.StreetAddress}
+                  </p>
+                  <p>
+                    <span className="font-semibold">Ville :</span> {addr.City}
+                  </p>
+                  <p>
+                    <span className="font-semibold">Gouvernorat :</span>{" "}
+                    {addr.Province || "—"}
+                  </p>
+                  <p>
+                    <span className="font-semibold">Code postal :</span> {addr.PostalCode}
+                  </p>
+                  <p>
+                    <span className="font-semibold">Pays :</span> {addr.Country}
+                  </p>
+                  {addr.Phone && (
+                    <p>
+                      <span className="font-semibold">Téléphone :</span> {addr.Phone}
+                    </p>
+                  )}
+                </div>
+                <div className="flex flex-col max-md:flex-row max-md:justify-end gap-2">
+                  <button
+                    onClick={() => {
+                      setAddrEdit(addr);
+                      setIsAddModalOpen(true);
+                    }}
+                    className="h-9 w-9 flex items-center justify-center border rounded text-secondary hover:bg-primary hover:text-white"
+                    title="Modifier"
+                  >
+                    <FaPenToSquare size={16} />
+                  </button>
+                  <button
+                    onClick={() => setAddrToDelete(addr)}
+                    className="h-9 w-9 flex items-center justify-center border rounded text-secondary hover:bg-primary hover:text-white"
+                    title="Supprimer"
+                  >
+                    <FaTrash size={16} />
+                  </button>
+                </div>
+              </div>
+            ))
+          )}
         </div>
 
         <PaginationClient
