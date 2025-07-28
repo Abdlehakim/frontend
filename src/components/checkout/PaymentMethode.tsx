@@ -11,17 +11,14 @@ const Skel = ({ className = "" }: { className?: string }) => (
   <div className={`animate-pulse bg-gray-200 rounded ${className}`} />
 );
 
-/* ───── types ───── */
-export type PaymentMethodId = "paypal" | "stripe" | "cashOnDelivery";
-
 interface PaymentMethod {
-  key: PaymentMethodId;
+  _id: string;
   label: string;
   help: string;
 }
 
 interface PaymentMethodeProps {
-  selectedPaymentMethod: PaymentMethodId | "";
+  selectedPaymentMethod: string;
   handlePaymentMethodChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
@@ -76,34 +73,30 @@ const PaymentMethode: React.FC<PaymentMethodeProps> = ({
       ) : methods.length === 0 ? (
         /* no methods available */
         <p className="italic text-sm text-gray-500">
-          No payment methods are currently available.
+          Aucun moyen de paiement disponible pour le moment.
         </p>
       ) : (
         /* real methods grid */
         <div className="grid grid-cols-3 gap-2 max-md:grid-cols-1">
-          {methods.map(({ key, label, help }) => (
+          {methods.map(({ _id, label, help }) => (
             <label
-              key={key}
-              htmlFor={key}
+              key={label}          // changed from _id → label
+              htmlFor={_id}
               className="cursor-pointer rounded-lg border border-gray-200 bg-white p-4 max-lg:text-sm"
             >
               <div className="flex items-center">
                 <input
-                  id={key}
+                  id={_id}
                   type="radio"
                   name="payment-method"
-                  value={key}
-                  checked={selectedPaymentMethod === key}
+                  value={label}
+                  checked={selectedPaymentMethod === label}
                   onChange={handlePaymentMethodChange}
-                  className="h-8 w-8 border-gray-300 bg-white text-primary-600  dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-primary-600"
+                  className="h-8 w-8 border-gray-300 bg-white text-primary-600 dark:border-gray-600 dark:bg-gray-700 dark:focus:ring-primary-600"
                 />
                 <div className="ml-4 text-sm">
-                  <span className="font-medium text-gray-900">
-                    {label}
-                  </span>
-                  <p className="mt-1 text-xs text-gray-500">
-                    {help}
-                  </p>
+                  <span className="font-medium text-gray-900">{label}</span>
+                  <p className="mt-1 text-xs text-gray-500">{help}</p>
                 </div>
               </div>
             </label>

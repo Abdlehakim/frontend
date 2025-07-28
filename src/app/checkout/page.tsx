@@ -7,7 +7,7 @@ import { CartItem, removeItem, updateItemQuantity } from "@/store/cartSlice";
 import CheckoutNav from "@/components/checkout/CheckoutNav";
 import RecapProduct from "@/components/checkout/RecapProduct";
 import PaymentSummary from "@/components/checkout/PaymentSummary";
-import PaymentMethode, { PaymentMethodId } from "@/components/checkout/PaymentMethode";
+import PaymentMethode from "@/components/checkout/PaymentMethode";
 import DeliveryAddressSelect from "@/components/checkout/DeliveryAddress";
 import DeliveryMethod from "@/components/checkout/DeliveryMethod";
 import OrderSummary from "@/components/checkout/OrderSummary";
@@ -29,11 +29,10 @@ const Checkout: React.FC = () => {
   >("cart");
   const [refOrder, setRefOrder] = useState("");
 
-  /* ----- selections (no localStorage) ----- */
+  /* ----- selections ----- */
   const [selectedAddressId, setSelectedAddressId] = useState<string>("");
-  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<
-    PaymentMethodId | ""
-  >("");
+  const [selectedDeliverToAddress, setSelectedDeliverToAddress] = useState<string>("");
+  const [selectedPaymentMethod, setSelectedPaymentMethod] = useState<string>("");
   const [selectedMethod, setSelectedMethod] = useState<string>("");
   const [deliveryCost, setDeliveryCost] = useState(0);
 
@@ -52,7 +51,7 @@ const Checkout: React.FC = () => {
   useEffect(() => {
     if (currentStep === "checkout" && addressSectionRef.current) {
       addressSectionRef.current.scrollIntoView({
-        behavior: "auto"
+        behavior: "auto",
       });
     }
   }, [currentStep]);
@@ -79,11 +78,13 @@ const Checkout: React.FC = () => {
   const decrementHandler = (it: CartItem) =>
     it.quantity > 1 &&
     dispatch(updateItemQuantity({ _id: it._id, quantity: it.quantity - 1 }));
-  const removeCartHandler = (id: string) =>
-    dispatch(removeItem({ _id: id }));
+  const removeCartHandler = (id: string) => dispatch(removeItem({ _id: id }));
 
   /* ----- address & delivery handlers ----- */
-  const handleAddressChange = (id: string) => setSelectedAddressId(id);
+  const handleAddressChange = (id: string, deliverToAddress: string) => {
+    setSelectedAddressId(id);
+    setSelectedDeliverToAddress(deliverToAddress);
+  };
   const handleMethodChange = (id: string, cost: number) => {
     setSelectedMethod(id);
     setDeliveryCost(cost);
@@ -91,7 +92,7 @@ const Checkout: React.FC = () => {
 
   /* ----- payment change ----- */
   const handlePaymentChange = (e: React.ChangeEvent<HTMLInputElement>) =>
-    setSelectedPaymentMethod(e.target.value as PaymentMethodId);
+    setSelectedPaymentMethod(e.target.value);
 
   const handleOrderSummary = (ref: string) => {
     setRefOrder(ref);
@@ -118,7 +119,7 @@ const Checkout: React.FC = () => {
             deliveryCost={deliveryCost}
             selectedMethod={selectedMethod}
             selectedPaymentMethod={selectedPaymentMethod}
-            addressId={selectedAddressId}
+            address={{ AddressId: selectedAddressId, DeliverToAddress: selectedDeliverToAddress }}
             onCheckout={() => setCurrentStep("checkout")}
             backcarte={() => setCurrentStep("cart")}
             handleOrderSummary={handleOrderSummary}
@@ -128,7 +129,6 @@ const Checkout: React.FC = () => {
 
       {currentStep === "checkout" && (
         <div className="mx-auto w-[80%] flex max-lg:flex-col gap-4">
-          {/* ‣ Attach the ref here */}
           <div
             ref={addressSectionRef}
             className="w-[70%] p-4 flex flex-col gap-8 bg-gray-100 rounded-md max-lg:w-full max-lg:gap-4"
@@ -154,7 +154,7 @@ const Checkout: React.FC = () => {
             deliveryCost={deliveryCost}
             selectedMethod={selectedMethod}
             selectedPaymentMethod={selectedPaymentMethod}
-            addressId={selectedAddressId}
+            address={{ AddressId: selectedAddressId, DeliverToAddress: selectedDeliverToAddress }}
             onCheckout={() => setCurrentStep("checkout")}
             backcarte={() => setCurrentStep("cart")}
             handleOrderSummary={handleOrderSummary}

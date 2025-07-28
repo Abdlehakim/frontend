@@ -9,7 +9,7 @@ export interface CartItem {
   name: string;
   reference: string;
   price: number;
-  tva: number;                                  // ← TVA now mandatory
+  tva: number; 
   mainImageUrl: string;
   discount?: number;
   slug: string;
@@ -45,7 +45,7 @@ const cartSlice = createSlice({
     addItem: (
       state,
       action: PayloadAction<{
-        item: Omit<CartItem, "quantity">; // already contains tva
+        item: Omit<CartItem, "quantity">;
         quantity: number;
       }>
     ) => {

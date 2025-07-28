@@ -7,19 +7,6 @@ import { fetchData } from "@/lib/fetchData";
 import LoadingDots from "@/components/LoadingDots";
 
 /* ---------- types ---------- */
-interface Address {
-  _id: string;
-  Name: string;
-  StreetAddress: string;
-  Country: string;
-  Province?: string;
-  City: string;
-  PostalCode: string;
-  Phone?: string;
-  createdAt?: string;
-  updatedAt?: string;
-}
-
 interface OrderItem {
   _id: Key | null | undefined;
   product: string;
@@ -34,34 +21,17 @@ interface Order {
   _id: string;
   user: string;
   ref: string;
-  address: Address;
+  DeliveryAddress: Array<{ DeliverToAddress: string }>;
   orderItems: OrderItem[];
-  paymentMethod: string;      // holds the *id*
-  deliveryMethod: string;     // holds the *id*
+  paymentMethod: string;
+  deliveryMethod: string;
   deliveryCost: number;
-  total: number;
   orderStatus: string;
 }
 
-/* helpers fetched from APIs */
-interface DeliveryOption {
-  id: string;
-  name: string;
-}
-interface PaymentMethodApi {
-  key: string;
-  label: string;
-}
-
-/* ---------- component ---------- */
 const OrderSummary: React.FC<{ data: string }> = ({ data }) => {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
-
-  /* id ➜ name maps */
-  const [deliveryMap, setDeliveryMap] = useState<Record<string, string>>({});
-  const [paymentMap, setPaymentMap] = useState<Record<string, string>>({});
-
   const router = useRouter();
 
   /* fetch order once */
@@ -81,28 +51,6 @@ const OrderSummary: React.FC<{ data: string }> = ({ data }) => {
     })();
   }, [data]);
 
-  /* fetch method/option labels once */
-  useEffect(() => {
-    (async () => {
-      try {
-        const deliveries = await fetchData<DeliveryOption[]>(
-          "/checkout/delivery-options?limit=100"
-        );
-        setDeliveryMap(
-          Object.fromEntries(deliveries.map((o) => [o.id, o.name]))
-        );
-
-        const payments = await fetchData<PaymentMethodApi[]>(
-          "/checkout/payment-methods"
-        );
-        setPaymentMap(Object.fromEntries(payments.map((m) => [m.key, m.label])));
-      } catch (err) {
-        console.error("Error fetching option / method names:", err);
-      }
-    })();
-  }, []);
-
-  /* loading overlay */
   if (loading) {
     return (
       <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
@@ -113,40 +61,42 @@ const OrderSummary: React.FC<{ data: string }> = ({ data }) => {
 
   if (!order) return <div>Order data not found.</div>;
 
-  /* ---------- helpers ---------- */
+  // Formatter
   const fmt = (n: number) => n.toFixed(2) + " TND";
-  const fullAddress = [
-    order.address.Name,
-    order.address.StreetAddress,
-    [order.address.City, order.address.Province].filter(Boolean).join(", "),
-    `${order.address.PostalCode} - ${order.address.Country}`,
-  ]
-    .filter(Boolean)
-    .join(", ");
 
-  /* ---------- JSX ---------- */
+  // Compute items total
+  const itemsTotal = order.orderItems.reduce((sum, item) => {
+    const ttc = item.discount
+      ? (item.price * (100 - item.discount)) / 100
+      : item.price;
+    return sum + ttc * item.quantity;
+  }, 0);
+
+  // Add deliveryCost
+  const computedTotal = itemsTotal + order.deliveryCost;
+
+  // Delivery address string
+  const deliverAddress = order.DeliveryAddress[0]?.DeliverToAddress || "";
+
   return (
     <div className="w-full flex flex-col items-center">
-      <div className="bg-white shadow-lg rounded-lg p-6 h-fit w-[50%] max-md:w-[90%]">
+      <div className="bg-white shadow-lg rounded-lg p-6 w-[50%] max-md:w-[90%]">
         {/* Header */}
-        <div className="flex items-center justify-center gap-2 mb-6">
+        <div className="flex justify-center mb-6">
           <h2 className="text-3xl max-md:text-lg font-bold text-green-500">
             Merci pour votre commande !
           </h2>
         </div>
 
         {/* Order summary */}
-        <div className="border-t border-gray-300 mt-4 pt-4">
-          <h3 className="text-xl font-semibold mb-2 max-md:text-lg">
-            Résumé de la commande :
-          </h3>
+        <div className="border-t border-gray-300 pt-4">
           <p className="text-gray-700 max-md:text-xs">
             Votre commande <span className="font-bold">#{order.ref}</span> a été
             réussie.
           </p>
           <div className="mt-4">
             <p className="text-base font-bold">
-              Total : <span>{fmt(order.total)}</span>
+              Total : <span>{fmt(computedTotal)}</span>
             </p>
           </div>
 
@@ -154,7 +104,7 @@ const OrderSummary: React.FC<{ data: string }> = ({ data }) => {
           <div className="mt-6">
             <p className="font-semibold text-lg mb-2">Article(s) :</p>
             <div className="flex flex-col divide-y divide-gray-200">
-              {order.orderItems.length ? (
+              {order.orderItems.length > 0 ? (
                 order.orderItems.map((item) => {
                   const unit =
                     item.discount > 0
@@ -198,26 +148,20 @@ const OrderSummary: React.FC<{ data: string }> = ({ data }) => {
           <div className="mt-4 space-y-2 max-md:text-xs border-t border-gray-300 pt-4">
             <p className="font-bold">
               Mode de paiement :{" "}
-              <span className="text-gray-700 font-normal">
-                {paymentMap[order.paymentMethod] ?? order.paymentMethod}
+              <span className="font-normal text-gray-700">
+                {order.paymentMethod}
               </span>
             </p>
-            <p className="text-gray-700 font-bold">
+            <p className="font-bold">
               Méthode de livraison :{" "}
-              <span className="font-normal">
-                {deliveryMap[order.deliveryMethod] ?? order.deliveryMethod}
+              <span className="font-normal text-gray-700">
+                {order.deliveryMethod} ({fmt(order.deliveryCost)})
               </span>
             </p>
             <p className="font-bold">
               Adresse de livraison :{" "}
-              <span className="text-gray-700 font-normal">
-                {fullAddress}
-                {order.address.Phone && (
-                  <>
-                    , <span className="font-semibold">Tél:</span>{" "}
-                    {order.address.Phone}
-                  </>
-                )}
+              <span className="font-normal text-gray-700">
+                {deliverAddress}
               </span>
             </p>
           </div>
@@ -227,13 +171,13 @@ const OrderSummary: React.FC<{ data: string }> = ({ data }) => {
         <div className="flex justify-between gap-2 border-t border-gray-300 mt-4 pt-4">
           <button
             onClick={() => router.push("/")}
-            className="mt-2 w-full rounded-md border border-gray-300 px-2 py-2 text-sm text-black hover:text-white hover:bg-primary"
+            className="mt-2 w-full rounded-md border border-gray-300 px-2 py-2 text-sm hover:bg-primary hover:text-white"
           >
             Accueil
           </button>
           <button
             onClick={() => router.push("/orderhistory")}
-            className="mt-2 w-full rounded-md border border-gray-300 px-2 py-2 text-sm text-black hover:text-white hover:bg-primary max-md:text-xs"
+            className="mt-2 w-full rounded-md border border-gray-300 px-2 py-2 text-sm hover:bg-primary hover:text-white max-md:text-xs"
           >
             Suivre ma commande
           </button>

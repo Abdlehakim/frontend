@@ -34,7 +34,7 @@ export interface Address {
 /* ---------- props ---------- */
 interface Props {
   selectedAddressId: string;
-  onAddressChange(id: string): void;
+  onAddressChange(id: string, DeliverToAddress: string): void;
 }
 
 /** Build a clean, comma‑separated address string (includes phone) */
@@ -89,7 +89,7 @@ export default function DeliveryAddress({
     if (!authLoading && isAuthenticated) fetchAddresses();
   }, [authLoading, isAuthenticated, fetchAddresses]);
 
-  /* ---------- fermer le menu au clic extérieur ---------- */
+  /* ---------- close menu on outside click ---------- */
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
       if (
@@ -104,11 +104,10 @@ export default function DeliveryAddress({
     return () => document.removeEventListener("mousedown", handleClickOutside);
   }, [open]);
 
-  /* ---------- helpers ---------- */
+  /* ---------- selected ---------- */
   const selected =
     addresses.find((a) => a._id === selectedAddressId) ?? null;
 
-  /* ---------- render ---------- */
   return (
     <>
       {error && <p className="text-red-500 py-2">{error}</p>}
@@ -121,7 +120,6 @@ export default function DeliveryAddress({
         {authLoading || loading ? (
           <Skel className="h-12 w-full min-w-0" />
         ) : (
-          /* --- D R O P D O W N   C U S T O M --- */
           <div className="relative w-full" ref={dropdownRef}>
             <button
               type="button"
@@ -155,7 +153,7 @@ export default function DeliveryAddress({
                   <li
                     key={addr._id}
                     onClick={() => {
-                      onAddressChange(addr._id);
+                      onAddressChange(addr._id, formatAddress(addr));
                       setOpen(false);
                     }}
                     className={`cursor-pointer select-none px-4 py-2 hover:bg-primary/10 hover:bg-primary hover:text-white ${
@@ -171,7 +169,7 @@ export default function DeliveryAddress({
             )}
           </div>
         )}
-{/* bouton d’ajout d’adresse */}
+
         <button
           type="button"
           onClick={() => setShowForm(true)}
@@ -181,10 +179,8 @@ export default function DeliveryAddress({
           <AiOutlinePlus className="h-5 w-5" />
           Ajouter une nouvelle adresse
         </button>
-    
       </div>
 
-      {/* modal d’ajout */}
       <AddAddress
         isFormVisible={showForm}
         toggleForminVisibility={() => {

@@ -6,7 +6,6 @@
 import React, { useEffect, useState } from "react";
 import { fetchData } from "@/lib/fetchData";
 
-
 /* ---------- tiny skeleton helper (like in MainProductSection) ---------- */
 const Skel = ({ className = "" }: { className?: string }) => (
   <div className={`animate-pulse bg-gray-200 rounded ${className}`} />
@@ -14,8 +13,8 @@ const Skel = ({ className = "" }: { className?: string }) => (
 
 /* ---------- parent-callback props ---------- */
 interface DeliveryMethodProps {
-  selectedMethod: string;
-  onMethodChange: (methodId: string, cost: number) => void;
+  selectedMethod: string;                       // now holds the method name
+  onMethodChange: (methodName: string, cost: number) => void;
 }
 
 /* ---------- API model ---------- */
@@ -49,23 +48,25 @@ const DeliveryMethod: React.FC<DeliveryMethodProps> = ({
     })();
   }, []);
 
-  /* change-handler */
+  /* change-handler: use option.name instead of id */
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const id = e.target.value;
-    const opt = options.find((o) => o.id === id);
-    if (opt) onMethodChange(id, opt.cost);
+    const name = e.target.value;                     // now the name
+    const opt = options.find((o) => o.name === name);
+    if (opt) onMethodChange(opt.name, opt.cost);
   };
 
   return (
     <div className="flex flex-col gap-4">
-      <h2 className="text-xl font-semibold max-lg:text-sm max-lg:text-center "> Choisissez la méthode de livraison qui vous convient :</h2>
+      <h2 className="text-xl font-semibold max-lg:text-sm max-lg:text-center">
+        Choisissez la méthode de livraison qui vous convient :
+      </h2>
 
       {loading ? (
         <div className="grid grid-cols-3 max-md:grid-cols-1 gap-2">
           {Array.from({ length: 3 }).map((_, i) => (
             <div
               key={i}
-              className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800"
+              className="rounded-lg border border-gray-200 bg-white p-4"
             >
               <div className="flex items-center">
                 <Skel className="h-8 w-8 rounded-full" />
@@ -79,34 +80,34 @@ const DeliveryMethod: React.FC<DeliveryMethodProps> = ({
         </div>
       ) : !options.length ? (
         <p className="text-sm text-gray-500 italic">
-          No delivery methods are currently available.
+          Aucune méthode de livraison disponible pour le moment.
         </p>
       ) : (
         <div className="grid grid-cols-3 max-md:grid-cols-1 gap-2">
           {options.map((opt) => (
             <label
               key={opt.id}
-              htmlFor={opt.id}
-              className="rounded-lg border border-gray-200 bg-white p-4 dark:border-gray-700 dark:bg-gray-800 cursor-pointer"
+              htmlFor={`dm-${opt.id}`}
+              className="rounded-lg border border-gray-200 bg-white p-4"
             >
               <div className="flex items-center">
                 <input
-                  id={opt.id}
+                  id={`dm-${opt.id}`}
                   type="radio"
                   name="delivery-method"
-                  value={opt.id}
-                  checked={selectedMethod === opt.id}
+                  value={opt.name}                             
+                  checked={selectedMethod === opt.name}        
                   onChange={handleChange}
-                  className="h-8 w-8 border-gray-300 bg-white text-primary-600 dark:border-gray-600 dark:bg-gray-700 dark:ring-offset-gray-800 dark:focus:ring-primary-600"
+                  className="h-8 w-8 border-gray-300 bg-white text-primary-600"
                 />
                 <div className="ml-4 text-sm">
                   <p className="font-medium text-gray-900 max-lg:text-xs">
                     {opt.cost === 0
-                      ? `Free shipping – ${opt.name}`
-                      : `${opt.cost} TND – ${opt.name}`}
+                      ? `Gratuit – ${opt.name}`
+                      : `${opt.cost.toFixed(2)} TND – ${opt.name}`}
                   </p>
                   {opt.description && (
-                    <span className="mt-1 block text-xs text-gray-500 dark:text-gray-400">
+                    <span className="mt-1 block text-xs text-gray-500">
                       {opt.description}
                     </span>
                   )}
