@@ -1,19 +1,15 @@
+// src/app/order/[orderRef]/page.tsx
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
+import Image from "next/image";
 import jsPDF from "jspdf";
 import html2canvas from "html2canvas";
-import Image from "next/image";
 import { FiDownload } from "react-icons/fi";
 import { fetchData } from "@/lib/fetchData";
+import InvoiceProforma from "@/components/InvoiceProforma";
 
-/* ---------- skeleton ---------- */
-const Skel = ({ className = "" }: { className?: string }) => (
-  <div className={`animate-pulse bg-gray-200 rounded ${className}`} />
-);
-
-/* ---------- types ---------- */
 interface OrderItem {
   _id: string;
   reference: string;
@@ -27,7 +23,6 @@ interface OrderItem {
 
 interface Order {
   ref: string;
-  // DeliveryAddress array contains formatted address strings
   DeliveryAddress: Array<{ DeliverToAddress: string }>;
   orderItems: OrderItem[];
   paymentMethod: string;
@@ -37,7 +32,16 @@ interface Order {
   createdAt: string;
 }
 
-/* ---------- format date/currency ---------- */
+interface LogoData {
+  name: string;
+  logoImageUrl: string;
+  phone: string;
+  address: string;
+  city: string;
+  governorate: string;
+  zipcode: number;
+}
+
 const frDate = (iso: string) =>
   new Date(iso).toLocaleDateString("fr-FR", {
     day: "2-digit",
@@ -47,23 +51,26 @@ const frDate = (iso: string) =>
 
 const fmt = (n: number) => n.toFixed(2) + " TND";
 
-/* ---------- component ---------- */
 export default function OrderByRef() {
   const router = useRouter();
   const { orderRef } = useParams() as { orderRef: string };
 
   const [order, setOrder] = useState<Order | null>(null);
+  const [company, setCompany] = useState<LogoData | null>(null);
   const [loading, setLoading] = useState(true);
 
-  /* fetch order once */
   useEffect(() => {
     (async () => {
       try {
-        const data = await fetchData<Order>(
-          `/client/order/getOrderByRef/${orderRef}`,
-          { credentials: "include" }
-        );
-        setOrder(data);
+        setLoading(true);
+        const [orderData, headerData] = await Promise.all([
+          fetchData<Order>(`/client/order/getOrderByRef/${orderRef}`, {
+            credentials: "include",
+          }),
+          fetchData<LogoData>("/website/header/getHeaderData"),
+        ]);
+        setOrder(orderData);
+        setCompany(headerData);
       } catch (err) {
         console.error(err);
       } finally {
@@ -72,61 +79,72 @@ export default function OrderByRef() {
     })();
   }, [orderRef]);
 
-  /* download PDF */
-  const telechargerPDF = useCallback(() => {
-    const el = document.getElementById("invoice-card");
+  const telechargerPDF = useCallback(async () => {
+    const el = document.getElementById("invoice-to-download");
     if (!el) return;
-    html2canvas(el).then((canvas) => {
-      const pdf = new jsPDF({ unit: "mm", format: "a4" });
-      const imgW = 210;
-      const imgH = (canvas.height * imgW) / canvas.width;
-      pdf.addImage(canvas.toDataURL("image/png"), "PNG", 0, 0, imgW, imgH);
-      pdf.save(`FACTURE-${order?.ref.replace("ORDER-", "")}.pdf`);
+    await new Promise((r) => setTimeout(r, 500));
+    const canvas = await html2canvas(el, {
+      useCORS: true,
+      allowTaint: false,
+      imageTimeout: 0,
     });
+    const pdf = new jsPDF({ unit: "mm", format: "a4" });
+    const imgW = 210;
+    const imgH = (canvas.height * imgW) / canvas.width;
+    pdf.addImage(canvas.toDataURL("image/png"), "PNG", 0, 0, imgW, imgH);
+    pdf.save(`FACTURE-${order?.ref.replace("ORDER-", "")}.pdf`);
   }, [order]);
 
   if (loading) {
     return (
-      <Skel className="bg-gray-100 border border-gray-200 rounded-xl p-6 h-[632px]" />
+      <div className="w-[90%] md:w-[70%] mx-auto pt-16">
+        <div className="bg-gray-100 border border-gray-200 rounded-xl p-6 h-[632px] animate-pulse" />
+      </div>
     );
   }
 
-  if (!order) return <p className="pt-16 text-center">Aucune commande trouvée.</p>;
+  if (!order) {
+    return (
+      <div className="w-[90%] md:w-[70%] mx-auto pt-16">
+        <p className="text-center">Aucune commande trouvée.</p>
+      </div>
+    );
+  }
 
-  /* compute totals */
   const itemsTotal = order.orderItems.reduce((sum, it) => {
-    const ttc = it.discount
+    const unit = it.discount
       ? (it.price * (100 - it.discount)) / 100
       : it.price;
-    return sum + ttc * it.quantity;
+    return sum + unit * it.quantity;
   }, 0);
   const computedTotal = itemsTotal + order.deliveryCost;
-
-  /* formatted delivery address */
-  const deliverAddress = order.DeliveryAddress[0]?.DeliverToAddress || "—";
+  const deliverAddress =
+    order.DeliveryAddress[0]?.DeliverToAddress || "—";
 
   return (
     <div className="w-[90%] md:w-[70%] mx-auto pt-16">
+      {/* On‑screen invoice */}
       <div
         id="invoice-card"
         className="bg-gray-100 border border-gray-200 rounded-xl p-6 space-y-6 max-md:p-2"
       >
-        {/* header */}
         <div className="md:flex md:divide-x divide-gray-200 text-center md:text-left">
           <div className="flex-1 pb-4 md:pb-0 space-y-1">
-            <p className="text-xs text-gray-400">N° de commande</p>
-            <p className="text-sm font-medium">#{order.ref.replace("ORDER-", "")}</p>
+            <p className="text-xs text-gray-400">N° de commande</p>
+            <p className="text-sm font-medium">
+              #{order.ref.replace("ORDER-", "")}
+            </p>
           </div>
           <div className="flex-1 pb-4 md:pb-0 md:pl-6 space-y-1">
-            <p className="text-xs text-gray-400">Date de commande</p>
+            <p className="text-xs text-gray-400">Date de commande</p>
             <p className="text-sm">{frDate(order.createdAt)}</p>
           </div>
           <div className="flex-1 pb-4 md:pb-0 md:pl-6 space-y-1">
-            <p className="text-xs text-gray-400">Méthode de livraison</p>
+            <p className="text-xs text-gray-400">Méthode de livraison</p>
             <p className="text-sm">{order.deliveryMethod}</p>
           </div>
           <div className="flex-1 pb-4 md:pb-0 md:pl-6 space-y-1">
-            <p className="text-xs text-gray-400">Moyen de paiement</p>
+            <p className="text-xs text-gray-400">Moyen de paiement</p>
             <p className="text-sm">{order.paymentMethod}</p>
           </div>
           <div className="flex-1 md:pl-6 space-y-1">
@@ -137,7 +155,6 @@ export default function OrderByRef() {
 
         <hr className="border-2" />
 
-        {/* items */}
         <div className="relative">
           <span
             aria-hidden
@@ -146,10 +163,9 @@ export default function OrderByRef() {
           <div className="h-[420px] overflow-y-auto px-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-6 sm:gap-x-12">
               {order.orderItems.map((it) => {
-                const unit =
-                  it.discount > 0
-                    ? it.price - (it.price * it.discount) / 100
-                    : it.price;
+                const unit = it.discount
+                  ? (it.price * (100 - it.discount)) / 100
+                  : it.price;
                 const lineTotal = unit * it.quantity;
                 return (
                   <div
@@ -160,8 +176,8 @@ export default function OrderByRef() {
                       <Image
                         src={it.mainImageUrl || "/placeholder.png"}
                         alt={it.name}
-                        className="object-cover"
                         fill
+                        className="object-cover rounded"
                         priority
                         loading="eager"
                         sizes="(max-width: 768px) 100vw,
@@ -193,7 +209,6 @@ export default function OrderByRef() {
 
         <hr className="border-2" />
 
-        {/* total including delivery */}
         <div className="flex justify-between flex-wrap items-center max-md:justify-center">
           <p className="text-gray-500 font-medium">
             Montant total :&nbsp;
@@ -204,23 +219,31 @@ export default function OrderByRef() {
         </div>
       </div>
 
-      {/* actions */}
-      {!loading && order && (
-        <div className="flex justify-between mt-4 gap-4">
-          <button
-            onClick={() => router.back()}
-            className="mt-2 rounded-md border border-gray-300 px-2 py-2 text-sm text-black hover:text-white hover:bg-primary max-md:text-xs max-md:w-full text-center"
-          >
-            Retour
-          </button>
-          <button
-            onClick={telechargerPDF}
-            className="mt-2 rounded-md border border-gray-300 px-2 py-2 text-sm text-black hover:text-white hover:bg-primary max-md:text-xs max-md:w-full text-center flex gap-4 justify-center"
-          >
-            <FiDownload /> Télécharger la facture
-          </button>
+      {/* Hidden invoice for PDF */}
+      {order && company && (
+        <div
+          id="invoice-to-download"
+          style={{ position: "absolute", top: "-9999px", left: "-9999px" }}
+        >
+          <InvoiceProforma order={order} company={company} />
         </div>
       )}
+
+      {/* Actions */}
+      <div className="flex justify-between mt-4 gap-4">
+        <button
+          onClick={() => router.back()}
+          className="mt-2 rounded-md border border-gray-300 px-2 py-2 text-sm text-black hover:text-white hover:bg-primary max-md:text-xs max-md:w-full"
+        >
+          Retour
+        </button>
+        <button
+          onClick={telechargerPDF}
+          className="mt-2 rounded-md border border-gray-300 px-2 py-2 text-sm text-black hover:text-white hover:bg-primary max-md:text-xs max-md:w-full flex items-center justify-center gap-2"
+        >
+          <FiDownload /> Télécharger la facture
+        </button>
+      </div>
     </div>
   );
 }
