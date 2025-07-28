@@ -88,7 +88,7 @@ export default function OrderHistory() {
 
   /* render */
   return (
-    <div className="w-[90%] mx-auto flex flex-col justify-between gap-4 h-[75vh] max-md:h-fit">
+    <div className="w-[90%] mx-auto flex flex-col justify-between gap-4 h-[75vh] max-md:h-fit py-6">
       <div className="w-full max-lg:w-[95%] rounded-lg p-4 flex flex-col gap-6">
         <aside className="space-y-2">
           <h1 className="text-lg font-semibold text-black">
@@ -98,7 +98,6 @@ export default function OrderHistory() {
             Suivez l’état de vos commandes récentes, gérez les retours et téléchargez vos factures.
           </p>
         </aside>
-<div></div>
         {ordersLoading ? (
           <div className="flex flex-col gap-4">
             {Array.from({ length: PAR_PAGE }).map((_, i) => (

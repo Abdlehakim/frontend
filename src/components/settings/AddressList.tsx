@@ -115,7 +115,7 @@ export default function AddressList() {
   const totalPages = Math.ceil(addresses.length / addressesPerPage);
 
   return (
-    <section className="w-[90%] mx-auto flex flex-col lg:flex-row gap-10 py-10">
+    <section className="w-[90%] mx-auto flex flex-col lg:flex-row gap-10 py-6">
       <aside className="lg:w-1/5 space-y-2">
         <h2 className="text-lg font-semibold text-black">Carnet d’adresses</h2>
         <p className="text-sm text-gray-400">
@@ -150,7 +150,7 @@ export default function AddressList() {
               .map((_, idx) => (
                 <div
                   key={idx}
-                  className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm flex max-md:flex-col justify-between gap-2 h-64"
+                  className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm flex max-md:flex-col justify-between gap-2 h-66"
                 >
                   <Skel className="h-full w-full" />
                 </div>
@@ -163,7 +163,7 @@ export default function AddressList() {
             shown.map((addr, i) => (
               <div
                 key={addr._id}
-                className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm flex max-md:flex-col justify-between gap-2 h-64"
+                className="border border-gray-200 rounded-lg p-4 bg-white shadow-sm flex max-md:flex-col justify-between gap-2 h-66"
               >
                 <div className="space-y-1 max-md:text-sm">
                   <p>

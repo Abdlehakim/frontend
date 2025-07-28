@@ -54,7 +54,7 @@ export default function ProfileDetails() {
   };
 
   return (
-    <section className="w-[90%] mx-auto flex flex-col lg:flex-row gap-10 border-b-2 py-10">
+    <section className="w-[90%] mx-auto flex flex-col lg:flex-row gap-10 border-b-2 py-6">
       <aside className="lg:w-1/5 space-y-2">
         <h2 className="text-lg font-semibold text-black">
           Informations personnelles
