@@ -19,7 +19,7 @@ export default async function LogoComponent() {
 
   return (
     
-      <Link href="/" aria-label="Home page" className="relative w-full aspect-[16/15] max-h-[80px] max-2xl:max-h-[60px] max-2xl:max-w-[250px] max-w-[350px] max-md:max-h-[40px] max-md:max-w-[160px]">
+      <Link href="/" aria-label="Home page" className="relative w-full aspect-[16/15] max-h-[64px] max-2xl:max-h-[64px] max-2xl:max-w-[298px] max-w-[298px] max-md:max-h-[32px] max-md:max-w-[149px]">
         <Image
           src={logoImageUrl ?? ""}
           alt={`${name} logo`}
