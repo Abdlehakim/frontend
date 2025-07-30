@@ -1,15 +1,17 @@
 import React from "react";
+import { useCurrency } from "@/contexts/CurrencyContext";
 
-
-// Define the props the component expects
+// ---------- props ----------
 interface TotalProps {
   totalPrice: number;
 }
 
 const Total: React.FC<TotalProps> = ({ totalPrice }) => {
+  const { fmt } = useCurrency(); // currency formatter
+
   return (
     <span className="w-[120px] text-sm max-2xl:text-sm max-md:hidden">
-      {totalPrice.toFixed(2).slice(0, 8)} TND
+      {fmt(totalPrice)}
     </span>
   );
 };

@@ -1,4 +1,6 @@
-// src/components/checkout/CartModal.tsx
+/* ------------------------------------------------------------------
+   src/components/checkout/CartModal.tsx
+------------------------------------------------------------------ */
 "use client";
 
 import React, { useMemo, useCallback, useState, useEffect } from "react";
@@ -8,15 +10,19 @@ import Link from "next/link";
 import { useDispatch } from "react-redux";
 import { removeItem, updateItemQuantity, CartItem } from "@/store/cartSlice";
 import Pagination from "@/components/PaginationClient";
+import { useCurrency } from "@/contexts/CurrencyContext";   // ← NEW
 
+/* ---------- props ---------- */
 interface CartModalProps {
   items: CartItem[];
   onClose: () => void;
 }
 
 const CartModal: React.FC<CartModalProps> = ({ items, onClose }) => {
+  const { fmt } = useCurrency();                           // ← NEW
   const dispatch = useDispatch();
 
+  /* ---------- totals ---------- */
   const totalPrice = useMemo(() => {
     return items.reduce((total, item) => {
       const discount = item.discount ?? 0;
@@ -28,6 +34,7 @@ const CartModal: React.FC<CartModalProps> = ({ items, onClose }) => {
     }, 0);
   }, [items]);
 
+  /* ---------- quantity handlers ---------- */
   const incrementHandler = useCallback(
     (item: CartItem, event: React.MouseEvent) => {
       event.stopPropagation();
@@ -58,7 +65,7 @@ const CartModal: React.FC<CartModalProps> = ({ items, onClose }) => {
     [dispatch]
   );
 
-  // Pagination state
+  /* ---------- pagination ---------- */
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 4;
   const totalPages = useMemo(
@@ -77,15 +84,18 @@ const CartModal: React.FC<CartModalProps> = ({ items, onClose }) => {
     }
   }, [currentPage, totalPages]);
 
+  /* ---------- render ---------- */
   return (
     <div
       className="flex flex-col px-4 w-[400px] max-md:mx-auto max-md:w-[90%] border-[#15335D] border-4 rounded-lg bg-white z-30"
       onClick={(e) => e.stopPropagation()}
     >
+      {/* header */}
       <h1 className="text-lg font-bold text-black border-b-2 text-center py-2 max-md:text-sm">
         Votre panier ({items.length} articles)
       </h1>
 
+      {/* pagination controls */}
       <div className="text-gray-500 border-b-2">
         <Pagination
           currentPage={currentPage}
@@ -94,6 +104,7 @@ const CartModal: React.FC<CartModalProps> = ({ items, onClose }) => {
         />
       </div>
 
+      {/* cart items */}
       <div className="flex flex-col">
         {items.length === 0 ? (
           <p className="text-center text-black">Your cart is empty.</p>
@@ -110,29 +121,35 @@ const CartModal: React.FC<CartModalProps> = ({ items, onClose }) => {
                 key={item._id}
                 className="flex items-center gap-2 justify-between py-2 border-b-2"
               >
-                  <div className="relative h-16 aspect-[16/16]  bg-gray-200">
-                <Image
-                  className="object-cover"
-                  src={item.mainImageUrl  ?? ""}
-                  alt={item.name}
-                  quality={75}
-                  placeholder="empty"
-                  priority
-                  sizes="(max-width: 600px) 100vw, 600px"
-                  fill
-                />  </div>
+                {/* image */}
+                <div className="relative h-16 aspect-square bg-gray-200">
+                  <Image
+                    className="object-cover"
+                    src={item.mainImageUrl ?? ""}
+                    alt={item.name}
+                    quality={75}
+                    placeholder="empty"
+                    priority
+                    sizes="(max-width: 600px) 100vw, 600px"
+                    fill
+                  />
+                </div>
 
+                {/* info */}
                 <div className="text-black flex flex-col gap-2">
                   <p className="text-sm font-bold">{item.name}</p>
                   <p className="text-gray-800 text-xs">
                     Quantity: {item.quantity}
                   </p>
                   <p className="text-gray-800 text-xs">
-                  <span className='max-md:hidden'>Price Unit:</span> TND {unitPrice.toFixed(2)}
+                    <span className="max-md:hidden">Price Unit:</span>{" "}
+                    {fmt(unitPrice)}                         {/* ← NEW */}
                   </p>
                 </div>
 
+                {/* actions */}
                 <div className="flex flex-col gap-2">
+                  {/* quantity buttons */}
                   <div className="flex items-center gap-2">
                     <button
                       className="text-black w-8 h-8 flex items-center justify-center bg-white border-2 border-[#15335E] rounded-lg hover:bg-[#15335E] hover:text-white"
@@ -150,6 +167,8 @@ const CartModal: React.FC<CartModalProps> = ({ items, onClose }) => {
                       +
                     </button>
                   </div>
+
+                  {/* remove button */}
                   <button
                     className="flex items-center gap-2 justify-center border-2 border-[#15335E] rounded text-black hover:bg-[#15335E] hover:text-white"
                     onClick={(e) => removeCartHandler(item._id, e)}
@@ -163,10 +182,11 @@ const CartModal: React.FC<CartModalProps> = ({ items, onClose }) => {
         )}
       </div>
 
+      {/* footer */}
       {items.length > 0 && (
         <>
           <p className="text-black text-lg font-bold text-center my-2">
-            Total: TND {totalPrice.toFixed(2)}
+            Total: {fmt(totalPrice)}                       {/* ← NEW */}
           </p>
 
           <Link href="/checkout">
@@ -174,7 +194,9 @@ const CartModal: React.FC<CartModalProps> = ({ items, onClose }) => {
               aria-label="checkout"
               className="w-fit mx-auto px-6 h-10 rounded-full border-2 border-secondary hover:bg-secondary flex items-center justify-center my-2 hover:text-white text-secondary"
             >
-              <span className="text-xl font-semibold tracking-wide max-md:text-base"> Poursuivre au paiement</span>
+              <span className="text-xl font-semibold tracking-wide max-md:text-base">
+                Poursuivre au paiement
+              </span>
             </button>
           </Link>
 

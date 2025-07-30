@@ -1,4 +1,6 @@
-// src/components/checkout/CartModalOnscroll.tsx
+/* ------------------------------------------------------------------
+   src/components/checkout/CartModalOnscroll.tsx
+------------------------------------------------------------------ */
 "use client";
 
 import React, { useMemo, useCallback, useState, useEffect } from "react";
@@ -8,7 +10,9 @@ import Link from "next/link";
 import { useDispatch } from "react-redux";
 import { removeItem, updateItemQuantity, CartItem } from "@/store/cartSlice";
 import Pagination from "@/components/PaginationClient";
+import { useCurrency } from "@/contexts/CurrencyContext";           // ← NEW
 
+/* ---------- props ---------- */
 interface CartModalOnscrollProps {
   items: CartItem[];
   onClose: () => void;
@@ -34,6 +38,7 @@ const CartModalOnscroll: React.FC<CartModalOnscrollProps> = ({
   items,
   onClose,
 }) => {
+  const { fmt } = useCurrency();                                  // ← NEW
   const dispatch = useDispatch();
 
   /* merge duplicates so UI shows one line */
@@ -48,6 +53,7 @@ const CartModalOnscroll: React.FC<CartModalOnscrollProps> = ({
     }, 0);
   }, [mergedItems]);
 
+  /* ---------- handlers ---------- */
   const incrementHandler = useCallback(
     (item: CartItem, e: React.MouseEvent) => {
       e.stopPropagation();
@@ -78,6 +84,7 @@ const CartModalOnscroll: React.FC<CartModalOnscrollProps> = ({
     [dispatch]
   );
 
+  /* ---------- pagination ---------- */
   const [currentPage, setCurrentPage] = useState(1);
   const itemsPerPage = 4;
   const totalPages = useMemo(
@@ -91,13 +98,12 @@ const CartModalOnscroll: React.FC<CartModalOnscrollProps> = ({
   }, [mergedItems, currentPage]);
 
   useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages);
-    }
+    if (currentPage > totalPages) setCurrentPage(totalPages);
   }, [currentPage, totalPages]);
 
   if (mergedItems.length === 0) return null;
 
+  /* ---------- render ---------- */
   return (
     <div
       className="flex flex-col px-4 w-[400px] max-md:w-[350px] border-[#15335D] border-4 rounded-lg bg-white z-30"
@@ -127,28 +133,33 @@ const CartModalOnscroll: React.FC<CartModalOnscrollProps> = ({
             <div
               key={item._id}
               className="flex items-center justify-between py-2 max-md:mx-[10%] border-b-2"
-            > 
-                <div className="relative h-16 aspect-[16/16]  bg-gray-200">
-                              <Image
-                                className="object-cover"
-                                src={item.mainImageUrl  ?? ""}
-                                alt={item.name}
-                                quality={75}
-                                placeholder="empty"
-                                priority
-                                sizes="(max-width: 600px) 100vw, 600px"
-                                fill
-                              />  </div>
-              
+            >
+              {/* image */}
+              <div className="relative h-16 aspect-square bg-gray-200">
+                <Image
+                  className="object-cover"
+                  src={item.mainImageUrl ?? ""}
+                  alt={item.name}
+                  quality={75}
+                  placeholder="empty"
+                  priority
+                  sizes="(max-width: 600px) 100vw, 600px"
+                  fill
+                />
+              </div>
 
+              {/* info */}
               <div className="text-black flex flex-col gap-[8px]">
                 <p className="text-sm font-bold">{item.name}</p>
-                <p className="text-gray-800 text-xs">Quantity: {item.quantity}</p>
+                <p className="text-gray-800 text-xs">
+                  Quantity: {item.quantity}
+                </p>
                 <p className="text-gray-800 text-xs max-md:hidden">
-                  Price Unit: TND {unitPrice.toFixed(2)}
+                  Price Unit: {fmt(unitPrice)}                 {/* ← NEW */}
                 </p>
               </div>
 
+              {/* controls */}
               <div className="flex flex-col gap-[8px]">
                 <div className="flex items-center gap-[8px] max-md:hidden">
                   <button
@@ -181,7 +192,7 @@ const CartModalOnscroll: React.FC<CartModalOnscrollProps> = ({
       </div>
 
       <p className="text-black text-lg font-bold flex items-center justify-center flex-col gap-[16px] my-2 max-md:text-lg">
-        Total: TND {totalPrice.toFixed(2)}
+        Total: {fmt(totalPrice)}                              {/* ← NEW */}
       </p>
 
       <Link href="/checkout">

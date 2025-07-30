@@ -12,12 +12,14 @@ import { useDispatch, useSelector } from "react-redux";
 import { addItem, type CartItem } from "@/store/cartSlice";
 import {
   addToWishlist,
-  removeFromWishlist,        // ⬅️ NEW
+  removeFromWishlist,
 } from "@/store/wishlistSlice";
 import ReviewClient from "@/components/product/reviews/ReviewClient";
 import { RootState } from "@/store";
 import { Product } from "@/types/Product";
+import { useCurrency } from "@/contexts/CurrencyContext"; 
 
+/* ---------- props & helpers ---------- */
 interface ProductCardProps {
   products: Product[];
 }
@@ -25,22 +27,23 @@ interface ProductCardProps {
 type BtnState = "loading" | "success";
 
 const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
-  const dispatch   = useDispatch();
-  const wishlist   = useSelector((state: RootState) => state.wishlist.items);
-  const isInWishlist = (slug: string) => wishlist.some((w) => w.slug === slug);
+  const { fmt } = useCurrency();                       
+  const dispatch  = useDispatch();
+  const wishlist  = useSelector((s: RootState) => s.wishlist.items);
+  const isInWishlist = (slug: string) =>
+    wishlist.some((w) => w.slug === slug);
 
-  /* 🔥 track button states per product */
-  const [btnStates, setBtnStates] = useState<Record<string, BtnState | undefined>>({});
+  const [btnStates, setBtnStates] = useState<
+    Record<string, BtnState | undefined>
+  >({});
 
   /* -------- wishlist toggle -------- */
   const handleWishlistClick = (product: Product) => {
     if (!product.categorie) return;
 
     if (isInWishlist(product.slug)) {
-      // retire de la wishlist
       dispatch(removeFromWishlist(product.slug));
     } else {
-      // ajoute à la wishlist
       dispatch(
         addToWishlist({
           name: product.name,
@@ -60,10 +63,8 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
   const handleAddToCart = (product: Product, isOutOfStock: boolean) => {
     if (isOutOfStock || btnStates[product._id] === "loading") return;
 
-    /* show loader */
     setBtnStates((p) => ({ ...p, [product._id]: "loading" }));
 
-    /* add to cart immediately */
     const base: Omit<CartItem, "quantity"> = {
       _id: product._id,
       name: product.name,
@@ -88,7 +89,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
     };
     dispatch(addItem({ item: base, quantity: 1 }));
 
-    /* 0.5 s spinner → puis 0.5 s texte succès */
     setTimeout(() => {
       setBtnStates((p) => ({ ...p, [product._id]: "success" }));
       setTimeout(() => {
@@ -101,19 +101,18 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
     }, 1000);
   };
 
+  /* ---------- render ---------- */
   return (
-    <div className="group w-fit max-md:h-fit h-fit grid grid-cols-4 max-2xl:grid-cols-3 max-lg:grid-cols-2 max-sm:grid-cols-1 gap-[40px]">
+    <div className="group w-fit h-fit grid grid-cols-4 max-2xl:grid-cols-3 max-lg:grid-cols-2 max-sm:grid-cols-1 gap-[40px]">
       {products.map((product) => {
-        /** price helpers */
+        /* ----- helpers ----- */
         const discountedPrice = product.discount
           ? product.price - product.price * (product.discount / 100)
           : product.price;
 
-        /** stock helpers */
         const isOutOfStock =
           product.stockStatus === "out of stock" || product.stock === 0;
 
-        /** url helper — use sub-category if present, else category */
         const parentSlug =
           product.subcategorie?.slug ?? product.categorie?.slug ?? "categorie";
         const productUrl = `/${parentSlug}/${product.slug}`;
@@ -122,11 +121,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
         const isLoading = state === "loading";
         const isSuccess = state === "success";
 
-        /* -------- single card -------- */
+        /* ----- card ----- */
         return (
           <div
             key={product._id}
-            className="h-fit w-[280px] flex flex-col gap-[10px] transform duration-200 ease-in-out group-hover:scale-[0.9] hover:!scale-[1.1]  max-md:group-hover:scale-[1] max-md:hover:!scale-[1]"
+            className="h-fit w-[280px] flex flex-col gap-[10px] transform duration-200 ease-in-out group-hover:scale-[0.9] hover:!scale-[1.1] max-md:group-hover:scale-[1] max-md:hover:!scale-[1]"
           >
             {/* image */}
             <Link href={productUrl}>
@@ -161,15 +160,15 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
                     {product.discount ? (
                       <>
                         <p className="text-xl max-md:text-lg font-bold text-primary">
-                          {discountedPrice.toFixed(1)} TND
+                          {fmt(discountedPrice)}
                         </p>
                         <p className="text-lg max-md:text-sm font-bold text-gray-500 line-through">
-                          {product.price.toFixed(1)} TND
+                          {fmt(product.price)}
                         </p>
                       </>
                     ) : (
                       <p className="text-primary text-xl max-md:text-lg font-bold">
-                        {product.price.toFixed(1)} TND
+                        {fmt(product.price)}
                       </p>
                     )}
                   </div>
@@ -208,7 +207,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
                   </p>
                 )}
 
-                {/* cart icon slide‑in (hide while loading/out‑of‑stock/success) */}
+                {/* cart icon slide‑in */}
                 {!isOutOfStock && !isLoading && !isSuccess && (
                   <span className="absolute inset-0 flex items-center justify-center -translate-x-full transition-transform duration-300 lg:group-hover/box:translate-x-[-35%]">
                     <FaCartShopping className="w-6 h-6" />
@@ -234,9 +233,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
                 onClick={() => handleWishlistClick(product)}
                 className={`
                   AddtoCart relative w-[15%] bg-white border max-lg:hidden max-md:rounded-[3px] group/box border-primary
-                  ${isInWishlist(product.slug)
-                    ? " text-red-500 hover:bg-red-500 hover:text-white"
-                    : " text-primary hover:bg-primary hover:text-white"}
+                  ${
+                    isInWishlist(product.slug)
+                      ? " text-red-500 hover:bg-red-500 hover:text-white"
+                      : " text-primary hover:bg-primary hover:text-white"
+                  }
                 `}
               >
                 {isInWishlist(product.slug) ? (
