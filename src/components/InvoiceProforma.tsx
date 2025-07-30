@@ -3,17 +3,18 @@
 
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
+import { useCurrency } from "@/contexts/CurrencyContext";  // ← added
 
 /* ---------- types ---------- */
 interface OrderItem {
   _id: string;
   reference: string;
   name: string;
-  tva: number; // TVA percentage (e.g. 19 for 19 %)
+  tva: number;      // TVA percentage (e.g. 19 for 19 %)
   discount: number; // percentage discount applied on TTC price
   quantity: number;
   mainImageUrl: string;
-  price: number; // **TTC price (already includes TVA)**
+  price: number;    // **TTC price (already includes TVA)**
 }
 
 interface InvoiceProformaProps {
@@ -103,13 +104,13 @@ const frDate = (iso: string) =>
     })
     .replace(/\s/g, "");
 
-const fmt = (n: number) => n.toFixed(2).replace(".", ",") + " TND";
-
 /* ---------- component ---------- */
 export default function InvoiceProforma({
   order,
   company,
 }: InvoiceProformaProps) {
+  const { fmt } = useCurrency();                      // ← added
+
   const billingAndDeliveryAddress =
     order.DeliveryAddress[0]?.DeliverToAddress || "—";
 
@@ -249,11 +250,11 @@ export default function InvoiceProforma({
           <div className="flex justify-between pb-2">
             <span>Frais de livraison</span>
             <span className="text-black">{fmt(order.deliveryCost)}</span>
-            </div>
-            <div className="flex justify-between font-semibold border-t pt-1">
-              <span>Total TTC</span>
-              <span className="text-black">{fmt(totalTTC)}</span>
-            </div>        
+          </div>
+          <div className="flex justify-between font-semibold border-t pt-1">
+            <span>Total TTC</span>
+            <span className="text-black">{fmt(totalTTC)}</span>
+          </div>
         </div>
       </div>
 

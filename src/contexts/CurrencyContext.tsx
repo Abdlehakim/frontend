@@ -1,29 +1,34 @@
 "use client";
 import React from "react";
 
+/* ------------------------------------------------------------------
+   Simple global currency context + helper
+------------------------------------------------------------------ */
 const CurrencyContext = React.createContext<{
-  code: string;        // e.g. "TND", "EUR"
-  fmt(n: number): string;
+  code: string;           
+  fmt(n: number): string;  
 }>({
   code: "TND",
-  fmt: (n) => n.toFixed(1) + " TND",
+  fmt: (n) => n.toFixed(2) + " TND",        
 });
 
+/* ------------------------------------------------------------------
+   Provider – inject the currency code you got from the backend
+------------------------------------------------------------------ */
 export const CurrencyProvider = ({
   initial,
   children,
 }: {
-  initial: string;
+  initial: string;          // currency code from server (ex. "EUR")
   children: React.ReactNode;
 }) => {
-  // small formatter that respects the user’s locale but always uses the
-  // currency code provided by the backend
   const value = React.useMemo(() => {
+    // Always format with *two* fraction digits and the right currency
     const fmt = new Intl.NumberFormat("fr-FR", {
       style: "currency",
       currency: initial,
-      minimumFractionDigits: 1,
-      maximumFractionDigits: 1,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
     }).format;
     return { code: initial, fmt };
   }, [initial]);
@@ -35,4 +40,7 @@ export const CurrencyProvider = ({
   );
 };
 
+/* ------------------------------------------------------------------
+   Hook – grab { code, fmt } anywhere in the component tree
+------------------------------------------------------------------ */
 export const useCurrency = () => React.useContext(CurrencyContext);

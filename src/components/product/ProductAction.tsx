@@ -1,13 +1,14 @@
-/* ------------------------------------------------------------------ */
-/*  ProductAction — button loader + “Produit ajouté” on success       */
-/* ------------------------------------------------------------------ */
+/* ------------------------------------------------------------------
+   ProductAction — bouton loader + “Produit ajouté” on success
+------------------------------------------------------------------ */
 "use client";
 
 import Link from "next/link";
 import Image from "next/image";
 import React, { useMemo, useState } from "react";
 import type { Product } from "@/types/Product";
-import { FaSpinner } from "react-icons/fa6"; // ✅ loader icon
+import { FaSpinner } from "react-icons/fa6";
+import { useCurrency } from "@/contexts/CurrencyContext";     // ← added
 
 /* ---------- tiny skeleton helper ---------- */
 const Skel = ({ className = "" }: { className?: string }) => (
@@ -93,15 +94,17 @@ interface ProductActionProps {
   onImageSelect?: (img?: string) => void;
 }
 
-type BtnState = "loading" | "success"; // ✅ same pattern as ProductCard
+type BtnState = "loading" | "success";
 
 const ProductAction: React.FC<ProductActionProps> = ({
   product,
   addToCartHandler,
   onImageSelect,
 }) => {
+  const { fmt } = useCurrency();                              // ← added
+
   /* ---------- loading flag ---------- */
-  const loading = !product.attributes; // stub has no attributes
+  const loading = !product.attributes;
 
   /* ---------- quantity ---------- */
   const [quantity, setQuantity] = useState(1);
@@ -140,7 +143,7 @@ const ProductAction: React.FC<ProductActionProps> = ({
   const inStock =
     product.stockStatus === "in stock" && (product.stock || 0) > 0;
 
-  /* ---------- NEW: loader/success state for add-to-cart button ---------- */
+  /* ---------- loader/success state ---------- */
   const [btnState, setBtnState] = useState<BtnState | undefined>(undefined);
 
   const onAddToCart = () => {
@@ -148,7 +151,6 @@ const ProductAction: React.FC<ProductActionProps> = ({
     setBtnState("loading");
     addToCartHandler(product, quantity, selected);
 
-    /* 0.5s spinner → 0.5s “Produit ajouté” → back to normal */
     setTimeout(() => {
       setBtnState("success");
       setTimeout(() => setBtnState(undefined), 500);
@@ -247,11 +249,11 @@ const ProductAction: React.FC<ProductActionProps> = ({
       ) : (
         <div className="flex items-center justify-center gap-4 max-lg:flex-col max-lg:gap-2">
           <p className="text-primary text-2xl font-bold">
-            {finalPrice.toFixed(2)} TND
+            {fmt(finalPrice)}                                      
           </p>
           {hasDiscount && (
             <p className="text-gray-500 line-through">
-              {product.price.toFixed(2)} TND
+              {fmt(product.price)}                              
             </p>
           )}
         </div>

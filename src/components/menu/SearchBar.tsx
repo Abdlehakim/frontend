@@ -4,12 +4,12 @@ import Image from "next/image";
 import Link from "next/link";
 import React, { useState, useEffect } from "react";
 import { CiSearch } from "react-icons/ci";
+import { useCurrency } from "@/contexts/CurrencyContext";
 
+/* ---------- types ---------- */
 interface Product {
   _id: string;
-  category: {
-    slug: string;
-  };
+  category: { slug: string };
   slug: string;
   imageUrl: string;
   name: string;
@@ -18,27 +18,29 @@ interface Product {
 }
 
 const SearchBar: React.FC = () => {
+  const { fmt } = useCurrency();
+
   const [searchTerm, setSearchTerm] = useState("");
   const [products, setProducts] = useState<Product[]>([]);
-  const [debouncedSearchTerm, setDebouncedSearchTerm] = useState(searchTerm);
-  useEffect(() => {
-    const handler = setTimeout(() => {
-      setDebouncedSearchTerm(searchTerm);
-    }, 500); // Delay of 500ms
+  const [debouncedSearchTerm, setDebouncedSearchTerm] =
+    useState(searchTerm);
 
-    return () => {
-      clearTimeout(handler);
-    };
+  /* debounce user input */
+  useEffect(() => {
+    const id = setTimeout(
+      () => setDebouncedSearchTerm(searchTerm),
+      500
+    );
+    return () => clearTimeout(id);
   }, [searchTerm]);
 
-  // Call the API whenever the debounced search term changes
+  /* fetch products when the debounced term changes */
   useEffect(() => {
-    if (debouncedSearchTerm.trim() === "") {
+    if (!debouncedSearchTerm.trim()) {
       setProducts([]);
       return;
     }
-
-    const searchProducts = async () => {
+    (async () => {
       try {
         const res = await fetch(
           `/api/searchProduct?searchTerm=${encodeURIComponent(
@@ -47,96 +49,96 @@ const SearchBar: React.FC = () => {
         );
         const data = await res.json();
         setProducts(data.products);
-      } catch (error) {
-        console.error("Error searching for products:", error);
+      } catch (err) {
+        console.error("Error searching for products:", err);
       }
-    };
-
-    searchProducts();
+    })();
   }, [debouncedSearchTerm]);
 
   const handleSearch = async () => {
     if (!searchTerm.trim()) return;
-
     try {
       const res = await fetch(
         `/api/searchProduct?searchTerm=${encodeURIComponent(searchTerm)}`
       );
       const data = await res.json();
-      setProducts(data.products); // Update products state with the search results
-    } catch (error) {
-      console.error("Error searching for products:", error);
+      setProducts(data.products);
+    } catch (err) {
+      console.error("Error searching for products:", err);
     }
   };
-  const handleLinkClick = () => {
-    setSearchTerm(""); // Clear search term
-    setProducts([]); // Clear products to close search results
+
+  const clearSearch = () => {
+    setSearchTerm("");
+    setProducts([]);
   };
+
   return (
     <div className="relative w-[450px] max-2xl:w-[300px] max-xl:w-[250px] max-xl:hidden">
       <input
-            className="w-full h-12 px-4 py-2 rounded-full max-xl:hidden border border-gray-300"
-            type="text"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-            placeholder="Search for products"
-            aria-label="Search for products"
-          />
-          <button
-            className="absolute h-full px-4 group right-0 top-1/2 -translate-y-1/2 rounded-r-full text-[#15335D]"
-            aria-label="Search"
-            onClick={handleSearch}
-          >
-            <CiSearch className="w-8 h-8 transform duration-500 group-hover:w-10 group-hover:h-10" />
-          </button>
+        className="w-full h-12 px-4 py-2 rounded-full border border-gray-300"
+        type="text"
+        value={searchTerm}
+        onChange={(e) => setSearchTerm(e.target.value)}
+        placeholder="Search for products"
+        aria-label="Search for products"
+      />
+      <button
+        className="absolute h-full px-4 group right-0 top-1/2 -translate-y-1/2 rounded-r-full text-[#15335D]"
+        aria-label="Search"
+        onClick={handleSearch}
+      >
+        <CiSearch className="w-8 h-8 transition-transform duration-500 group-hover:w-10 group-hover:h-10" />
+      </button>
 
- {/* Display search results */}
- {products.length > 0 && (
-          <div className="absolute top-14 left-0 w-full bg-white shadow-lg max-h-60 overflow-y-auto z-50">
-          {products.map((product) => (
-       <div
-       key={product._id}
-       className="p-4 border-b"
-     >
-              <Link href={`/${product.category.slug}/${product.slug}`} 
-               onClick={handleLinkClick} // Clear search on link click
-              className="gap-[8px] flex items-center justify-start font-bold text-[25px]">
-                       <Image
+      {/* results */}
+      {products.length > 0 && (
+        <div className="absolute top-14 left-0 w-full bg-white shadow-lg max-h-60 overflow-y-auto z-50">
+          {products.map((product) => {
+            const hasDiscount =
+              typeof product.discount === "number" &&
+              product.discount > 0;
+            const discountedPrice = hasDiscount
+              ? (product.price * (100 - product.discount!)) / 100
+              : product.price; // always a number
+
+            return (
+              <div key={product._id} className="p-4 border-b">
+                <Link
+                  href={`/${product.category.slug}/${product.slug}`}
+                  onClick={clearSearch}
+                  className="flex items-center gap-2 text-[22px]"
+                >
+                  <Image
                     width={50}
                     height={50}
                     src={product.imageUrl}
                     alt={product.name}
                     className="rounded-md"
-                  /> {/* Product Name */}
-                  <span className="ml-4">{product.name}</span>
+                  />
 
-                  {/* Product Price & Discount */}
-                  <span className="ml-auto text-[20px] text-gray-500">
-                    {product.discount ? (
+                  <span className="ml-4 truncate">{product.name}</span>
+
+                  <span className="ml-auto text-[18px] text-gray-500">
+                    {hasDiscount ? (
                       <>
-                        {/* Show discounted price */}
                         <span className="line-through mr-2 text-red-500">
-                          {product.price.toFixed(2)} TND
+                          {fmt(product.price)}
                         </span>
                         <span className="text-green-500">
-                          {(
-                            (product.price * (100 - product.discount)) /
-                            100
-                          ).toFixed(2)} TND
+                          {fmt(discountedPrice)}
                         </span>
                       </>
                     ) : (
-                      // Show regular price if no discount
-                      <span>${product.price.toFixed(2)}</span>
+                      <span>{fmt(product.price)}</span>
                     )}
                   </span>
-             </Link>
-             </div>
-            
-          ))}
+                </Link>
+              </div>
+            );
+          })}
         </div>
       )}
-     
     </div>
   );
 };

@@ -1,19 +1,20 @@
 /* ------------------------------------------------------------------
-   src/app/components/checkout/DeliveryMethod.tsx
+   src/components/checkout/DeliveryMethod.tsx
 ------------------------------------------------------------------ */
 "use client";
 
 import React, { useEffect, useState } from "react";
 import { fetchData } from "@/lib/fetchData";
+import { useCurrency } from "@/contexts/CurrencyContext";          // ← added
 
-/* ---------- tiny skeleton helper (like in MainProductSection) ---------- */
+/* ---------- tiny skeleton helper ---------- */
 const Skel = ({ className = "" }: { className?: string }) => (
   <div className={`animate-pulse bg-gray-200 rounded ${className}`} />
 );
 
-/* ---------- parent-callback props ---------- */
+/* ---------- parent‑callback props ---------- */
 interface DeliveryMethodProps {
-  selectedMethod: string;                       // now holds the method name
+  selectedMethod: string;                       // holds the method name
   onMethodChange: (methodName: string, cost: number) => void;
 }
 
@@ -29,6 +30,7 @@ const DeliveryMethod: React.FC<DeliveryMethodProps> = ({
   selectedMethod,
   onMethodChange,
 }) => {
+  const { fmt } = useCurrency();                // ← added
   const [options, setOptions] = useState<DeliveryOption[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -48,7 +50,7 @@ const DeliveryMethod: React.FC<DeliveryMethodProps> = ({
     })();
   }, []);
 
-  /* change-handler: use option.name instead of id */
+  /* change‑handler: use option.name instead of id */
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const name = e.target.value;                     // now the name
     const opt = options.find((o) => o.name === name);
@@ -95,8 +97,8 @@ const DeliveryMethod: React.FC<DeliveryMethodProps> = ({
                   id={`dm-${opt.id}`}
                   type="radio"
                   name="delivery-method"
-                  value={opt.name}                             
-                  checked={selectedMethod === opt.name}        
+                  value={opt.name}                          // now the name
+                  checked={selectedMethod === opt.name}     // check by name
                   onChange={handleChange}
                   className="h-8 w-8 border-gray-300 bg-white text-primary-600"
                 />
@@ -104,7 +106,7 @@ const DeliveryMethod: React.FC<DeliveryMethodProps> = ({
                   <p className="font-medium text-gray-900 max-lg:text-xs">
                     {opt.cost === 0
                       ? `Gratuit – ${opt.name}`
-                      : `${opt.cost.toFixed(2)} TND – ${opt.name}`}
+                      : `${fmt(opt.cost)} – ${opt.name}`}   {/* ← formatted */}
                   </p>
                   {opt.description && (
                     <span className="mt-1 block text-xs text-gray-500">

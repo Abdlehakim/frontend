@@ -9,7 +9,9 @@ import html2canvas from "html2canvas";
 import { FiDownload } from "react-icons/fi";
 import { fetchData } from "@/lib/fetchData";
 import InvoiceProforma from "@/components/InvoiceProforma";
+import { useCurrency } from "@/contexts/CurrencyContext";   // ← added
 
+/* ---------- types ---------- */
 interface OrderItem {
   _id: string;
   reference: string;
@@ -42,6 +44,7 @@ interface LogoData {
   zipcode: number;
 }
 
+/* ---------- helpers ---------- */
 const frDate = (iso: string) =>
   new Date(iso).toLocaleDateString("fr-FR", {
     day: "2-digit",
@@ -49,16 +52,17 @@ const frDate = (iso: string) =>
     year: "numeric",
   });
 
-const fmt = (n: number) => n.toFixed(2) + " TND";
-
+/* ---------- component ---------- */
 export default function OrderByRef() {
   const router = useRouter();
   const { orderRef } = useParams() as { orderRef: string };
+  const { fmt } = useCurrency();                      // ← added
 
   const [order, setOrder] = useState<Order | null>(null);
   const [company, setCompany] = useState<LogoData | null>(null);
   const [loading, setLoading] = useState(true);
 
+  /* fetch order + header data */
   useEffect(() => {
     (async () => {
       try {
@@ -79,15 +83,12 @@ export default function OrderByRef() {
     })();
   }, [orderRef]);
 
+  /* download PDF */
   const telechargerPDF = useCallback(async () => {
     const el = document.getElementById("invoice-to-download");
     if (!el) return;
     await new Promise((r) => setTimeout(r, 500));
-    const canvas = await html2canvas(el, {
-      useCORS: true,
-      allowTaint: false,
-      imageTimeout: 0,
-    });
+    const canvas = await html2canvas(el, { useCORS: true });
     const pdf = new jsPDF({ unit: "mm", format: "a4" });
     const imgW = 210;
     const imgH = (canvas.height * imgW) / canvas.width;
@@ -95,6 +96,7 @@ export default function OrderByRef() {
     pdf.save(`FACTURE-${order?.ref.replace("ORDER-", "")}.pdf`);
   }, [order]);
 
+  /* ---------- loading / error states ---------- */
   if (loading) {
     return (
       <div className="w-[90%] md:w-[70%] mx-auto pt-16">
@@ -102,7 +104,6 @@ export default function OrderByRef() {
       </div>
     );
   }
-
   if (!order) {
     return (
       <div className="w-[90%] md:w-[70%] mx-auto pt-16">
@@ -111,50 +112,48 @@ export default function OrderByRef() {
     );
   }
 
+  /* ---------- totals & helpers ---------- */
   const itemsTotal = order.orderItems.reduce((sum, it) => {
-    const unit = it.discount
-      ? (it.price * (100 - it.discount)) / 100
-      : it.price;
+    const unit =
+      it.discount > 0
+        ? (it.price * (100 - it.discount)) / 100
+        : it.price;
     return sum + unit * it.quantity;
   }, 0);
   const computedTotal = itemsTotal + order.deliveryCost;
   const deliverAddress =
     order.DeliveryAddress[0]?.DeliverToAddress || "—";
 
+  /* ---------- render ---------- */
   return (
     <div className="w-[90%] md:w-[70%] mx-auto pt-16">
-      {/* On‑screen invoice */}
+      {/* on‑screen invoice */}
       <div
         id="invoice-card"
         className="bg-gray-100 border border-gray-200 rounded-xl p-6 space-y-6 max-md:p-2"
       >
+        {/* meta */}
         <div className="md:flex md:divide-x divide-gray-200 text-center md:text-left">
-          <div className="flex-1 pb-4 md:pb-0 space-y-1">
-            <p className="text-xs text-gray-400">N° de commande</p>
-            <p className="text-sm font-medium">
-              #{order.ref.replace("ORDER-", "")}
-            </p>
-          </div>
-          <div className="flex-1 pb-4 md:pb-0 md:pl-6 space-y-1">
-            <p className="text-xs text-gray-400">Date de commande</p>
-            <p className="text-sm">{frDate(order.createdAt)}</p>
-          </div>
-          <div className="flex-1 pb-4 md:pb-0 md:pl-6 space-y-1">
-            <p className="text-xs text-gray-400">Méthode de livraison</p>
-            <p className="text-sm">{order.deliveryMethod}</p>
-          </div>
-          <div className="flex-1 pb-4 md:pb-0 md:pl-6 space-y-1">
-            <p className="text-xs text-gray-400">Moyen de paiement</p>
-            <p className="text-sm">{order.paymentMethod}</p>
-          </div>
-          <div className="flex-1 md:pl-6 space-y-1">
-            <p className="text-xs text-gray-400">Adresse de livraison</p>
-            <p className="text-sm">{deliverAddress}</p>
-          </div>
+          {([
+            ["N° de commande", `#${order.ref.replace("ORDER-", "")}`],
+            ["Date de commande", frDate(order.createdAt)],
+            ["Méthode de livraison", order.deliveryMethod],
+            ["Moyen de paiement", order.paymentMethod],
+            ["Adresse de livraison", deliverAddress],
+          ] as const).map(([label, value]) => (
+            <div
+              key={label}
+              className="flex-1 pb-4 md:pb-0 md:pl-6 space-y-1"
+            >
+              <p className="text-xs text-gray-400">{label}</p>
+              <p className="text-sm font-medium">{value}</p>
+            </div>
+          ))}
         </div>
 
         <hr className="border-2" />
 
+        {/* items */}
         <div className="relative">
           <span
             aria-hidden
@@ -163,9 +162,10 @@ export default function OrderByRef() {
           <div className="h-[420px] overflow-y-auto px-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-6 sm:gap-x-12">
               {order.orderItems.map((it) => {
-                const unit = it.discount
-                  ? (it.price * (100 - it.discount)) / 100
-                  : it.price;
+                const unit =
+                  it.discount > 0
+                    ? (it.price * (100 - it.discount)) / 100
+                    : it.price;
                 const lineTotal = unit * it.quantity;
                 return (
                   <div
@@ -179,13 +179,8 @@ export default function OrderByRef() {
                         fill
                         className="object-cover rounded"
                         priority
-                        loading="eager"
-                        sizes="(max-width: 768px) 100vw,
-                               (max-width: 1280px) 100vw,
-                               1280px"
+                        sizes="(max-width: 768px) 100vw, 1280px"
                         quality={75}
-                        placeholder="blur"
-                        blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA"
                       />
                     </div>
                     <div className="flex-1 max-md:text-xs">
@@ -209,6 +204,7 @@ export default function OrderByRef() {
 
         <hr className="border-2" />
 
+        {/* total */}
         <div className="flex justify-between flex-wrap items-center max-md:justify-center">
           <p className="text-gray-500 font-medium">
             Montant total :&nbsp;
@@ -219,8 +215,8 @@ export default function OrderByRef() {
         </div>
       </div>
 
-      {/* Hidden invoice for PDF */}
-      {order && company && (
+      {/* hidden invoice for PDF generation */}
+      {company && (
         <div
           id="invoice-to-download"
           style={{ position: "absolute", top: "-9999px", left: "-9999px" }}
@@ -229,7 +225,7 @@ export default function OrderByRef() {
         </div>
       )}
 
-      {/* Actions */}
+      {/* actions */}
       <div className="flex justify-between mt-4 gap-4">
         <button
           onClick={() => router.back()}

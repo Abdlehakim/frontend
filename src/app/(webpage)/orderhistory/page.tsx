@@ -9,6 +9,7 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import Pagination from "@/components/PaginationClient";
 import { fetchData } from "@/lib/fetchData";
+import { useCurrency } from "@/contexts/CurrencyContext";   // ← added
 
 /* ---------- tiny skeleton helper ---------- */
 const Skel = ({ className = "" }: { className?: string }) => (
@@ -36,6 +37,7 @@ interface Order {
 export default function OrderHistory() {
   const router = useRouter();
   const { isAuthenticated, loading } = useAuth();
+  const { fmt } = useCurrency();                       // ← added
 
   /* commandes */
   const [orders, setOrders] = useState<Order[]>([]);
@@ -118,7 +120,7 @@ export default function OrderHistory() {
                   : itm.price;
                 return sum + ttc * itm.quantity;
               }, 0);
-              const displayTotal = (itemsTotal + o.deliveryCost).toFixed(2);
+              const total = itemsTotal + o.deliveryCost;     // ← numeric total
 
               return (
                 <div key={o._id} className="flex flex-col gap-4">
@@ -150,7 +152,7 @@ export default function OrderHistory() {
                     {/* total column */}
                     <div className="flex flex-col gap-1">
                       <span className="text-xs text-gray-500">Total</span>
-                      <span>{displayTotal} TND</span>
+                      <span>{fmt(total)}</span>              {/* ← formatted */}
                     </div>
 
                     {/* action */}
@@ -163,15 +165,15 @@ export default function OrderHistory() {
                   </div>
                 </div>
               );
-            })}        
+            })}
           </>
-        )}        
+        )}
       </div>
       <Pagination
-            currentPage={courante}
-            totalPages={pages}
-            onPageChange={setCourante}
-          />
+        currentPage={courante}
+        totalPages={pages}
+        onPageChange={setCourante}
+      />
     </div>
   );
 }

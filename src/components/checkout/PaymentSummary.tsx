@@ -1,16 +1,15 @@
-/* ------------------------------------------------------------------ */
-/*  src/components/checkout/PaymentSummary.tsx                        */
-/* ------------------------------------------------------------------ */
+/* ------------------------------------------------------------------
+   src/components/checkout/PaymentSummary.tsx
+------------------------------------------------------------------ */
 "use client";
 
-import React,
-  {
-    useEffect,
-    useState,
-    FormEvent,
-    ReactNode,
-    useMemo,
-  } from "react";
+import React, {
+  useEffect,
+  useState,
+  FormEvent,
+  ReactNode,
+  useMemo,
+} from "react";
 import Link from "next/link";
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
@@ -19,6 +18,7 @@ import PaypalButton from "@/components/checkout/PaypalButton";
 import { fetchData } from "@/lib/fetchData";
 import LoadingDots from "@/components/LoadingDots";
 import Notification, { NotificationType } from "@/components/ui/Notification";
+import { useCurrency } from "@/contexts/CurrencyContext";      // ← added
 
 /* ---------- props ---------- */
 interface PaymentSummaryProps {
@@ -59,6 +59,7 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
   handleOrderSummary,
 }) => {
   const dispatch = useDispatch();
+  const { fmt } = useCurrency();                       // ← added
 
   /* loading overlay */
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
@@ -110,7 +111,16 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
   /* post order */
   const postOrder = async () => {
     const lines = items.map(
-      ({ _id, reference, name, quantity, tva, mainImageUrl, discount, price }) => ({
+      ({
+        _id,
+        reference,
+        name,
+        quantity,
+        tva,
+        mainImageUrl,
+        discount,
+        price,
+      }) => ({
         _id,
         reference,
         name,
@@ -124,7 +134,7 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
 
     const payload = {
       DeliveryAddress: [
-        { Address: address.AddressId, DeliverToAddress: address.DeliverToAddress }
+        { Address: address.AddressId, DeliverToAddress: address.DeliverToAddress },
       ],
       paymentMethod: selectedPaymentMethod,
       selectedMethod,
@@ -216,19 +226,19 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
           <ul className="space-y-4 text-gray-800">
             <li className="flex justify-between text-base">
               <span>Remise</span>
-              <span className="font-bold">{totalDiscount.toFixed(2)} TND</span>
+              <span className="font-bold">{fmt(totalDiscount)}</span>
             </li>
             <li className="flex justify-between text-base">
               <span>Livraison</span>
-              <span className="font-bold">{deliveryCost.toFixed(2)} TND</span>
+              <span className="font-bold">{fmt(deliveryCost)}</span>
             </li>
             <li className="flex justify-between text-base">
               <span>TVA</span>
-              <span className="font-bold">{totalTva.toFixed(2)} TND</span>
+              <span className="font-bold">{fmt(totalTva)}</span>
             </li>
             <li className="flex justify-between text-base font-bold">
               <span>Total</span>
-              <span>{totalWithShipping.toFixed(2)} TND</span>
+              <span>{fmt(totalWithShipping)}</span>
             </li>
           </ul>
 
@@ -250,10 +260,20 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
 
               {isPayPal
                 ? isFormValid
-                  ? <PaypalButton amount={totalWithShipping.toFixed(2)} onSuccess={handlePayPalSuccess} />
-                  : <button onClick={handleOrderSubmit} className="mt-2 w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm bg-gray-200 text-gray-400">PayPal</button>
-                : null
-              }
+                  ? (
+                    <PaypalButton
+                      amount={totalWithShipping.toFixed(2)}
+                      onSuccess={handlePayPalSuccess}
+                    />
+                  ) : (
+                    <button
+                      onClick={handleOrderSubmit}
+                      className="mt-2 w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm bg-gray-200 text-gray-400"
+                    >
+                      PayPal
+                    </button>
+                  )
+                : null}
 
               <button
                 onClick={backcarte}

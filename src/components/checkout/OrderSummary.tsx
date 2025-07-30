@@ -5,6 +5,7 @@ import Image from "next/image";
 import { useRouter } from "next/navigation";
 import { fetchData } from "@/lib/fetchData";
 import LoadingDots from "@/components/LoadingDots";
+import { useCurrency } from "@/contexts/CurrencyContext";   // ← added
 
 /* ---------- types ---------- */
 interface OrderItem {
@@ -33,6 +34,7 @@ const OrderSummary: React.FC<{ data: string }> = ({ data }) => {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
   const router = useRouter();
+  const { fmt } = useCurrency();                         // ← added
 
   /* fetch order once */
   useEffect(() => {
@@ -60,9 +62,6 @@ const OrderSummary: React.FC<{ data: string }> = ({ data }) => {
   }
 
   if (!order) return <div>Order data not found.</div>;
-
-  // Formatter
-  const fmt = (n: number) => n.toFixed(2) + " TND";
 
   // Compute items total
   const itemsTotal = order.orderItems.reduce((sum, item) => {
