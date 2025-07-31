@@ -24,7 +24,7 @@ const LoadingDots: React.FC<LoadingDotsProps> = ({
 }) => {
   if (isSuccess && successMessage) {
     return (
-      <div className="w-full h-full bg-white bg-opacity-50 flex justify-center items-center">
+      <div className="w-full h-full bg-white bg-opacity-50 flex justify-center items-center rounded-xl">
         <p className="text-center text-sm text-green-500">
           {successMessage}
         </p>
@@ -33,7 +33,7 @@ const LoadingDots: React.FC<LoadingDotsProps> = ({
   }
 
   return (
-    <div className="w-full h-full bg-white bg-opacity-50 flex flex-col justify-center items-center">  
+    <div className="w-full h-full bg-white bg-opacity-50 flex flex-col justify-center items-center rounded-xl">  
       <div className="flex justify-center items-center space-x-1 z-10 w-full h-14">
         <div className="w-2 h-2 bg-primary rounded-full animate-bounce" />
         <div
