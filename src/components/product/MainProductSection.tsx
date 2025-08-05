@@ -243,7 +243,7 @@ const MainProductSection: React.FC<Props> = ({ initialProduct }) => {
           <div className="flex items-center gap-2 max-lg:text-sm">
             <p className="font-bold">Disponibilité&nbsp;:</p>
             <span>
-              {product.boutique?.name ?? "Disponible en magasin"}
+              {product.magasin?.name ?? "Disponible en magasin"}
             </span>
           </div>
         )}

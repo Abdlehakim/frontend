@@ -35,7 +35,7 @@ export default function ProductSectionSubCategoriePage({ slugSubCategorie }: Pro
 
   /* ----- option lists ----- */
   const [brands,    setBrands]    = useState<OptionItem[]>([]);
-  const [boutiques, setBoutiques] = useState<OptionItem[]>([]);
+  const [magasins, setBoutiques] = useState<OptionItem[]>([]);
 
   /* ----- sentinel ref ----- */
   const loaderRef = useRef<HTMLDivElement | null>(null);
@@ -50,7 +50,7 @@ export default function ProductSectionSubCategoriePage({ slugSubCategorie }: Pro
       qs.set("skip",  skip.toString());
 
       if (selectedBrand)    qs.set("brand",    selectedBrand);
-      if (selectedBoutique) qs.set("boutique", selectedBoutique);
+      if (selectedBoutique) qs.set("magasin", selectedBoutique);
       if (minPrice !== null) qs.set("priceMin", minPrice.toString());
       if (maxPrice !== null) qs.set("priceMax", maxPrice.toString());
       qs.set("sort", sortOrder);
@@ -122,12 +122,12 @@ export default function ProductSectionSubCategoriePage({ slugSubCategorie }: Pro
     let ignore = false;
     (async () => {
       try {
-        const { brands, boutiques } = await fetchData<{ brands: OptionItem[]; boutiques: OptionItem[] }>(
+        const { brands, magasins } = await fetchData<{ brands: OptionItem[]; magasins: OptionItem[] }>(
           `NavMenu/categorieSubCategoriePage/products/${slugSubCategorie}/options`
         );
         if (!ignore) {
           setBrands(brands);
-          setBoutiques(boutiques);
+          setBoutiques(magasins);
         }
       } catch (err) {
         if (!ignore) console.error(err);
@@ -158,7 +158,7 @@ export default function ProductSectionSubCategoriePage({ slugSubCategorie }: Pro
           setMaxPrice={setMaxPrice}
           categories={[]}
           brands={brands}
-          boutiques={boutiques}
+          magasins={magasins}
           sortOrder={sortOrder}
           setSortOrder={setSortOrder}
         />

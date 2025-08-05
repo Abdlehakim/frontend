@@ -46,7 +46,7 @@ export default function ProductSectionCategoriePage({
 
   /* ---------- option lists ---------- */
   const [brands, setBrands] = useState<OptionItem[]>([]);
-  const [boutiques, setBoutiques] = useState<OptionItem[]>([]);
+  const [magasins, setBoutiques] = useState<OptionItem[]>([]);
   const [subcategories, setSubcategories] = useState<OptionItem[]>([]);
 
   /* ---------- refs ---------- */
@@ -62,7 +62,7 @@ export default function ProductSectionCategoriePage({
       qs.set("skip", skip.toString());
 
       if (selectedBrand) qs.set("brand", selectedBrand);
-      if (selectedBoutique) qs.set("boutique", selectedBoutique);
+      if (selectedBoutique) qs.set("magasin", selectedBoutique);
       if (selectedSubCategorie) qs.set("subCat", selectedSubCategorie);
       if (minPrice !== null) qs.set("priceMin", minPrice.toString());
       if (maxPrice !== null) qs.set("priceMax", maxPrice.toString());
@@ -149,9 +149,9 @@ export default function ProductSectionCategoriePage({
     let ignore = false;
     (async () => {
       try {
-        const { brands, boutiques, subcategories } = await fetchData<{
+        const { brands, magasins, subcategories } = await fetchData<{
           brands: OptionItem[];
-          boutiques: OptionItem[];
+          magasins: OptionItem[];
           subcategories: OptionItem[];
         }>(
           `NavMenu/categorieSubCategoriePage/products/${slugCategorie}/options`
@@ -159,7 +159,7 @@ export default function ProductSectionCategoriePage({
 
         if (!ignore) {
           setBrands(brands);
-          setBoutiques(boutiques);
+          setBoutiques(magasins);
           setSubcategories(subcategories);
         }
       } catch (err) {
@@ -188,7 +188,7 @@ export default function ProductSectionCategoriePage({
         maxPrice={maxPrice}
         setMaxPrice={setMaxPrice}
         brands={brands}
-        boutiques={boutiques}
+        magasins={magasins}
         subcategories={subcategories}
         sortOrder={sortOrder}
         setSortOrder={setSortOrder}

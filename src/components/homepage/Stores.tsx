@@ -27,7 +27,7 @@ export default async function Stores() {
   try {
     titles = await fetchData<BoutiqueHomePageTitles>("store/storeHomePageTitles");
   } catch (err) {
-    console.error("Error fetching boutique titles:", err);
+    console.error("Error fetching magasin titles:", err);
   }
 
   let storesData: StoreType[] = [];
@@ -37,7 +37,7 @@ export default async function Stores() {
     console.error("Error fetching store data:", err);
     return (
       <section className="w-[95%] mx-auto py-8">
-        <p className="text-red-500">Échec du chargement des boutiques.</p>
+        <p className="text-red-500">Échec du chargement des magasins.</p>
       </section>
     );
   }
@@ -48,7 +48,7 @@ export default async function Stores() {
     <section className="w-[95%] mx-auto py-8">
       <div className="flex w-full flex-col gap-[8px] items-center mb-4">
         <h3 className="font-bold text-2xl text-HomePageTitles capitalize">
-          {titles.HPboutiqueTitle || "Nos boutiques"}
+          {titles.HPboutiqueTitle || "Nos magasins"}
         </h3>
         {titles.HPboutiqueSubTitle && (
           <p className="test-base max-md:text-sm text-[#525566] text-center">{titles.HPboutiqueSubTitle}</p>

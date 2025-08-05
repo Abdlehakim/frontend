@@ -34,7 +34,7 @@ export default function ProductSectionByCollection() {
   const [categories,    setCategories]    = useState<OptionItem[]>([]);
   const [subcategories, setSubcategories] = useState<OptionItem[]>([]);
   const [brands,        setBrands]        = useState<OptionItem[]>([]);
-  const [boutiques,     setBoutiques]     = useState<OptionItem[]>([]);
+  const [magasins,     setBoutiques]     = useState<OptionItem[]>([]);
 
   /* -------- sentinel -------- */
   const loaderRef = useRef<HTMLDivElement | null>(null);
@@ -49,7 +49,7 @@ export default function ProductSectionByCollection() {
       if (selectedCategorie)    qs.set("categorie", selectedCategorie);
       if (selectedSubCategorie) qs.set("subCat",     selectedSubCategorie);
       if (selectedBrand)        qs.set("brand",      selectedBrand);
-      if (selectedBoutique)     qs.set("boutique",   selectedBoutique);
+      if (selectedBoutique)     qs.set("magasin",   selectedBoutique);
       if (minPrice !== null)    qs.set("priceMin",   minPrice.toString());
       if (maxPrice !== null)    qs.set("priceMax",   maxPrice.toString());
       qs.set("sort", sortOrder);
@@ -122,18 +122,18 @@ export default function ProductSectionByCollection() {
   useEffect(() => {
     (async () => {
       try {
-        const { categories, subcategories, brands, boutiques } =
+        const { categories, subcategories, brands, magasins } =
           await fetchData<{
             categories: OptionItem[];
             subcategories: OptionItem[];
             brands: OptionItem[];
-            boutiques: OptionItem[];
+            magasins: OptionItem[];
           }>("NavMenu/ProductPromotion/products/options");
 
         setCategories(categories);
         setSubcategories(subcategories);
         setBrands(brands);
-        setBoutiques(boutiques);
+        setBoutiques(magasins);
       } catch (err) {
         console.error(err);
       }
@@ -153,7 +153,7 @@ export default function ProductSectionByCollection() {
         categories={categories}
         subcategories={subcategories}
         brands={brands}
-        boutiques={boutiques}
+        magasins={magasins}
         sortOrder={sortOrder} setSortOrder={setSortOrder}
       />
 

@@ -17,7 +17,7 @@ interface SectionData {
 }
 interface OptionsData {
   brands:      { _id: string; name: string }[];
-  boutiques:   { _id: string; name: string }[];
+  magasins:   { _id: string; name: string }[];
   subcategories: { _id: string; name: string }[];
 }
 
@@ -83,7 +83,7 @@ export default async function SectionPage({
   // fetch filter options to see if there are any sub-categories
   const opts = await fetchData<OptionsData>(
     `NavMenu/categorieSubCategoriePage/products/${slugCategorie}/options`
-  ).catch(() => ({ brands: [], boutiques: [], subcategories: [] }));
+  ).catch(() => ({ brands: [], magasins: [], subcategories: [] }));
 
    const hideSubcategorie = opts.subcategories.length <= 1;
 

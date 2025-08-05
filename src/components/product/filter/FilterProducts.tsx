@@ -44,7 +44,7 @@ interface Props {
   /** marque */
   selectedBrand: string | null;
   setSelectedBrand: (id: string | null) => void;
-  /** boutique */
+  /** magasin */
   selectedBoutique: string | null;
   setSelectedBoutique: (id: string | null) => void;
 
@@ -58,7 +58,7 @@ interface Props {
   /** list of sous-catégories */
   subcategories: OptionItem[];
   brands: OptionItem[];
-  boutiques: OptionItem[];
+  magasins: OptionItem[];
 
   sortOrder: "asc" | "desc";
   setSortOrder: (o: "asc" | "desc") => void;
@@ -84,7 +84,7 @@ const ProductsFilter: React.FC<Props> = ({
   categories = [],
   subcategories,
   brands,
-  boutiques,
+  magasins,
   sortOrder,
   setSortOrder,
   hideSubcategorie = false,
@@ -159,12 +159,12 @@ const ProductsFilter: React.FC<Props> = ({
         />
 
         <Select
-          id="boutique"
-          label="Boutique"
+          id="magasin"
+          label="Magasin"
           value={boutiqueDraft}
           onChange={setBoutiqueDraft}
-          options={boutiques}
-          placeholder="Toutes les boutiques"
+          options={magasins}
+          placeholder="Toutes les magasins"
         />
 
         {/* price */}

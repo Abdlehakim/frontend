@@ -13,7 +13,7 @@ export interface ProductDetail {
   description?: string | null;
 }
 
-export interface Boutique {
+export interface Magasin {
   _id: string;
   name: string;
 }
@@ -45,7 +45,7 @@ export interface Product {
 
   categorie?: Categorie | null;
   subcategorie?: SubCategorie | null;       // 👈 unified name
-  boutique?: Boutique | null;
+  magasin?: Magasin | null;
   brand?: Brand | null;
 
   stock: number;

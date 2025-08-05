@@ -8,7 +8,7 @@ const Headerbottonright = () => {
         Blog
       </Link>
       <Link className="hover:text-secondary uppercase" href="/">
-        Voir Notre Boutique
+        Voir Notre Magasin
       </Link>
       <Link className="hover:text-secondary uppercase" href="/contactus">
         CONTACTEZ-NOUS
