@@ -159,10 +159,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
                   <div className="flex flex-col gap-[4px] text-right truncate">
                     {product.discount ? (
                       <>
-                        <p className="text-xl max-md:text-lg font-bold text-primary">
+                        <p className="text-base max-md:text-lg font-bold text-primary">
                           {fmt(discountedPrice)}
                         </p>
-                        <p className="text-lg max-md:text-sm font-bold text-gray-500 line-through">
+                        <p className="text-sm max-md:text-sm font-bold text-gray-500 line-through">
                           {fmt(product.price)}
                         </p>
                       </>
