@@ -62,17 +62,23 @@ export default async function Headertop() {
     <div className="w-full h-[40px] flex bg-primary max-lg:hidden justify-center">
       <div className="flex w-[90%] text-white justify-between max-2xl:text-base text-sm">
         {/* Left: Address, Phone, Email */}
-        <div className="flex gap-[8px] items-center text-sm max-xl:text-xs">
+        <div className="flex gap-[8px] items-center text-sm max-2xl:text-xs">
           <p className="flex gap-[8px] items-center">
-            <span className="font-semibold uppercase tracking-wider">ADRESSE:</span>
+            <span className="font-semibold uppercase tracking-wider">
+              ADRESSE:
+            </span>
             {address}, {zipcode} {city}, {governorate}, Tunisie
           </p>
           <p className="flex gap-[8px] items-center px-4">
-            <span className="font-semibold uppercase tracking-wider">TÉLÉ:</span>
+            <span className="font-semibold uppercase tracking-wider">
+              TÉLÉ:
+            </span>
             +216 {formatPhoneNumber(phone)}
           </p>
           <p className="flex gap-[8px] items-center px-4">
-            <span className="font-semibold uppercase tracking-wider">EMAIL:</span>
+            <span className="font-semibold uppercase tracking-wider">
+              EMAIL:
+            </span>
             {email}
           </p>
         </div>
