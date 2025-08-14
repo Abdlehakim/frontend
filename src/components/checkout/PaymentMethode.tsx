@@ -3,16 +3,18 @@
 ------------------------------------------------------------------ */
 "use client";
 
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState } from "react";
+import { AiOutlineDown, AiOutlineUp } from "react-icons/ai";
 import { fetchData } from "@/lib/fetchData";
 
-/* ---------- tiny skeleton helper (like in MainProductSection) ---------- */
+/* ---------- tiny skeleton helper ---------- */
 const Skel = ({ className = "" }: { className?: string }) => (
   <div className={`animate-pulse bg-gray-200 rounded ${className}`} />
 );
 
 interface PaymentMethod {
-  _id: string;
+  _id?: string;   // might not be present depending on API
+  name?: string;  // enum key (stable/unique) — preferred as key
   label: string;
   help: string;
 }
@@ -29,80 +31,142 @@ const PaymentMethode: React.FC<PaymentMethodeProps> = ({
   const [methods, setMethods] = useState<PaymentMethod[]>([]);
   const [loading, setLoading] = useState(true);
 
+  // dropdown state
+  const [open, setOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
+
   /* fetch enabled methods once */
   useEffect(() => {
     (async () => {
       try {
-        const active = await fetchData<PaymentMethod[]>(
-          "/checkout/payment-methods"
-        );
-        setMethods(active);
+        const active = await fetchData<PaymentMethod[]>("/checkout/payment-methods");
+        setMethods(active || []);
       } catch (err) {
         console.error("Fetch payment methods failed:", err);
+        setMethods([]);
       } finally {
         setLoading(false);
       }
     })();
   }, []);
 
+  // close on outside click / escape
+  useEffect(() => {
+    const onClick = (e: MouseEvent) => {
+      if (!dropdownRef.current) return;
+      if (!dropdownRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onClick);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, []);
+
+  const selected = methods.find((m) => m.label === selectedPaymentMethod) || null;
+
+  const buttonText = selected
+    ? selected.label
+    : loading
+    ? "Chargement des moyens de paiement…"
+    : methods.length
+    ? "-- Choisir un moyen de paiement --"
+    : "Aucun moyen de paiement disponible";
+
+  // keep parent API (expects ChangeEvent<HTMLInputElement>)
+  const emitChange = (value: string) => {
+    const fakeEvt = {
+      target: { value, name: "payment-method" } as unknown as HTMLInputElement,
+    } as React.ChangeEvent<HTMLInputElement>;
+    handlePaymentMethodChange(fakeEvt);
+  };
+
   return (
     <div className="space-y-4">
-      {/* heading always visible */}
-      <h3 className="text-xl font-semibold max-lg:text-sm max-lg:text-center">
-        Choisissez le moyen de paiement qui vous convient :
+      {/* heading (unchanged text) */}
+      <h3 className="font-semibold">
+        Choisissez le moyen de paiement qui vous convient :
       </h3>
 
-      {loading ? (
-        /* skeleton grid for loading */
-        <div className="grid grid-cols-3 gap-2 max-md:grid-cols-1">
-          {Array.from({ length: 3 }).map((_, i) => (
-            <div
-              key={i}
-              className="rounded-lg border border-gray-200 bg-white p-4"
+      {/* Select-like dropdown */}
+      <div className="flex flex-col">
+        <div className="relative w-full" ref={dropdownRef}>
+          <button
+            type="button"
+            onClick={() => !loading && methods.length && setOpen((p) => !p)}
+            className="flex h-12 w-full items-center justify-between rounded-md
+                        bg-white px-4 text-sm shadow-sm focus:outline-none
+                       focus:ring-2 focus:ring-primary/50 max-lg:text-xs disabled:opacity-50"
+            disabled={loading || !methods.length}
+            aria-haspopup="listbox"
+            aria-expanded={open}
+          >
+            <span
+              className={
+                selected ? "block w-full truncate" : "text-gray-400 block w-full truncate"
+              }
             >
-              <div className="flex items-center">
-                <Skel className="h-8 w-8 rounded-full" />
-                <div className="ml-4 space-y-2">
-                  <Skel className="h-4 w-3/4" />
-                  <Skel className="h-3 w-1/2" />
-                </div>
-              </div>
-            </div>
-          ))}
-        </div>
-      ) : methods.length === 0 ? (
-        /* no methods available */
-        <p className="italic text-sm text-gray-500">
-          Aucun moyen de paiement disponible pour le moment.
-        </p>
-      ) : (
-        /* real methods grid */
-        <div className="grid grid-cols-3 gap-2 max-md:grid-cols-1">
-          {methods.map(({ _id, label, help }) => (
-            <label
-              key={label}          // changed from _id → label
-              htmlFor={_id}
-              className="cursor-pointer rounded-lg border border-gray-200 bg-white p-4 max-lg:text-sm"
+              {buttonText}
+            </span>
+            {open ? (
+              <AiOutlineUp className="h-4 w-4 shrink-0 text-gray-500" />
+            ) : (
+              <AiOutlineDown className="h-4 w-4 shrink-0 text-gray-500" />
+            )}
+          </button>
+
+          {open && (
+            <ul
+              role="listbox"
+              className="absolute left-0 right-0 z-20 mt-1 max-h-60 overflow-auto rounded-md
+                         bg-white py-1 text-sm shadow-lg ring-1 ring-black/5"
             >
-              <div className="flex items-center">
-                <input
-                  id={_id}
-                  type="radio"
-                  name="payment-method"
-                  value={label}
-                  checked={selectedPaymentMethod === label}
-                  onChange={handlePaymentMethodChange}
-                  className="h-8 w-8 border-gray-300 bg-white text-primary-600 dark:border-gray-600 dark:bg-gray-700 dark:focus:ring-primary-600"
-                />
-                <div className="ml-4 text-sm">
-                  <span className="font-medium text-gray-900">{label}</span>
-                  <p className="mt-1 text-xs text-gray-500">{help}</p>
-                </div>
-              </div>
-            </label>
-          ))}
+              {loading ? (
+                <>
+                  <li className="px-4 py-2">
+                    <Skel className="h-4 w-2/3" />
+                    <Skel className="mt-1 h-3 w-1/2" />
+                  </li>
+                  <li className="px-4 py-2">
+                    <Skel className="h-4 w-1/2" />
+                    <Skel className="mt-1 h-3 w-1/3" />
+                  </li>
+                </>
+              ) : (
+                methods.map((m) => {
+                  const isSelected = m.label === selectedPaymentMethod;
+                  const key = m.name ?? m._id ?? m.label; // stable unique key
+                  return (
+                    <li
+                      key={key}
+                      role="option"
+                      aria-selected={isSelected}
+                      onClick={() => {
+                        emitChange(m.label);
+                        setOpen(false);
+                      }}
+                      className={`cursor-pointer select-none px-4 py-2 transition-colors ${
+                        isSelected
+                          ? "bg-secondary text-white"
+                          : "hover:bg-secondary hover:text-white"
+                      }`}
+                    >
+                      <div className="truncate font-medium">{m.label}</div>
+                      {m.help && (
+                        <p className="text-xs text-gray-500">{m.help}</p>
+                      )}
+                    </li>
+                  );
+                })
+              )}
+            </ul>
+          )}
         </div>
-      )}
+      </div>
     </div>
   );
 };

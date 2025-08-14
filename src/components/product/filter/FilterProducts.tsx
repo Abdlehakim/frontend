@@ -45,8 +45,8 @@ interface Props {
   selectedBrand: string | null;
   setSelectedBrand: (id: string | null) => void;
   /** magasin */
-  selectedBoutique: string | null;
-  setSelectedBoutique: (id: string | null) => void;
+  selectedMagasin: string | null;
+  setSelectedMagasin: (id: string | null) => void;
 
   minPrice: number | null;
   setMinPrice: (v: number | null) => void;
@@ -75,8 +75,8 @@ const ProductsFilter: React.FC<Props> = ({
   setSelectedSubCategorie,
   selectedBrand,
   setSelectedBrand,
-  selectedBoutique,
-  setSelectedBoutique,
+  selectedMagasin,
+  setSelectedMagasin,
   minPrice,
   setMinPrice,
   maxPrice,
@@ -94,7 +94,7 @@ const ProductsFilter: React.FC<Props> = ({
   const [categDraft, setCategDraft] = useState<string | null>(selectedCategorie);
   const [subDraft, setSubDraft] = useState<string | null>(selectedSubCategorie);
   const [brandDraft, setBrandDraft] = useState<string | null>(selectedBrand);
-  const [boutiqueDraft, setBoutiqueDraft] = useState<string | null>(selectedBoutique);
+  const [magasinDraft, setMagasinDraft] = useState<string | null>(selectedMagasin);
   const [minDraft, setMinDraft] = useState<number | null>(minPrice);
   const [maxDraft, setMaxDraft] = useState<number | null>(maxPrice);
   const [sortDraft, setSortDraft] = useState<"asc" | "desc">(sortOrder);
@@ -103,7 +103,7 @@ const ProductsFilter: React.FC<Props> = ({
   useEffect(() => setCategDraft(selectedCategorie), [selectedCategorie]);
   useEffect(() => setSubDraft(selectedSubCategorie), [selectedSubCategorie]);
   useEffect(() => setBrandDraft(selectedBrand), [selectedBrand]);
-  useEffect(() => setBoutiqueDraft(selectedBoutique), [selectedBoutique]);
+  useEffect(() => setMagasinDraft(selectedMagasin), [selectedMagasin]);
   useEffect(() => setMinDraft(minPrice), [minPrice]);
   useEffect(() => setMaxDraft(maxPrice), [maxPrice]);
   useEffect(() => setSortDraft(sortOrder), [sortOrder]);
@@ -116,7 +116,7 @@ const ProductsFilter: React.FC<Props> = ({
     setSelectedCategorie?.(categDraft);
     setSelectedSubCategorie(subDraft);
     setSelectedBrand(brandDraft);
-    setSelectedBoutique(boutiqueDraft);
+    setSelectedMagasin(magasinDraft);
     setMinPrice(minDraft);
     setMaxPrice(maxDraft);
     setSortOrder(sortDraft);
@@ -161,8 +161,8 @@ const ProductsFilter: React.FC<Props> = ({
         <Select
           id="magasin"
           label="Magasin"
-          value={boutiqueDraft}
-          onChange={setBoutiqueDraft}
+          value={magasinDraft}
+          onChange={setMagasinDraft}
           options={magasins}
           placeholder="Toutes les magasins"
         />

@@ -1,3 +1,4 @@
+// src/app/.../Checkout.tsx  (use your actual file path)
 "use client";
 
 import React, { useState, useEffect, useRef } from "react";
@@ -11,9 +12,30 @@ import PaymentMethode from "@/components/checkout/PaymentMethode";
 import DeliveryAddressSelect from "@/components/checkout/DeliveryAddress";
 import DeliveryMethod from "@/components/checkout/DeliveryMethod";
 import OrderSummary from "@/components/checkout/OrderSummary";
+// CHANGED: use Magasins (no named type import)
+import Magasins from "@/components/checkout/MagasinSelected";
 
 import { useAuth } from "@/hooks/useAuth";
 import { useRouter, useSearchParams } from "next/navigation";
+import { fetchData } from "@/lib/fetchData";
+
+/* ---- API shapes we need locally ---- */
+interface PaymentMethodAPI {
+  _id?: string;
+  name?: string;
+  label: string;
+  help?: string;
+  payOnline?: boolean;
+  requireAddress?: boolean;
+}
+
+interface DeliveryOptionAPI {
+  id: string;
+  name: string;            // used as selectedMethod
+  description?: string;
+  cost: number;
+  isPickup?: boolean;      // tells if pickup (in-store) method
+}
 
 const Checkout: React.FC = () => {
   const items = useSelector((s: RootState) => s.cart.items);
@@ -24,9 +46,7 @@ const Checkout: React.FC = () => {
   const searchParams = useSearchParams();
 
   /* ----- step navigation ----- */
-  const [currentStep, setCurrentStep] = useState<
-    "cart" | "checkout" | "order-summary"
-  >("cart");
+  const [currentStep, setCurrentStep] = useState<"cart" | "checkout" | "order-summary">("cart");
   const [refOrder, setRefOrder] = useState("");
 
   /* ----- selections ----- */
@@ -36,7 +56,14 @@ const Checkout: React.FC = () => {
   const [selectedMethod, setSelectedMethod] = useState<string>("");
   const [deliveryCost, setDeliveryCost] = useState(0);
 
-  /* ‣ NEW: ref to scroll to */
+  // PICKUP: only keep the selected magasin ID (removed unused selectedMagasin)
+  const [selectedMagasinId, setSelectedMagasinId] = useState<string | null>(null);
+
+  /* ---- lookups for metadata (to drive conditional flow) ---- */
+  const [paymentMethods, setPaymentMethods] = useState<PaymentMethodAPI[]>([]);
+  const [deliveryOptions, setDeliveryOptions] = useState<DeliveryOptionAPI[]>([]);
+
+  /* ‣ scroll target */
   const addressSectionRef = useRef<HTMLDivElement>(null);
 
   /* ----- redirect if not logged in ----- */
@@ -47,20 +74,34 @@ const Checkout: React.FC = () => {
     }
   }, [loading, isAuthenticated, router, searchParams]);
 
-  /* ‣ NEW: scroll into view when entering checkout step */
+  /* ----- fetch metadata needed for conditional rendering ----- */
+  useEffect(() => {
+    (async () => {
+      try {
+        const pm = await fetchData<PaymentMethodAPI[]>("/checkout/payment-methods");
+        setPaymentMethods(pm || []);
+      } catch {
+        setPaymentMethods([]);
+      }
+      try {
+        const opts = await fetchData<DeliveryOptionAPI[]>("/checkout/delivery-options");
+        setDeliveryOptions((opts || []).sort((a, b) => a.cost - b.cost));
+      } catch {
+        setDeliveryOptions([]);
+      }
+    })();
+  }, []);
+
+  /* ‣ scroll into view when entering checkout step */
   useEffect(() => {
     if (currentStep === "checkout" && addressSectionRef.current) {
-      addressSectionRef.current.scrollIntoView({
-        behavior: "auto",
-      });
+      addressSectionRef.current.scrollIntoView({ behavior: "auto" });
     }
   }, [currentStep]);
 
   /* ----- totals ----- */
   const totalPrice = items.reduce((sum, item) => {
-    const ttc = item.discount
-      ? (item.price * (100 - item.discount)) / 100
-      : item.price;
+    const ttc = item.discount ? (item.price * (100 - item.discount)) / 100 : item.price;
     return sum + ttc * item.quantity;
   }, 0);
 
@@ -91,13 +132,42 @@ const Checkout: React.FC = () => {
   };
 
   /* ----- payment change ----- */
-  const handlePaymentChange = (e: React.ChangeEvent<HTMLInputElement>) =>
+  const handlePaymentChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setSelectedPaymentMethod(e.target.value);
+    // reset dependent selections when payment method changes
+    setSelectedMethod("");
+    setDeliveryCost(0);
+    setSelectedAddressId("");
+    setSelectedDeliverToAddress("");
+    setSelectedMagasinId(null);
+  };
 
   const handleOrderSummary = (ref: string) => {
     setRefOrder(ref);
     setCurrentStep("order-summary");
   };
+
+  /* ----- derived for conditional UI ----- */
+  const selectedPaymentMeta =
+    paymentMethods.find((m) => m.label === selectedPaymentMethod) || null;
+
+  // Determine which delivery options to show based on rules:
+  // - payOnline && requireAddress  => show "all"
+  // - else if requireAddress       => show "deliveryOnly"   (isPickup:false)
+  // - else                         => show "pickupOnly"     (isPickup:true)
+  const deliveryFilter: "all" | "deliveryOnly" | "pickupOnly" | null = selectedPaymentMeta
+    ? selectedPaymentMeta.payOnline && selectedPaymentMeta.requireAddress
+      ? "all"
+      : selectedPaymentMeta.requireAddress
+      ? "deliveryOnly"
+      : "pickupOnly"
+    : null;
+
+  // Find selected delivery meta to decide address vs magasin
+  const selectedDeliveryMeta =
+    deliveryOptions.find((o) => o.name === selectedMethod) || null;
+
+  const selectedIsPickup = !!selectedDeliveryMeta?.isPickup;
 
   return (
     <div className="my-8 flex flex-col gap-4">
@@ -133,19 +203,39 @@ const Checkout: React.FC = () => {
             ref={addressSectionRef}
             className="w-[70%] p-4 flex flex-col gap-8 bg-gray-100 rounded-md max-lg:w-full max-lg:gap-4"
           >
-            <DeliveryAddressSelect
-              selectedAddressId={selectedAddressId}
-              onAddressChange={handleAddressChange}
-            />
-            <DeliveryMethod
-              selectedMethod={selectedMethod}
-              onMethodChange={handleMethodChange}
-            />
+            {/* 1) Always start with Payment method selection */}
             <PaymentMethode
               selectedPaymentMethod={selectedPaymentMethod}
               handlePaymentMethodChange={handlePaymentChange}
             />
+
+            {/* 2) Show DeliveryMethod as soon as a payment method is selected, with filtering */}
+            {selectedPaymentMeta && deliveryFilter && (
+              <DeliveryMethod
+                filter={deliveryFilter}
+                selectedMethod={selectedMethod}
+                onMethodChange={handleMethodChange}
+              />
+            )}
+
+            {/* 3) If a delivery method is selected, choose between Address vs Magasin */}
+            {selectedPaymentMeta && selectedMethod && (
+              selectedIsPickup ? (
+                <Magasins
+                  value={selectedMagasinId}
+                  onChange={(id) => {
+                    setSelectedMagasinId(id);
+                  }}
+                />
+              ) : (
+                <DeliveryAddressSelect
+                  selectedAddressId={selectedAddressId}
+                  onAddressChange={handleAddressChange}
+                />
+              )
+            )}
           </div>
+
           <PaymentSummary
             currentStep="checkout"
             items={items}

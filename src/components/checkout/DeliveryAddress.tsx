@@ -1,14 +1,9 @@
-/* ------------------------------------------------------------------ */
-/*  src/components/checkout/DeliveryAddress.tsx                       */
-/* ------------------------------------------------------------------ */
+/* ------------------------------------------------------------------
+   src/components/checkout/DeliveryAddress.tsx
+------------------------------------------------------------------ */
 "use client";
 
-import React, {
-  useState,
-  useCallback,
-  useEffect,
-  useRef,
-} from "react";
+import React, { useState, useCallback, useEffect, useRef } from "react";
 import { AiOutlinePlus, AiOutlineDown, AiOutlineUp } from "react-icons/ai";
 import { useAuth } from "@/hooks/useAuth";
 import { fetchData } from "@/lib/fetchData";
@@ -37,7 +32,7 @@ interface Props {
   onAddressChange(id: string, DeliverToAddress: string): void;
 }
 
-/** Build a clean, comma‑separated address string (includes phone) */
+/** Build a clean, comma-separated address string (includes phone) */
 const formatAddress = (a: Address) =>
   [
     a.Name,
@@ -60,19 +55,20 @@ export default function DeliveryAddress({
   const [error, setError] = useState("");
 
   const [showForm, setShowForm] = useState(false);
+
+  // dropdown state (aligned with other components)
   const [open, setOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement | null>(null);
 
   const { isAuthenticated, loading: authLoading } = useAuth();
-  const dropdownRef = useRef<HTMLDivElement | null>(null);
 
   /* ---------- fetch addresses ---------- */
   const fetchAddresses = useCallback(async () => {
     try {
       setLoading(true);
-      const data = await fetchData<Address[]>(
-        "/client/address/getAddress",
-        { credentials: "include" }
-      );
+      const data = await fetchData<Address[]>("/client/address/getAddress", {
+        credentials: "include",
+      });
       setAddresses(data);
     } catch (err) {
       setError(
@@ -89,82 +85,105 @@ export default function DeliveryAddress({
     if (!authLoading && isAuthenticated) fetchAddresses();
   }, [authLoading, isAuthenticated, fetchAddresses]);
 
-  /* ---------- close menu on outside click ---------- */
+  /* ---------- close on outside click / escape (like others) ---------- */
   useEffect(() => {
-    function handleClickOutside(e: MouseEvent) {
-      if (
-        open &&
-        dropdownRef.current &&
-        !dropdownRef.current.contains(e.target as Node)
-      ) {
-        setOpen(false);
-      }
-    }
-    document.addEventListener("mousedown", handleClickOutside);
-    return () => document.removeEventListener("mousedown", handleClickOutside);
-  }, [open]);
+    const onClick = (e: MouseEvent) => {
+      if (!dropdownRef.current) return;
+      if (!dropdownRef.current.contains(e.target as Node)) setOpen(false);
+    };
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onClick);
+    document.addEventListener("keydown", onKey);
+    return () => {
+      document.removeEventListener("mousedown", onClick);
+      document.removeEventListener("keydown", onKey);
+    };
+  }, []);
 
   /* ---------- selected ---------- */
   const selected =
     addresses.find((a) => a._id === selectedAddressId) ?? null;
+
+  const buttonText = selected
+    ? formatAddress(selected)
+    : authLoading || loading
+    ? "Chargement des adresses…"
+    : addresses.length
+    ? "-- Choisir une adresse --"
+    : "Aucune adresse enregistrée";
 
   return (
     <>
       {error && <p className="text-red-500 py-2">{error}</p>}
 
       <div className="flex flex-col items-end gap-4">
-        <h3 className="text-xl font-semibold max-lg:text-sm max-lg:text-center w-full">
-          Sélectionnez votre adresse ou ajoutez‑en une nouvelle&nbsp;:
+        <h3 className="font-semibold w-full">
+          Sélectionnez votre adresse ou ajoutez-en une nouvelle&nbsp;:
         </h3>
-    
+
         {authLoading || loading ? (
           <Skel className="h-12 w-full min-w-0" />
         ) : (
           <div className="relative w-full" ref={dropdownRef}>
             <button
               type="button"
-              onClick={() => setOpen((prev) => !prev)}
-              className="w-full h-12 flex items-center justify-between rounded-md border border-gray-300 bg-white px-4 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/50 max-lg:text-xs"
+              onClick={() => !loading && addresses.length && setOpen((p) => !p)}
+              className="flex h-12 w-full items-center justify-between rounded-md border
+                         border-gray-300 bg-white px-4 text-sm shadow-sm focus:outline-none
+                         focus:ring-2 focus:ring-primary/50 max-lg:text-xs disabled:opacity-50"
+              disabled={loading || !addresses.length}
+              aria-haspopup="listbox"
+              aria-expanded={open}
             >
-              <span className={selected ? "block w-full truncate" : "text-gray-400 block w-full truncate"}>
-                {selected
-                  ? formatAddress(selected)
-                  : "-- Choisir une adresse --"}
+              <span
+                className={
+                  selected ? "block w-full truncate" : "text-gray-400 block w-full truncate"
+                }
+              >
+                {buttonText}
               </span>
               {open ? (
-                <AiOutlineUp className="h-4 w-4 text-gray-500 shrink-0" />
+                <AiOutlineUp className="h-4 w-4 shrink-0 text-gray-500" />
               ) : (
-                <AiOutlineDown className="h-4 w-4 text-gray-500 shrink-0" />
+                <AiOutlineDown className="h-4 w-4 shrink-0 text-gray-500" />
               )}
             </button>
 
             {open && (
               <ul
-                className="absolute left-0 right-0 z-20 mt-1 max-h-60 overflow-auto rounded-md bg-white py-1 text-sm
-                           shadow-lg ring-1 ring-black/5 divide-y-2"
+                role="listbox"
+                className="absolute left-0 right-0 z-20 mt-1 max-h-60 overflow-auto rounded-md
+                           bg-white py-1 text-sm shadow-lg ring-1 ring-black/5"
               >
+                {addresses.map((addr) => {
+                  const isSelected = addr._id === selectedAddressId;
+                  return (
+                    <li
+                      key={addr._id}
+                      role="option"
+                      aria-selected={isSelected}
+                      onClick={() => {
+                        onAddressChange(addr._id, formatAddress(addr));
+                        setOpen(false);
+                      }}
+                      className={`cursor-pointer select-none px-4 py-2 transition-colors ${
+                        isSelected
+                          ? "bg-secondary text-white"
+                          : "hover:bg-secondary hover:text-white"
+                      }`}
+                    >
+                      <div className="truncate">{formatAddress(addr)}</div>
+                    </li>
+                  );
+                })}
+
                 {addresses.length === 0 && (
                   <li className="px-4 py-2 text-gray-500">
                     Aucune adresse enregistrée.
                   </li>
                 )}
-
-                {addresses.map((addr) => (
-                  <li
-                    key={addr._id}
-                    onClick={() => {
-                      onAddressChange(addr._id, formatAddress(addr));
-                      setOpen(false);
-                    }}
-                    className={`cursor-pointer select-none px-4 py-2 hover:bg-primary/10 hover:bg-primary hover:text-white ${
-                      addr._id === selectedAddressId
-                        ? "bg-primary/5 font-medium"
-                        : ""
-                    }`}
-                  >
-                    {formatAddress(addr)}
-                  </li>
-                ))}
               </ul>
             )}
           </div>

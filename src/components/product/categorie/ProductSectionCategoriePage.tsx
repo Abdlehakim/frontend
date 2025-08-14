@@ -30,7 +30,7 @@ export default function ProductSectionCategoriePage({
 
   /* ---------- filter state ---------- */
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
-  const [selectedBoutique, setSelectedBoutique] = useState<string | null>(null);
+  const [selectedMagasin, setSelectedMagasin] = useState<string | null>(null);
   const [selectedSubCategorie, setSelectedSubCategorie] = useState<
     string | null
   >(null);
@@ -46,7 +46,7 @@ export default function ProductSectionCategoriePage({
 
   /* ---------- option lists ---------- */
   const [brands, setBrands] = useState<OptionItem[]>([]);
-  const [magasins, setBoutiques] = useState<OptionItem[]>([]);
+  const [magasins, setMagasins] = useState<OptionItem[]>([]);
   const [subcategories, setSubcategories] = useState<OptionItem[]>([]);
 
   /* ---------- refs ---------- */
@@ -62,7 +62,7 @@ export default function ProductSectionCategoriePage({
       qs.set("skip", skip.toString());
 
       if (selectedBrand) qs.set("brand", selectedBrand);
-      if (selectedBoutique) qs.set("magasin", selectedBoutique);
+      if (selectedMagasin) qs.set("magasin", selectedMagasin);
       if (selectedSubCategorie) qs.set("subCat", selectedSubCategorie);
       if (minPrice !== null) qs.set("priceMin", minPrice.toString());
       if (maxPrice !== null) qs.set("priceMax", maxPrice.toString());
@@ -73,7 +73,7 @@ export default function ProductSectionCategoriePage({
     [
       itemsPerBatch,
       selectedBrand,
-      selectedBoutique,
+      selectedMagasin,
       selectedSubCategorie,
       minPrice,
       maxPrice,
@@ -159,7 +159,7 @@ export default function ProductSectionCategoriePage({
 
         if (!ignore) {
           setBrands(brands);
-          setBoutiques(magasins);
+          setMagasins(magasins);
           setSubcategories(subcategories);
         }
       } catch (err) {
@@ -179,8 +179,8 @@ export default function ProductSectionCategoriePage({
       <FilterProducts
         selectedBrand={selectedBrand}
         setSelectedBrand={setSelectedBrand}
-        selectedBoutique={selectedBoutique}
-        setSelectedBoutique={setSelectedBoutique}
+        selectedMagasin={selectedMagasin}
+        setSelectedMagasin={setSelectedMagasin}
         selectedSubCategorie={selectedSubCategorie}
         setSelectedSubCategorie={setSelectedSubCategorie}
         minPrice={minPrice}

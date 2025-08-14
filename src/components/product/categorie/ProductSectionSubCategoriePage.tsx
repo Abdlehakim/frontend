@@ -22,7 +22,7 @@ export default function ProductSectionSubCategoriePage({ slugSubCategorie }: Pro
 
   /* ----- filter state ----- */
   const [selectedBrand,    setSelectedBrand]    = useState<string | null>(null);
-  const [selectedBoutique, setSelectedBoutique] = useState<string | null>(null);
+  const [selectedMagasin, setSelectedMagasin] = useState<string | null>(null);
   const [minPrice, setMinPrice]   = useState<number | null>(null);
   const [maxPrice, setMaxPrice]   = useState<number | null>(null);
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
@@ -35,7 +35,7 @@ export default function ProductSectionSubCategoriePage({ slugSubCategorie }: Pro
 
   /* ----- option lists ----- */
   const [brands,    setBrands]    = useState<OptionItem[]>([]);
-  const [magasins, setBoutiques] = useState<OptionItem[]>([]);
+  const [magasins, setMagasins] = useState<OptionItem[]>([]);
 
   /* ----- sentinel ref ----- */
   const loaderRef = useRef<HTMLDivElement | null>(null);
@@ -50,14 +50,14 @@ export default function ProductSectionSubCategoriePage({ slugSubCategorie }: Pro
       qs.set("skip",  skip.toString());
 
       if (selectedBrand)    qs.set("brand",    selectedBrand);
-      if (selectedBoutique) qs.set("magasin", selectedBoutique);
+      if (selectedMagasin) qs.set("magasin", selectedMagasin);
       if (minPrice !== null) qs.set("priceMin", minPrice.toString());
       if (maxPrice !== null) qs.set("priceMax", maxPrice.toString());
       qs.set("sort", sortOrder);
 
       return qs.toString();
     },
-    [itemsPerBatch, selectedBrand, selectedBoutique, minPrice, maxPrice, sortOrder]
+    [itemsPerBatch, selectedBrand, selectedMagasin, minPrice, maxPrice, sortOrder]
   );
 
   /* =================================================================
@@ -127,7 +127,7 @@ export default function ProductSectionSubCategoriePage({ slugSubCategorie }: Pro
         );
         if (!ignore) {
           setBrands(brands);
-          setBoutiques(magasins);
+          setMagasins(magasins);
         }
       } catch (err) {
         if (!ignore) console.error(err);
@@ -150,8 +150,8 @@ export default function ProductSectionSubCategoriePage({ slugSubCategorie }: Pro
           subcategories={[]}
           selectedBrand={selectedBrand}
           setSelectedBrand={setSelectedBrand}
-          selectedBoutique={selectedBoutique}
-          setSelectedBoutique={setSelectedBoutique}
+          selectedMagasin={selectedMagasin}
+          setSelectedMagasin={setSelectedMagasin}
           minPrice={minPrice}
           setMinPrice={setMinPrice}
           maxPrice={maxPrice}

@@ -19,7 +19,7 @@ export default function ProductSectionByCollection() {
   const [selectedCategorie,    setSelectedCategorie]    = useState<string | null>(null);
   const [selectedSubCategorie, setSelectedSubCategorie] = useState<string | null>(null);
   const [selectedBrand,        setSelectedBrand]        = useState<string | null>(null);
-  const [selectedBoutique,     setSelectedBoutique]     = useState<string | null>(null);
+  const [selectedMagasin,     setSelectedMagasin]     = useState<string | null>(null);
   const [minPrice, setMinPrice] = useState<number | null>(null);
   const [maxPrice, setMaxPrice] = useState<number | null>(null);
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
@@ -34,7 +34,7 @@ export default function ProductSectionByCollection() {
   const [categories,    setCategories]    = useState<OptionItem[]>([]);
   const [subcategories, setSubcategories] = useState<OptionItem[]>([]);
   const [brands,        setBrands]        = useState<OptionItem[]>([]);
-  const [magasins,     setBoutiques]     = useState<OptionItem[]>([]);
+  const [magasins,     setMagasins]     = useState<OptionItem[]>([]);
 
   /* -------- sentinel -------- */
   const loaderRef = useRef<HTMLDivElement | null>(null);
@@ -49,7 +49,7 @@ export default function ProductSectionByCollection() {
       if (selectedCategorie)    qs.set("categorie", selectedCategorie);
       if (selectedSubCategorie) qs.set("subCat",     selectedSubCategorie);
       if (selectedBrand)        qs.set("brand",      selectedBrand);
-      if (selectedBoutique)     qs.set("magasin",   selectedBoutique);
+      if (selectedMagasin)     qs.set("magasin",   selectedMagasin);
       if (minPrice !== null)    qs.set("priceMin",   minPrice.toString());
       if (maxPrice !== null)    qs.set("priceMax",   maxPrice.toString());
       qs.set("sort", sortOrder);
@@ -61,7 +61,7 @@ export default function ProductSectionByCollection() {
       selectedCategorie,
       selectedSubCategorie,
       selectedBrand,
-      selectedBoutique,
+      selectedMagasin,
       minPrice,
       maxPrice,
       sortOrder,
@@ -133,7 +133,7 @@ export default function ProductSectionByCollection() {
         setCategories(categories);
         setSubcategories(subcategories);
         setBrands(brands);
-        setBoutiques(magasins);
+        setMagasins(magasins);
       } catch (err) {
         console.error(err);
       }
@@ -147,7 +147,7 @@ export default function ProductSectionByCollection() {
         selectedCategorie={selectedCategorie}    setSelectedCategorie={setSelectedCategorie}
         selectedSubCategorie={selectedSubCategorie} setSelectedSubCategorie={setSelectedSubCategorie}
         selectedBrand={selectedBrand}            setSelectedBrand={setSelectedBrand}
-        selectedBoutique={selectedBoutique}      setSelectedBoutique={setSelectedBoutique}
+        selectedMagasin={selectedMagasin}      setSelectedMagasin={setSelectedMagasin}
         minPrice={minPrice} setMinPrice={setMinPrice}
         maxPrice={maxPrice} setMaxPrice={setMaxPrice}
         categories={categories}

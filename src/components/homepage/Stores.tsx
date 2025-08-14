@@ -17,15 +17,15 @@ export interface StoreType {
   };
 }
 
-interface BoutiqueHomePageTitles {
-  HPboutiqueTitle?: string;
-  HPboutiqueSubTitle?: string;
+interface MagasinHomePageTitles {
+  HPmagasinTitle?: string;
+  HPmagasinSubTitle?: string;
 }
 
 export default async function Stores() {
-  let titles: BoutiqueHomePageTitles = {};
+  let titles: MagasinHomePageTitles = {};
   try {
-    titles = await fetchData<BoutiqueHomePageTitles>("store/storeHomePageTitles");
+    titles = await fetchData<MagasinHomePageTitles>("store/storeHomePageTitles");
   } catch (err) {
     console.error("Error fetching magasin titles:", err);
   }
@@ -48,10 +48,10 @@ export default async function Stores() {
     <section className="w-[95%] mx-auto py-8">
       <div className="flex w-full flex-col gap-[8px] items-center mb-4">
         <h3 className="font-bold text-2xl text-HomePageTitles capitalize">
-          {titles.HPboutiqueTitle || "Nos magasins"}
+          {titles.HPmagasinTitle || "Nos magasins"}
         </h3>
-        {titles.HPboutiqueSubTitle && (
-          <p className="test-base max-md:text-sm text-[#525566] text-center">{titles.HPboutiqueSubTitle}</p>
+        {titles.HPmagasinSubTitle && (
+          <p className="test-base max-md:text-sm text-[#525566] text-center">{titles.HPmagasinSubTitle}</p>
         )}
       </div>
 
