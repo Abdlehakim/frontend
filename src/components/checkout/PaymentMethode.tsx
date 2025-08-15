@@ -13,15 +13,15 @@ const Skel = ({ className = "" }: { className?: string }) => (
 );
 
 interface PaymentMethod {
-  _id?: string;   // might not be present depending on API
-  name?: string;  // enum key (stable/unique) — preferred as key
-  label: string;
-  help: string;
+  _id?: string;      // backend id
+  name?: string;     // stable key if provided
+  label: string;     // display label
+  help?: string;     // optional hint text
 }
 
 interface PaymentMethodeProps {
-  selectedPaymentMethod: string;
-  handlePaymentMethodChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
+  selectedPaymentMethod: string;                 // store the label (or switch to id if you prefer)
+  handlePaymentMethodChange: (id: string, label: string) => void; // UPDATED signature
 }
 
 const PaymentMethode: React.FC<PaymentMethodeProps> = ({
@@ -77,17 +77,8 @@ const PaymentMethode: React.FC<PaymentMethodeProps> = ({
     ? "-- Choisir un moyen de paiement --"
     : "Aucun moyen de paiement disponible";
 
-  // keep parent API (expects ChangeEvent<HTMLInputElement>)
-  const emitChange = (value: string) => {
-    const fakeEvt = {
-      target: { value, name: "payment-method" } as unknown as HTMLInputElement,
-    } as React.ChangeEvent<HTMLInputElement>;
-    handlePaymentMethodChange(fakeEvt);
-  };
-
   return (
     <div className="space-y-4">
-      {/* heading (unchanged text) */}
       <h3 className="font-semibold">
         Choisissez le moyen de paiement qui vous convient :
       </h3>
@@ -98,18 +89,14 @@ const PaymentMethode: React.FC<PaymentMethodeProps> = ({
           <button
             type="button"
             onClick={() => !loading && methods.length && setOpen((p) => !p)}
-            className="flex h-12 w-full items-center justify-between rounded-md
-                        bg-white px-4 text-sm shadow-sm focus:outline-none
+            className="flex h-12 w-full items-center justify-between rounded-md border
+                       border-gray-300 bg-white px-4 text-sm shadow-sm focus:outline-none
                        focus:ring-2 focus:ring-primary/50 max-lg:text-xs disabled:opacity-50"
             disabled={loading || !methods.length}
             aria-haspopup="listbox"
             aria-expanded={open}
           >
-            <span
-              className={
-                selected ? "block w-full truncate" : "text-gray-400 block w-full truncate"
-              }
-            >
+            <span className={selected ? "block w-full truncate" : "text-gray-400 block w-full truncate"}>
               {buttonText}
             </span>
             {open ? (
@@ -146,7 +133,7 @@ const PaymentMethode: React.FC<PaymentMethodeProps> = ({
                       role="option"
                       aria-selected={isSelected}
                       onClick={() => {
-                        emitChange(m.label);
+                        handlePaymentMethodChange(m._id ?? "", m.label);
                         setOpen(false);
                       }}
                       className={`cursor-pointer select-none px-4 py-2 transition-colors ${
@@ -156,9 +143,7 @@ const PaymentMethode: React.FC<PaymentMethodeProps> = ({
                       }`}
                     >
                       <div className="truncate font-medium">{m.label}</div>
-                      {m.help && (
-                        <p className="text-xs text-gray-500">{m.help}</p>
-                      )}
+                      {m.help && <p className="text-xs text-gray-500">{m.help}</p>}
                     </li>
                   );
                 })

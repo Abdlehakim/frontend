@@ -8,61 +8,55 @@ import { AiOutlineDown, AiOutlineUp } from "react-icons/ai";
 import { fetchData } from "@/lib/fetchData";
 import { useCurrency } from "@/contexts/CurrencyContext";
 
-/* ---------- tiny skeleton helper ---------- */
 const Skel = ({ className = "" }: { className?: string }) => (
   <div className={`animate-pulse bg-gray-200 rounded ${className}`} />
 );
 
-/* ---------- parent-callback props ---------- */
 interface DeliveryMethodProps {
-  selectedMethod: string; // holds the method name
-  onMethodChange: (methodName: string, cost: number) => void;
-
-  /** NEW: control which options are shown */
+  selectedMethodId: string;
+  onMethodChange: (
+    id: string,
+    name: string,
+    price: number,
+    expectedDeliveryDate?: string
+  ) => void;
   filter?: "all" | "pickupOnly" | "deliveryOnly";
 }
 
-/* ---------- API model ---------- */
 interface DeliveryOption {
   id: string;
   name: string;
   description?: string;
-  cost: number;
-  /** NEW: true if this option is pickup/in-store */
+  cost?: number;
+  price?: number;
+  estimatedDays?: number;
   isPickup?: boolean;
 }
 
 const DeliveryMethod: React.FC<DeliveryMethodProps> = ({
-  selectedMethod,
+  selectedMethodId,
   onMethodChange,
   filter = "all",
 }) => {
-  const { fmt } = useCurrency(); // formats a number -> currency string
-
+  const { fmt } = useCurrency();
   const [options, setOptions] = useState<DeliveryOption[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // dropdown state
   const [open, setOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement | null>(null);
 
-  // fetch delivery options on mount
   useEffect(() => {
     (async () => {
       try {
-        const opts = await fetchData<DeliveryOption[]>(
-          "/checkout/delivery-options?limit=100"
-        );
-        setOptions([...opts].sort((a, b) => a.cost - b.cost));
-      } catch (err) {
-        console.error("Fetch delivery options failed:", err);
+        const opts = await fetchData<DeliveryOption[]>("/checkout/delivery-options?limit=100");
+        setOptions([...(opts || [])].sort((a, b) => (a.cost ?? a.price ?? 0) - (b.cost ?? b.price ?? 0)));
+      } catch {
+        setOptions([]);
       } finally {
         setLoading(false);
       }
     })();
   }, []);
 
-  // close on outside click / escape
   useEffect(() => {
     const onClick = (e: MouseEvent) => {
       if (!dropdownRef.current) return;
@@ -82,15 +76,16 @@ const DeliveryMethod: React.FC<DeliveryMethodProps> = ({
   const filteredOptions = useMemo(() => {
     if (filter === "all") return options;
     if (filter === "pickupOnly") return options.filter((o) => !!o.isPickup);
-    // deliveryOnly
     return options.filter((o) => !o.isPickup);
   }, [options, filter]);
 
-  const selectedOpt =
-    filteredOptions.find((o) => o.name === selectedMethod) || null;
+  const selectedOpt = filteredOptions.find((o) => o.id === selectedMethodId) || null;
 
-  const labelFor = (opt: DeliveryOption) =>
-    opt.cost === 0 ? `Gratuit – ${opt.name}` : `${fmt(opt.cost)} – ${opt.name}`;
+  const normalizePrice = (opt: DeliveryOption) => opt.cost ?? opt.price ?? 0;
+  const labelFor = (opt: DeliveryOption) => {
+    const value = normalizePrice(opt);
+    return value === 0 ? `Gratuit – ${opt.name}` : `${fmt(value)} – ${opt.name}`;
+  };
 
   const buttonText = selectedOpt
     ? labelFor(selectedOpt)
@@ -100,32 +95,43 @@ const DeliveryMethod: React.FC<DeliveryMethodProps> = ({
     ? "-- Choisir un mode de livraison --"
     : "Aucune méthode de livraison disponible";
 
+  const computeExpectedISO = (opt: DeliveryOption) => {
+    if (opt.isPickup) return undefined; // ← do not compute for pickup
+    if (typeof opt.estimatedDays !== "number") return undefined;
+    const base = new Date();
+    base.setHours(0, 0, 0, 0);
+    base.setDate(base.getDate() + opt.estimatedDays);
+    return base.toISOString();
+  };
+
   const handlePick = (opt: DeliveryOption) => {
-    onMethodChange(opt.name, opt.cost); // ← send name + cost
+    const expected = computeExpectedISO(opt);
+    onMethodChange(opt.id, opt.name, normalizePrice(opt), expected);
     setOpen(false);
   };
+
+  useEffect(() => {
+    if (!selectedMethodId || !filteredOptions.length) return;
+    const opt = filteredOptions.find((o) => o.id === selectedMethodId);
+    if (!opt) return;
+    const expected = computeExpectedISO(opt);
+    onMethodChange(opt.id, opt.name, normalizePrice(opt), expected);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [selectedMethodId, filteredOptions.length]);
 
   return (
     <div className="flex flex-col gap-4">
       <h2 className="font-semibold">Choisissez la méthode de livraison qui vous convient :</h2>
-
-      {/* Select-like dropdown */}
       <div className="relative w-full" ref={dropdownRef}>
         <button
           type="button"
           onClick={() => !loading && filteredOptions.length && setOpen((p) => !p)}
-          className="flex h-12 w-full items-center justify-between rounded-md border
-                     border-gray-300 bg-white px-4 text-sm shadow-sm focus:outline-none
-                     focus:ring-2 focus:ring-primary/50 max-lg:text-xs disabled:opacity-50"
+          className="flex h-12 w-full items-center justify-between rounded-md border border-gray-300 bg-white px-4 text-sm shadow-sm focus:outline-none focus:ring-2 focus:ring-primary/50 max-lg:text-xs disabled:opacity-50"
           disabled={loading || !filteredOptions.length}
           aria-haspopup="listbox"
           aria-expanded={open}
         >
-          <span
-            className={
-              selectedOpt ? "block w-full truncate" : "text-gray-400 block w-full truncate"
-            }
-          >
+          <span className={selectedOpt ? "block w-full truncate" : "text-gray-400 block w-full truncate"}>
             {buttonText}
           </span>
           {open ? (
@@ -138,8 +144,7 @@ const DeliveryMethod: React.FC<DeliveryMethodProps> = ({
         {open && (
           <ul
             role="listbox"
-            className="absolute left-0 right-0 z-20 mt-1 max-h-60 overflow-auto rounded-md
-                       bg-white py-1 text-sm shadow-lg ring-1 ring-black/5"
+            className="absolute left-0 right-0 z-20 mt-1 max-h-60 overflow-auto rounded-md bg-white py-1 text-sm shadow-lg ring-1 ring-black/5"
           >
             {loading ? (
               <>
@@ -158,7 +163,7 @@ const DeliveryMethod: React.FC<DeliveryMethodProps> = ({
               </>
             ) : (
               filteredOptions.map((opt) => {
-                const isSelected = opt.name === selectedMethod;
+                const isSelected = opt.id === selectedMethodId;
                 return (
                   <li
                     key={opt.id}
@@ -166,9 +171,7 @@ const DeliveryMethod: React.FC<DeliveryMethodProps> = ({
                     aria-selected={isSelected}
                     onClick={() => handlePick(opt)}
                     className={`cursor-pointer select-none px-4 py-2 transition-colors ${
-                      isSelected
-                        ? "bg-secondary text-white"
-                        : "hover:bg-secondary hover:text-white"
+                      isSelected ? "bg-secondary text-white" : "hover:bg-secondary hover:text-white"
                     }`}
                   >
                     <div className="truncate">{labelFor(opt)}</div>

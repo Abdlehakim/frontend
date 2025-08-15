@@ -167,7 +167,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
                         </p>
                       </>
                     ) : (
-                      <p className="text-primary text-xl max-md:text-lg font-bold">
+                      <p className="text-base max-md:text-lg font-bold text-primary">
                         {fmt(product.price)}
                       </p>
                     )}

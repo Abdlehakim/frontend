@@ -1,4 +1,3 @@
-// src/components/checkout/MagasinSelected.tsx
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
@@ -16,14 +15,26 @@ export interface Magasin {
   address?: string;
   phoneNumber?: string;
   city?: string;
+
+  /** set on the SELECTED magasin and mirrors `name` for BE payloads */
+  MagasinName?: string;
 }
 
 interface Props {
   value: string | null;
-  onChange: (id: string | null, m: Magasin | null) => void;
+  onChange: (id: string | null, magasin: Magasin | null) => void;
+  placeholder?: string;
+  label?: string;
+  disabled?: boolean;
 }
 
-export default function MagasinSelected({ value, onChange }: Props) {
+export default function MagasinSelected({
+  value,
+  onChange,
+  placeholder = "-- Choisir un magasin --",
+  label = "Magasin de retrait",
+  disabled = false,
+}: Props) {
   const [magasins, setMagasins] = useState<Magasin[]>([]);
   const [loading, setLoading] = useState(true);
   const [open, setOpen] = useState(false);
@@ -34,7 +45,6 @@ export default function MagasinSelected({ value, onChange }: Props) {
       try {
         const data = await fetchData<Magasin[]>("/checkout/Magasin-options");
         const list = Array.isArray(data) ? data : [];
-        // Optional: sort by name for consistent order
         list.sort((a, b) => a.name.localeCompare(b.name, "fr", { sensitivity: "base" }));
         setMagasins(list);
       } catch {
@@ -63,39 +73,36 @@ export default function MagasinSelected({ value, onChange }: Props) {
   }, []);
 
   const selected = magasins.find((m) => m._id === value) || null;
-  const fmt = (m: Magasin) => (m.city ? `${m.name} — ${m.city}` : m.name);
+  const fmtOption = (m: Magasin) => (m.city ? `${m.name} — ${m.city}` : m.name);
 
-  const buttonText = selected
-    ? fmt(selected)
-    : loading
-    ? "Chargement des magasins…"
-    : magasins.length
-    ? "-- Choisir un magasin --"
-    : "Aucun magasin disponible";
+  const buttonText =
+    selected?.name ??
+    (loading
+      ? "Chargement des magasins…"
+      : magasins.length
+      ? placeholder
+      : "Aucun magasin disponible");
+
+  const canInteract = !disabled && !loading && magasins.length > 0;
 
   return (
     <div className="space-y-4">
-      <h2 className="font-semibold">Magasin de retrait</h2>
+      <h2 className="font-semibold">{label}</h2>
 
       {/* Select-like dropdown */}
       <div className="relative w-full" ref={dropdownRef}>
         <button
           type="button"
-          onClick={() => !loading && magasins.length && setOpen((p) => !p)}
-          className="flex h-12 w-full items-center justify-between rounded-md border
-                     border-gray-300 bg-white px-4 text-sm shadow-sm focus:outline-none
-                     focus:ring-2 focus:ring-primary/50 max-lg:text-xs disabled:opacity-50"
-          disabled={loading || !magasins.length}
+          onClick={() => canInteract && setOpen((p) => !p)}
+          className={`flex h-12 w-full items-center justify-between rounded-md border
+                      border-gray-300 bg-white px-4 text-sm shadow-sm focus:outline-none
+                      focus:ring-2 focus:ring-primary/50 max-lg:text-xs disabled:opacity-50
+                      ${!selected ? "text-gray-400" : ""}`}
+          disabled={!canInteract}
           aria-haspopup="listbox"
           aria-expanded={open}
         >
-          <span
-            className={
-              selected ? "block w-full truncate" : "text-gray-400 block w-full truncate"
-            }
-          >
-            {buttonText}
-          </span>
+          <span className="block w-full truncate">{buttonText}</span>
           {open ? (
             <AiOutlineUp className="h-4 w-4 shrink-0 text-gray-500" />
           ) : (
@@ -120,35 +127,54 @@ export default function MagasinSelected({ value, onChange }: Props) {
                   <Skel className="mt-1 h-3 w-1/3" />
                 </li>
               </>
-            ) : (
-              magasins.map((m) => {
-                const isSelected = m._id === value;
-                return (
+            ) : magasins.length ? (
+              <>
+                {/* Clear selection option */}
+                {selected && (
                   <li
-                    key={m._id}
                     role="option"
-                    aria-selected={isSelected}
+                    aria-selected={false}
                     onClick={() => {
-                      onChange(m._id, m);
+                      onChange(null, null);
                       setOpen(false);
                     }}
-                    className={`cursor-pointer select-none px-4 py-2 transition-colors ${
-                      isSelected
-                        ? "bg-secondary text-white"
-                        : "hover:bg-secondary hover:text-white"
-                    }`}
+                    className="cursor-pointer select-none px-4 py-2 text-red-600 hover:bg-red-50"
                   >
-                    <div className="truncate font-medium">{fmt(m)}</div>
-                    {(m.address || m.phoneNumber) && (
-                      <p className="text-xs text-gray-500">
-                        {m.address ?? ""}
-                        {m.address && m.phoneNumber ? " • " : ""}
-                        {m.phoneNumber ?? ""}
-                      </p>
-                    )}
+                    Effacer la sélection
                   </li>
-                );
-              })
+                )}
+                {magasins.map((m) => {
+                  const isSelected = m._id === value;
+                  return (
+                    <li
+                      key={m._id}
+                      role="option"
+                      aria-selected={isSelected}
+                      onClick={() => {
+                        // Ensure the selected magasin object carries MagasinName = name
+                        onChange(m._id, { ...m, MagasinName: m.name });
+                        setOpen(false);
+                      }}
+                      className={`cursor-pointer select-none px-4 py-2 transition-colors ${
+                        isSelected
+                          ? "bg-secondary text-white"
+                          : "hover:bg-secondary hover:text-white"
+                      }`}
+                    >
+                      <div className="truncate font-medium">{fmtOption(m)}</div>
+                      {(m.address || m.phoneNumber) && (
+                        <p className="text-xs text-gray-500">
+                          {m.address ?? ""}
+                          {m.address && m.phoneNumber ? " • " : ""}
+                          {m.phoneNumber ?? ""}
+                        </p>
+                      )}
+                    </li>
+                  );
+                })}
+              </>
+            ) : (
+              <li className="px-4 py-2 text-gray-500">Aucun magasin disponible</li>
             )}
           </ul>
         )}

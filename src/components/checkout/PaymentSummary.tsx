@@ -18,24 +18,29 @@ import PaypalButton from "@/components/checkout/PaypalButton";
 import { fetchData } from "@/lib/fetchData";
 import LoadingDots from "@/components/LoadingDots";
 import Notification, { NotificationType } from "@/components/ui/Notification";
-import { useCurrency } from "@/contexts/CurrencyContext";      // ← added
+import { useCurrency } from "@/contexts/CurrencyContext";
+import type { Magasin } from "@/components/checkout/MagasinSelected";
 
-/* ---------- props ---------- */
 interface PaymentSummaryProps {
   items: CartItem[];
   totalPrice: number;
   totalDiscount: number;
   deliveryCost: number;
   selectedMethod: string;
+  selectedMethodId?: string;
+  selectedExpectedDeliveryDate?: string;
   selectedPaymentMethod: string;
   address: { AddressId: string; DeliverToAddress: string };
   currentStep: "cart" | "checkout" | "order-summary";
   onCheckout(): void;
   backcarte(): void;
   handleOrderSummary(ref: string): void;
+
+  isPickup?: boolean;
+  selectedMagasinId?: string | null;
+  selectedMagasin?: Magasin | null;
 }
 
-/* ---------- helpers ---------- */
 function formattedMissing(list: string[]): ReactNode {
   return list.map((txt, idx) => (
     <React.Fragment key={idx}>
@@ -51,20 +56,23 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
   totalDiscount,
   deliveryCost,
   selectedMethod,
+  selectedMethodId,
+  selectedExpectedDeliveryDate,
   selectedPaymentMethod,
   address,
   currentStep,
   onCheckout,
   backcarte,
   handleOrderSummary,
+  isPickup = false,
+  selectedMagasinId = null,
+  selectedMagasin = null,
 }) => {
   const dispatch = useDispatch();
-  const { fmt } = useCurrency();                       // ← added
+  const { fmt } = useCurrency();
 
-  /* loading overlay */
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
 
-  /* totals */
   const [totalWithShipping, setTotalWithShipping] = useState(
     totalPrice + deliveryCost
   );
@@ -82,20 +90,30 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
     setTotalTva(tvaSum);
   }, [items, totalPrice, deliveryCost]);
 
-  /* validity */
-  const isFormValid = useMemo(
-    () => Boolean(address.AddressId && selectedMethod && selectedPaymentMethod),
-    [address, selectedMethod, selectedPaymentMethod]
-  );
+  const isFormValid = useMemo(() => {
+    if (!selectedMethodId || !selectedPaymentMethod) return false;
 
-  /* notification */
+    if (isPickup) {
+      const addr = selectedMagasin?.address?.trim();
+      return Boolean(selectedMagasinId && addr);
+    }
+
+    return Boolean(address.AddressId);
+  }, [
+    isPickup,
+    selectedMagasinId,
+    selectedMagasin,
+    address.AddressId,
+    selectedMethodId,
+    selectedPaymentMethod,
+  ]);
+
   const [notification, setNotification] = useState<{
     message: ReactNode;
     type: NotificationType;
   } | null>(null);
   const hideNotification = () => setNotification(null);
 
-  /* send email */
   const sendMail = async (ref: string) => {
     try {
       await fetch("/api/sendEmail", {
@@ -108,7 +126,6 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
     }
   };
 
-  /* post order */
   const postOrder = async () => {
     const lines = items.map(
       ({
@@ -132,15 +149,40 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
       })
     );
 
-    const payload = {
-      DeliveryAddress: [
-        { Address: address.AddressId, DeliverToAddress: address.DeliverToAddress },
-      ],
+    const payload: Record<string, unknown> = {
       paymentMethod: selectedPaymentMethod,
-      selectedMethod,
-      deliveryCost,
       items: lines,
+      deliveryMethod: [
+        {
+          deliveryMethodID: selectedMethodId,
+          deliveryMethodName: selectedMethod,
+          Cost: Number.isFinite(deliveryCost) ? deliveryCost.toFixed(2) : "0.00",
+          ...(selectedExpectedDeliveryDate
+            ? { expectedDeliveryDate: selectedExpectedDeliveryDate }
+            : {}),
+        },
+      ],
     };
+
+    if (isPickup) {
+      const magasinName =
+        selectedMagasin?.MagasinName ?? selectedMagasin?.name ?? "";
+      const magasinAddress = selectedMagasin?.address ?? "";
+      payload.pickupMagasin = [
+        {
+          MagasinID: selectedMagasinId,
+          MagasinName: magasinName,
+          MagasinAddress: magasinAddress,
+        },
+      ];
+    } else {
+      payload.DeliveryAddress = [
+        {
+          AddressID: address.AddressId,
+          DeliverToAddress: address.DeliverToAddress,
+        },
+      ];
+    }
 
     const { ref } = await fetchData<{ ref: string }>(
       "/client/order/postOrderClient",
@@ -153,7 +195,7 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
     );
 
     await sendMail(ref);
-    toast.success("Commande envoyée avec succès !");
+    toast.success("Commande envoyée avec succès !");
     dispatch(clearCart());
     handleOrderSummary(ref);
   };
@@ -163,9 +205,15 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
 
     if (!isFormValid) {
       const missing: string[] = [];
-      if (!address.AddressId) missing.push("l’adresse de livraison");
-      if (!selectedMethod) missing.push("la méthode de livraison");
       if (!selectedPaymentMethod) missing.push("le moyen de paiement");
+      if (!selectedMethodId) missing.push("la méthode de livraison");
+      if (isPickup) {
+        if (!selectedMagasinId) missing.push("le magasin de retrait");
+        if (!selectedMagasin?.address?.trim())
+          missing.push("l’adresse du magasin");
+      } else {
+        if (!address.AddressId) missing.push("l’adresse de livraison");
+      }
 
       setNotification({
         message: <>Veuillez sélectionner {formattedMissing(missing)}.</>,
@@ -183,13 +231,13 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
         type: "error",
       });
       console.error(err);
+    } finally {
       setIsSubmittingOrder(false);
     }
   };
 
   const handlePayPalSuccess = () => handleOrderSubmit();
 
-  /* JSX */
   const isPayPal = selectedPaymentMethod.toLowerCase() === "paypal";
 
   return (
@@ -210,7 +258,6 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
 
       <div className="bg-gray-100 rounded-md p-4 w-[420px] max-lg:w-full">
         <div className="mt-8 sticky top-4 space-y-8">
-          {/* promo code */}
           <div className="flex border border-[#15335E] overflow-hidden rounded-md">
             <input
               type="text"
@@ -222,7 +269,6 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
             </button>
           </div>
 
-          {/* totals */}
           <ul className="space-y-4 text-gray-800">
             <li className="flex justify-between text-base">
               <span>Remise</span>
@@ -242,38 +288,30 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
             </li>
           </ul>
 
-          {/* Checkout step */}
           {currentStep === "checkout" && (
             <div className="space-y-2">
               {!isPayPal && (
                 <button
                   onClick={handleOrderSubmit}
+                  disabled={!isFormValid}
                   className={`mt-2 w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm ${
                     isFormValid
                       ? "text-black hover:bg-primary hover:text-white"
-                      : "bg-gray-200 text-gray-400"
+                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
                   }`}
                 >
                   Confirmer la commande
                 </button>
               )}
 
-              {isPayPal
-                ? isFormValid
-                  ? (
-                    <PaypalButton
-                      amount={totalWithShipping.toFixed(2)}
-                      onSuccess={handlePayPalSuccess}
-                    />
-                  ) : (
-                    <button
-                      onClick={handleOrderSubmit}
-                      className="mt-2 w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm bg-gray-200 text-gray-400"
-                    >
-                      PayPal
-                    </button>
-                  )
-                : null}
+              {isPayPal && (
+                <div className={isFormValid ? "" : "opacity-50 pointer-events-none"}>
+                  <PaypalButton
+                    amount={totalWithShipping.toFixed(2)}
+                    onSuccess={handlePayPalSuccess}
+                  />
+                </div>
+              )}
 
               <button
                 onClick={backcarte}
@@ -290,7 +328,6 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
             </div>
           )}
 
-          {/* Cart step */}
           {currentStep === "cart" && (
             <div className="space-y-2">
               <button

@@ -3,28 +3,44 @@
 
 import React, { useEffect, useState } from "react";
 import Image from "next/image";
-import { useCurrency } from "@/contexts/CurrencyContext";  // ← added
+import { useCurrency } from "@/contexts/CurrencyContext";
 
 /* ---------- types ---------- */
 interface OrderItem {
   _id: string;
   reference: string;
   name: string;
-  tva: number;      // TVA percentage (e.g. 19 for 19 %)
+  tva: number;      // TVA percentage (e.g. 19 for 19 %)
   discount: number; // percentage discount applied on TTC price
   quantity: number;
   mainImageUrl: string;
   price: number;    // **TTC price (already includes TVA)**
 }
 
+type PaymentMethodUnion =
+  | string
+  | Array<{
+      PaymentMethodLabel: string;
+    }>;
+
+type DeliveryMethodUnion =
+  | string
+  | Array<{
+      deliveryMethodID?: string;
+      deliveryMethodName?: string;
+      Cost: string | number;
+      expectedDeliveryDate?: string | Date;
+    }>;
+
 interface InvoiceProformaProps {
   order: {
     ref: string;
     DeliveryAddress: { DeliverToAddress: string }[];
+    pickupMagasin?: { MagasinAddress: string; MagasinName?: string }[];
     orderItems: OrderItem[];
-    paymentMethod: string;
-    deliveryMethod: string;
-    deliveryCost: number;
+    paymentMethod: PaymentMethodUnion;
+    deliveryMethod: DeliveryMethodUnion;
+    deliveryCost?: number; // legacy
     createdAt: string;
   };
   company: {
@@ -39,12 +55,11 @@ interface InvoiceProformaProps {
 }
 
 /* ---------- helpers ---------- */
-// Render inline SVG if URL ends with .svg, else use <Image>
-const InlineOrImg: React.FC<{
-  url: string;
-  className?: string;
-  alt?: string;
-}> = ({ url, className, alt }) => {
+const InlineOrImg: React.FC<{ url: string; className?: string; alt?: string }> = ({
+  url,
+  className,
+  alt,
+}) => {
   const [svg, setSvg] = useState<string | null>(null);
   const isSvg = /\.svg($|\?)/i.test(url);
 
@@ -105,36 +120,62 @@ const frDate = (iso: string) =>
     .replace(/\s/g, "");
 
 /* ---------- component ---------- */
-export default function InvoiceProforma({
-  order,
-  company,
-}: InvoiceProformaProps) {
-  const { fmt } = useCurrency();                      // ← added
+export default function InvoiceProforma({ order, company }: InvoiceProformaProps) {
+  const { fmt } = useCurrency();
 
-  const billingAndDeliveryAddress =
-    order.DeliveryAddress[0]?.DeliverToAddress || "—";
+  const isPickup = (order.pickupMagasin?.length ?? 0) > 0;
+  const billingAndDeliveryAddress = isPickup
+    ? order.pickupMagasin?.[0]?.MagasinAddress || "—"
+    : order.DeliveryAddress[0]?.DeliverToAddress || "—";
 
-  /* ----- per‑item + global totals ----- */
+  // Normalize payment method(s)
+  const paymentMethodText =
+    typeof order.paymentMethod === "string"
+      ? order.paymentMethod
+      : order.paymentMethod.map((p) => p.PaymentMethodLabel).filter(Boolean).join(", ");
+
+  // Normalize delivery method(s) and cost
+  const dmArray = Array.isArray(order.deliveryMethod) ? order.deliveryMethod : [];
+  const deliveryMethodText =
+    dmArray.length > 0
+      ? dmArray.map((d) => d.deliveryMethodName || "—").filter(Boolean).join(", ")
+      : typeof order.deliveryMethod === "string"
+      ? order.deliveryMethod
+      : "—";
+
+  const deliveryCostFromDM = dmArray.reduce((sum, d) => {
+    const v = typeof d.Cost === "number" ? d.Cost : parseFloat(String(d.Cost || 0));
+    return sum + (Number.isFinite(v) ? v : 0);
+  }, 0);
+
+  const shippingCost =
+    typeof order.deliveryCost === "number" ? order.deliveryCost : deliveryCostFromDM;
+
+  // Expected dates (skip if pickup)
+  const expectedDates: string[] =
+    isPickup
+      ? []
+      : dmArray
+          .map((d) => d.expectedDeliveryDate)
+          .filter((v): v is string | Date => Boolean(v))
+          .map((v) => new Date(v as string).toLocaleDateString("fr-FR"));
+
+  /* ----- per-item + global totals ----- */
   const lines = order.orderItems.map((it) => {
-    // 1. TTC after eventual discount
-    const unitTTC =
-      it.discount > 0 ? (it.price * (100 - it.discount)) / 100 : it.price;
-
-    // 2. HT = TTC / (1 + tva%)
+    // 1. TTC after discount
+    const unitTTC = it.discount > 0 ? (it.price * (100 - it.discount)) / 100 : it.price;
+    // 2. HT
     const unitHT = unitTTC / (1 + it.tva / 100);
-
-    // 3. Line calculations
+    // 3. Lines
     const lineHT = unitHT * it.quantity;
-    const lineTVA = unitTTC * it.quantity - lineHT; // equivalent to lineHT * tva%
     const lineTTC = unitTTC * it.quantity;
-
+    const lineTVA = lineTTC - lineHT;
     return { ...it, unitHT, lineHT, lineTVA, lineTTC };
   });
 
   const totalHT = lines.reduce((s, l) => s + l.lineHT, 0);
   const totalTVA = lines.reduce((s, l) => s + l.lineTVA, 0);
-  const totalTTC =
-    lines.reduce((s, l) => s + l.lineTTC, 0) + order.deliveryCost;
+  const totalTTC = lines.reduce((s, l) => s + l.lineTTC, 0) + shippingCost;
 
   return (
     <div
@@ -156,7 +197,7 @@ export default function InvoiceProforma({
 
       {/* ---------- Company & Invoice Meta ---------- */}
       <div className="grid md:grid-cols-2 gap-10 text-sm">
-        {/* Company info */}
+        {/* Company info + meta */}
         <div className="space-y-4">
           <div className="space-y-1 pb-4">
             <p className="font-semibold uppercase">{company.name}</p>
@@ -164,25 +205,39 @@ export default function InvoiceProforma({
             <p>
               {company.city} {company.zipcode}, {company.governorate}
             </p>
-            <p className="italic">Téléphone : {company.phone}</p>
+            <p className="italic">Téléphone : {company.phone}</p>
           </div>
 
           <div className="bg-gray-50 p-4 rounded">
             <div className="grid grid-cols-2 gap-2 text-xs">
-              <span>Date :</span>
+              <span>Date :</span>
               <span className="font-medium">{frDate(order.createdAt)}</span>
 
-              <span>N° de facture :</span>
+              <span>N° de facture :</span>
               <span className="font-medium">{order.ref}</span>
 
-              <span>Mode de livraison :</span>
-              <span className="font-medium">{order.deliveryMethod}</span>
+              <span>Mode(s) de livraison :</span>
+              <span className="font-medium">{deliveryMethodText}</span>
 
-              <span>Frais de livraison :</span>
-              <span className="font-medium">{fmt(order.deliveryCost)}</span>
+              <span>Frais de livraison :</span>
+              <span className="font-medium">{fmt(shippingCost)}</span>
 
-              <span>Moyen de paiement :</span>
-              <span className="font-medium">{order.paymentMethod}</span>
+              <span>Moyen(s) de paiement :</span>
+              <span className="font-medium">{paymentMethodText}</span>
+
+              {!isPickup && expectedDates.length > 0 && (
+                <>
+                  <span>Date(s) de livraison prévue(s) :</span>
+                  <span className="font-medium">
+                    {expectedDates
+                      .map((d, i) => {
+                        const name = dmArray[i]?.deliveryMethodName;
+                        return name ? `${name}: ${d}` : d;
+                      })
+                      .join(" • ")}
+                  </span>
+                </>
+              )}
             </div>
           </div>
         </div>
@@ -207,18 +262,13 @@ export default function InvoiceProforma({
         <table className="w-full">
           <thead>
             <tr className="border-b-2 border-teal-400">
-              {[
-                "Description",
-                "Quantité",
-                "Prix unitaire HT",
-                "% TVA",
-                "Total TVA",
-                "Total TTC",
-              ].map((h) => (
-                <th key={h} className="py-2 text-center">
-                  {h}
-                </th>
-              ))}
+              {["Description", "Quantité", "Prix unitaire HT", "% TVA", "Total TVA", "Total TTC"].map(
+                (h) => (
+                  <th key={h} className="py-2 text-center">
+                    {h}
+                  </th>
+                )
+              )}
             </tr>
           </thead>
           <tbody>
@@ -227,7 +277,7 @@ export default function InvoiceProforma({
                 <td className="py-2 text-center">{l.name}</td>
                 <td className="py-2 text-center">{l.quantity}</td>
                 <td className="py-2 text-center">{fmt(l.unitHT)}</td>
-                <td className="py-2 text-center">{l.tva} %</td>
+                <td className="py-2 text-center">{l.tva} %</td>
                 <td className="py-2 text-center">{fmt(l.lineTVA)}</td>
                 <td className="py-2 text-center">{fmt(l.lineTTC)}</td>
               </tr>
@@ -249,7 +299,7 @@ export default function InvoiceProforma({
           </div>
           <div className="flex justify-between pb-2">
             <span>Frais de livraison</span>
-            <span className="text-black">{fmt(order.deliveryCost)}</span>
+            <span className="text-black">{fmt(shippingCost)}</span>
           </div>
           <div className="flex justify-between font-semibold border-t pt-1">
             <span>Total TTC</span>

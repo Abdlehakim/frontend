@@ -1,4 +1,4 @@
-// src/app/order/[orderRef]/page.tsx
+// src/app/(webpage)/orderhistory/[orderRef]/page.tsx
 "use client";
 
 import React, { useEffect, useState, useCallback } from "react";
@@ -9,7 +9,7 @@ import html2canvas from "html2canvas";
 import { FiDownload } from "react-icons/fi";
 import { fetchData } from "@/lib/fetchData";
 import InvoiceProforma from "@/components/InvoiceProforma";
-import { useCurrency } from "@/contexts/CurrencyContext";   // ← added
+import { useCurrency } from "@/contexts/CurrencyContext";
 
 /* ---------- types ---------- */
 interface OrderItem {
@@ -23,25 +23,37 @@ interface OrderItem {
   price: number;
 }
 
+interface DeliveryMethodItem {
+  deliveryMethodID: string;
+  deliveryMethodName?: string;
+  Cost: string | number;
+  expectedDeliveryDate?: string | Date;
+}
+
+interface PaymentMethodItem {
+  PaymentMethodID: string;
+  PaymentMethodLabel: string;
+}
+
+interface PickupMagasinItem {
+  MagasinID: string;
+  MagasinAddress: string;
+  MagasinName?: string;
+}
+
 interface Order {
   ref: string;
   DeliveryAddress: Array<{ DeliverToAddress: string }>;
+  pickupMagasin: PickupMagasinItem[];
   orderItems: OrderItem[];
-  paymentMethod: string;
-  deliveryMethod: string;
-  deliveryCost: number;
+  deliveryMethod?: DeliveryMethodItem[];
+  paymentMethod?: PaymentMethodItem[];
+  deliveryMethodLegacy?: string;
+  paymentMethodLegacy?: string;
+  deliveryCostLegacy?: number;
+  expectedDeliveryDate?: string | Date;
   orderStatus: string;
   createdAt: string;
-}
-
-interface LogoData {
-  name: string;
-  logoImageUrl: string;
-  phone: string;
-  address: string;
-  city: string;
-  governorate: string;
-  zipcode: number;
 }
 
 /* ---------- helpers ---------- */
@@ -52,17 +64,40 @@ const frDate = (iso: string) =>
     year: "numeric",
   });
 
+function toNumber(v: string | number | undefined): number {
+  if (typeof v === "number") return Number.isFinite(v) ? v : 0;
+  if (typeof v === "string") {
+    const n = parseFloat(v);
+    return Number.isFinite(n) ? n : 0;
+  }
+  return 0;
+}
+
+function safeToDate(val?: string | Date): Date | null {
+  if (!val) return null;
+  if (val instanceof Date) return isNaN(val.getTime()) ? null : val;
+  const d = new Date(val);
+  return isNaN(d.getTime()) ? null : d;
+}
+
 /* ---------- component ---------- */
 export default function OrderByRef() {
   const router = useRouter();
   const { orderRef } = useParams() as { orderRef: string };
-  const { fmt } = useCurrency();                      // ← added
+  const { fmt } = useCurrency();
 
   const [order, setOrder] = useState<Order | null>(null);
-  const [company, setCompany] = useState<LogoData | null>(null);
+  const [company, setCompany] = useState<{
+    name: string;
+    logoImageUrl: string;
+    phone: string;
+    address: string;
+    city: string;
+    governorate: string;
+    zipcode: number;
+  } | null>(null);
   const [loading, setLoading] = useState(true);
 
-  /* fetch order + header data */
   useEffect(() => {
     (async () => {
       try {
@@ -71,10 +106,18 @@ export default function OrderByRef() {
           fetchData<Order>(`/client/order/getOrderByRef/${orderRef}`, {
             credentials: "include",
           }),
-          fetchData<LogoData>("/website/header/getHeaderData"),
+          fetchData<{
+            name: string;
+            logoImageUrl: string;
+            phone: string;
+            address: string;
+            city: string;
+            governorate: string;
+            zipcode: number;
+          }>("/website/header/getHeaderData"),
         ]);
-        setOrder(orderData);
-        setCompany(headerData);
+        setOrder(orderData || null);
+        setCompany(headerData || null);
       } catch (err) {
         console.error(err);
       } finally {
@@ -83,7 +126,6 @@ export default function OrderByRef() {
     })();
   }, [orderRef]);
 
-  /* download PDF */
   const telechargerPDF = useCallback(async () => {
     const el = document.getElementById("invoice-to-download");
     if (!el) return;
@@ -96,7 +138,6 @@ export default function OrderByRef() {
     pdf.save(`FACTURE-${order?.ref.replace("ORDER-", "")}.pdf`);
   }, [order]);
 
-  /* ---------- loading / error states ---------- */
   if (loading) {
     return (
       <div className="w-[90%] md:w-[70%] mx-auto pt-16">
@@ -112,22 +153,60 @@ export default function OrderByRef() {
     );
   }
 
-  /* ---------- totals & helpers ---------- */
+  /* ---------- totals & derived fields ---------- */
   const itemsTotal = order.orderItems.reduce((sum, it) => {
     const unit =
-      it.discount > 0
-        ? (it.price * (100 - it.discount)) / 100
-        : it.price;
+      it.discount > 0 ? (it.price * (100 - it.discount)) / 100 : it.price;
     return sum + unit * it.quantity;
   }, 0);
-  const computedTotal = itemsTotal + order.deliveryCost;
-  const deliverAddress =
-    order.DeliveryAddress[0]?.DeliverToAddress || "—";
+
+  const dmArray = Array.isArray(order.deliveryMethod) ? order.deliveryMethod : [];
+  const deliveryMethodText =
+    dmArray.length > 0
+      ? dmArray
+          .map((d) => d.deliveryMethodName || "—")
+          .filter(Boolean)
+          .join(", ")
+      : order.deliveryMethodLegacy || "—";
+
+  const deliveryCostFromArray = dmArray.reduce((sum, d) => sum + toNumber(d.Cost), 0);
+  const deliveryCost =
+    typeof order.deliveryCostLegacy === "number"
+      ? order.deliveryCostLegacy
+      : deliveryCostFromArray;
+
+  const computedTotal = itemsTotal + deliveryCost;
+
+  const deliverAddress = order.DeliveryAddress[0]?.DeliverToAddress || "—";
+
+  const isPickup = Array.isArray(order.pickupMagasin) && order.pickupMagasin.length > 0;
+  const magasin = isPickup ? order.pickupMagasin[0] : null;
+  const magasinDisplay = magasin
+    ? [magasin.MagasinName, magasin.MagasinAddress].filter(Boolean).join(" – ")
+    : "—";
+  const addressLabel = isPickup ? "Magasin de retrait" : "Adresse de livraison";
+  const addressValue = isPickup ? magasinDisplay : deliverAddress;
+
+  // ⇩ CHANGED: show only the date(s), no "Livraison Express :" prefix
+  let expectedDatesText: string | null = null;
+  if (!isPickup && dmArray.length) {
+    const dates = dmArray
+      .map((d) => safeToDate(d.expectedDeliveryDate))
+      .filter((dt): dt is Date => !!dt)
+      .map((dt) => dt.toLocaleDateString("fr-FR"));
+    if (dates.length) expectedDatesText = dates.join(" • ");
+  }
+
+  const paymentLabels =
+    (order.paymentMethod || [])
+      .map((p) => (p as PaymentMethodItem).PaymentMethodLabel)
+      .filter(Boolean)
+      .join(", ") || order.paymentMethodLegacy || "—";
 
   /* ---------- render ---------- */
   return (
-    <div className="w-[90%] md:w-[70%] mx-auto pt-16">
-      {/* on‑screen invoice */}
+    <div className="w-[90%] md:w-[80%] mx-auto pt-16">
+      {/* on-screen invoice */}
       <div
         id="invoice-card"
         className="bg-gray-100 border border-gray-200 rounded-xl p-6 space-y-6 max-md:p-2"
@@ -137,14 +216,16 @@ export default function OrderByRef() {
           {([
             ["N° de commande", `#${order.ref.replace("ORDER-", "")}`],
             ["Date de commande", frDate(order.createdAt)],
-            ["Méthode de livraison", order.deliveryMethod],
-            ["Moyen de paiement", order.paymentMethod],
-            ["Adresse de livraison", deliverAddress],
+            ["Méthode de livraison", deliveryMethodText],
+            ["Moyen de paiement", paymentLabels],
+            [addressLabel, addressValue],
+            ...(expectedDatesText
+              ? ([
+                  ["Date de livraison prévue", expectedDatesText],
+                ] as const)
+              : []),
           ] as const).map(([label, value]) => (
-            <div
-              key={label}
-              className="flex-1 pb-4 md:pb-0 md:pl-6 space-y-1"
-            >
+            <div key={label} className="flex-1 pb-4 md:pb-0 md:pl-6 space-y-1">
               <p className="text-xs text-gray-400">{label}</p>
               <p className="text-sm font-medium">{value}</p>
             </div>
@@ -168,10 +249,7 @@ export default function OrderByRef() {
                     : it.price;
                 const lineTotal = unit * it.quantity;
                 return (
-                  <div
-                    key={it._id}
-                    className="flex items-start justify-between gap-4"
-                  >
+                  <div key={it._id} className="flex items-start justify-between gap-4">
                     <div className="relative w-20 h-20 rounded-lg">
                       <Image
                         src={it.mainImageUrl || "/placeholder.png"}
@@ -186,10 +264,10 @@ export default function OrderByRef() {
                     <div className="flex-1 max-md:text-xs">
                       <h4 className="font-semibold">{it.name}</h4>
                       <p className="text-sm text-gray-500 max-md:text-xs">
-                        Réf :&nbsp;{it.reference}
+                        Réf :&nbsp;{it.reference}
                       </p>
                       <p className="text-sm text-gray-500 max-md:text-xs">
-                        Quantité :&nbsp;{it.quantity}
+                        Quantité :&nbsp;{it.quantity}
                       </p>
                     </div>
                     <p className="font-semibold whitespace-nowrap max-md:text-xs">
@@ -207,21 +285,32 @@ export default function OrderByRef() {
         {/* total */}
         <div className="flex justify-between flex-wrap items-center max-md:justify-center">
           <p className="text-gray-500 font-medium">
-            Montant total :&nbsp;
-            <span className="text-black font-semibold">
-              {fmt(computedTotal)}
-            </span>
+            Montant total :&nbsp;
+            <span className="text-black font-semibold">{fmt(computedTotal)}</span>
           </p>
         </div>
       </div>
 
       {/* hidden invoice for PDF generation */}
-      {company && (
+      {company && order && (
         <div
           id="invoice-to-download"
           style={{ position: "absolute", top: "-9999px", left: "-9999px" }}
         >
-          <InvoiceProforma order={order} company={company} />
+          <InvoiceProforma
+            order={{
+              ref: order.ref,
+              DeliveryAddress: isPickup
+                ? [{ DeliverToAddress: addressValue }]
+                : order.DeliveryAddress,
+              orderItems: order.orderItems,
+              paymentMethod: paymentLabels,
+              deliveryMethod: deliveryMethodText,
+              deliveryCost: deliveryCost,
+              createdAt: order.createdAt,
+            }}
+            company={company}
+          />
         </div>
       )}
 

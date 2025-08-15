@@ -9,65 +9,69 @@ import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import Pagination from "@/components/PaginationClient";
 import { fetchData } from "@/lib/fetchData";
-import { useCurrency } from "@/contexts/CurrencyContext";   // ← added
+import { useCurrency } from "@/contexts/CurrencyContext";
 
-/* ---------- tiny skeleton helper ---------- */
 const Skel = ({ className = "" }: { className?: string }) => (
   <div className={`animate-pulse bg-gray-200 rounded ${className}`} />
 );
 
-/* ---------- data models ---------- */
 interface OrderItem {
   price: number;
   discount: number;
   quantity: number;
 }
 
+interface PaymentMethodItem {
+  PaymentMethodID: string;
+  PaymentMethodLabel: string;
+}
+
+interface DeliveryMethodItem {
+  deliveryMethodID: string;
+  deliveryMethodName?: string;
+  Cost: string | number;
+  expectedDeliveryDate?: string | Date;
+}
+
 interface Order {
   _id: string;
   ref: string;
-  paymentMethod: string;
-  deliveryMethod: string;
-  deliveryCost: number;
+  paymentMethod: PaymentMethodItem[];
+  deliveryMethod: DeliveryMethodItem[];
   orderItems: OrderItem[];
   createdAt: string;
+  paymentMethodLegacy?: string;
+  deliveryMethodLegacy?: string;
+  deliveryCostLegacy?: number;
 }
 
-/* ---------- component ---------- */
 export default function OrderHistory() {
   const router = useRouter();
   const { isAuthenticated, loading } = useAuth();
-  const { fmt } = useCurrency();                       // ← added
+  const { fmt } = useCurrency();
 
-  /* commandes */
   const [orders, setOrders] = useState<Order[]>([]);
   const [ordersLoading, setOrdersLoading] = useState(true);
   const [ordersError, setOrdersError] = useState("");
 
-  /* pagination */
   const PAR_PAGE = 5;
   const [courante, setCourante] = useState(1);
   const [pages, setPages] = useState(1);
 
-  /* 1) redirect if not authenticated */
   useEffect(() => {
     if (!loading && !isAuthenticated) router.push("/signin");
   }, [loading, isAuthenticated, router]);
 
-  /* 2) fetch orders */
   useEffect(() => {
     const fetchOrders = async () => {
       try {
-        const data = await fetchData<Order[]>(
-          "/client/order/getOrdersByClient",
-          { credentials: "include" }
-        );
+        const data = await fetchData<Order[]>("/client/order/getOrdersByClient", {
+          credentials: "include",
+        });
         setOrders(data);
         setPages(Math.ceil(data.length / PAR_PAGE));
       } catch (err: unknown) {
-        setOrdersError(
-          err instanceof Error ? err.message : "Erreur inattendue."
-        );
+        setOrdersError(err instanceof Error ? err.message : "Erreur inattendue.");
       } finally {
         setOrdersLoading(false);
       }
@@ -75,7 +79,6 @@ export default function OrderHistory() {
     if (!loading && isAuthenticated) fetchOrders();
   }, [loading, isAuthenticated]);
 
-  /* utilities */
   const dateFr = (iso: string) =>
     new Date(iso).toLocaleDateString("fr-FR", {
       year: "numeric",
@@ -88,14 +91,29 @@ export default function OrderHistory() {
     return orders.slice(start, start + PAR_PAGE);
   };
 
-  /* render */
+  const paymentText = (pm: PaymentMethodItem[], legacy?: string) => {
+    const labels = pm.map((p) => p.PaymentMethodLabel).filter(Boolean);
+    return labels.length ? labels.join(", ") : legacy || "—";
+  };
+
+  const deliveryMethodText = (dm: DeliveryMethodItem[], legacy?: string) => {
+    const names = dm.map((d) => d.deliveryMethodName || "").filter(Boolean);
+    return names.length ? names.join(", ") : legacy || "—";
+    };
+
+  const deliveryCostFromDM = (dm: DeliveryMethodItem[], legacy?: number) => {
+    if (typeof legacy === "number") return legacy;
+    return dm.reduce((sum, d) => {
+      const v = typeof d.Cost === "number" ? d.Cost : parseFloat(String(d.Cost || 0));
+      return sum + (isFinite(v) ? v : 0);
+    }, 0);
+  };
+
   return (
     <div className="w-[90%] mx-auto flex flex-col justify-between gap-4 h-[75vh] max-md:h-fit py-6">
       <div className="w-full max-lg:w-[95%] rounded-lg p-4 flex flex-col gap-6">
         <aside className="space-y-2">
-          <h1 className="text-lg font-semibold text-black">
-            Historique des commandes
-          </h1>
+          <h1 className="text-lg font-semibold text-black">Historique des commandes</h1>
           <p className="text-sm text-gray-400">
             Suivez l’état de vos commandes récentes, gérez les retours et téléchargez vos factures.
           </p>
@@ -113,49 +131,41 @@ export default function OrderHistory() {
         ) : (
           <>
             {tronque().map((o) => {
-              // compute total from orderItems + deliveryCost
               const itemsTotal = o.orderItems.reduce((sum, itm) => {
-                const ttc = itm.discount
-                  ? (itm.price * (100 - itm.discount)) / 100
-                  : itm.price;
+                const ttc = itm.discount ? (itm.price * (100 - itm.discount)) / 100 : itm.price;
                 return sum + ttc * itm.quantity;
               }, 0);
-              const total = itemsTotal + o.deliveryCost;     // ← numeric total
+              const ship = deliveryCostFromDM(o.deliveryMethod, o.deliveryCostLegacy);
+              const total = itemsTotal + ship;
 
               return (
                 <div key={o._id} className="flex flex-col gap-4">
                   <div className="bg-gray-100 rounded-lg p-6 flex justify-between items-center gap-4 max-md:flex-col max-md:items-start h-20 max-md:h-96">
-                    {/* date column */}
                     <div className="flex flex-col gap-1">
                       <span className="text-xs text-gray-500">Date</span>
                       <span>{dateFr(o.createdAt)}</span>
                     </div>
 
-                    {/* reference column */}
                     <div className="flex flex-col gap-1">
-                      <span className="text-xs text-gray-500">Commande n°</span>
+                      <span className="text-xs text-gray-500">Commande n°</span>
                       <span>{o.ref}</span>
                     </div>
 
-                    {/* delivery method column */}
                     <div className="flex flex-col gap-1">
-                      <span className="text-xs text-gray-500">Méthode de livraison</span>
-                      <span>{o.deliveryMethod}</span>
+                      <span className="text-xs text-gray-500">Méthode de livraison</span>
+                      <span>{deliveryMethodText(o.deliveryMethod, o.deliveryMethodLegacy)}</span>
                     </div>
 
-                    {/* payment method column */}
                     <div className="flex flex-col gap-1">
-                      <span className="text-xs text-gray-500">Moyen de paiement</span>
-                      <span>{o.paymentMethod}</span>
+                      <span className="text-xs text-gray-500">Moyen de paiement</span>
+                      <span>{paymentText(o.paymentMethod, o.paymentMethodLegacy)}</span>
                     </div>
 
-                    {/* total column */}
                     <div className="flex flex-col gap-1">
                       <span className="text-xs text-gray-500">Total</span>
-                      <span>{fmt(total)}</span>              {/* ← formatted */}
+                      <span>{fmt(total)}</span>
                     </div>
 
-                    {/* action */}
                     <Link
                       href={`/orderhistory/${o.ref}`}
                       className="mt-2 rounded-md border border-gray-300 px-4 py-2 text-sm text-black hover:text-white hover:bg-primary max-md:text-xs max-md:w-full text-center"
@@ -169,11 +179,7 @@ export default function OrderHistory() {
           </>
         )}
       </div>
-      <Pagination
-        currentPage={courante}
-        totalPages={pages}
-        onPageChange={setCourante}
-      />
+      <Pagination currentPage={courante} totalPages={pages} onPageChange={setCourante} />
     </div>
   );
 }
