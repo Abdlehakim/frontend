@@ -6,7 +6,6 @@ import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FaBars } from "react-icons/fa6";
-import { AiOutlinePlus, AiOutlineMinus, AiOutlineClose } from "react-icons/ai";
 import { FaLongArrowAltLeft, FaPlus, FaMinus } from "react-icons/fa";
 
 /* getAllName response shapes */
