@@ -6,8 +6,10 @@ import React, { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FaBars } from "react-icons/fa6";
-import { AiOutlinePlus, AiOutlineMinus } from "react-icons/ai";
+import { AiOutlinePlus, AiOutlineMinus, AiOutlineClose } from "react-icons/ai";
+import { FaLongArrowAltLeft, FaPlus, FaMinus } from "react-icons/fa";
 
+/* getAllName response shapes */
 export interface SubCategorie {
   name: string;
   slug: string;
@@ -31,17 +33,7 @@ const Headerbottomleft: React.FC<HeaderbottomleftProps> = ({ categories }) => {
   const menuWrapperRef = useRef<HTMLDivElement>(null);
   const toggleButtonRef = useRef<HTMLDivElement>(null);
 
-  // used to avoid double-trigger (pointerdown + click on iOS)
-  const suppressNextClickRef = useRef(false);
-
-  const isDesktop = () =>
-    typeof window !== "undefined" && window.innerWidth >= 1024;
-
   const hasSubs = (cat: Categorie) => (cat.subcategories?.length || 0) > 0;
-
-  const handleMouseEnter = (catSlug: string) => {
-    if (isDesktop()) setActiveCategory(catSlug);
-  };
 
   const toggleMenu = (e: React.MouseEvent) => {
     e.stopPropagation();
@@ -52,58 +44,23 @@ const Headerbottomleft: React.FC<HeaderbottomleftProps> = ({ categories }) => {
     setActiveCategory(null);
   };
 
-  // Mobile: open/close on POINTER DOWN (so one tap opens immediately)
-  const handleRowPointerDown = (
-    e: React.PointerEvent<HTMLAnchorElement>,
-    cat: Categorie
-  ) => {
-    if (isDesktop()) return; // desktop uses hover/click
-    if (!hasSubs(cat)) return; // let normal navigation happen for leaf cats
-
-    e.preventDefault();
-    e.stopPropagation();
-    setActiveCategory((prev) => (prev === cat.slug ? null : cat.slug));
-    suppressNextClickRef.current = true; // prevent subsequent click from navigating
-  };
-
-  // Click: desktop navigates; mobile navigates only if no subs
-  const handleRowClick = async (
-    e: React.MouseEvent<HTMLAnchorElement>,
-    cat: Categorie
-  ) => {
-    if (suppressNextClickRef.current) {
-      // ignore the click that follows our pointerdown toggle
-      suppressNextClickRef.current = false;
-      return;
-    }
-
-    if (isDesktop()) {
-      closeMenu();
-      return; // let Link navigate
-    }
-
-    if (!hasSubs(cat)) {
-      e.preventDefault();
-      closeMenu();
-      router.push(`/${cat.slug}`);
-      return;
-    }
-
-    // If it has subs on mobile, pointerdown already handled the toggle.
-    e.preventDefault();
-  };
-
+  // Desktop: close on click outside / scroll
   useEffect(() => {
+    const isDesktop = () =>
+      typeof window !== "undefined" && window.innerWidth >= 1024;
+
     const handleClickOutside = (e: MouseEvent) => {
       if (
         isMenuOpen &&
+        isDesktop() &&
         !menuWrapperRef.current?.contains(e.target as Node) &&
         !toggleButtonRef.current?.contains(e.target as Node)
       ) {
         closeMenu();
       }
     };
-    const handleScroll = () => isMenuOpen && closeMenu();
+    const handleScroll = () =>
+      isMenuOpen && isDesktop() && closeMenu();
 
     document.addEventListener("mousedown", handleClickOutside);
     window.addEventListener("scroll", handleScroll);
@@ -111,6 +68,20 @@ const Headerbottomleft: React.FC<HeaderbottomleftProps> = ({ categories }) => {
       document.removeEventListener("mousedown", handleClickOutside);
       window.removeEventListener("scroll", handleScroll);
     };
+  }, [isMenuOpen]);
+
+  // Mobile: lock body scroll while drawer is open
+  useEffect(() => {
+    const isDesktop = () =>
+      typeof window !== "undefined" && window.innerWidth >= 1024;
+
+    if (isMenuOpen && !isDesktop()) {
+      const prev = document.body.style.overflow;
+      document.body.style.overflow = "hidden";
+      return () => {
+        document.body.style.overflow = prev;
+      };
+    }
   }, [isMenuOpen]);
 
   return (
@@ -124,49 +95,33 @@ const Headerbottomleft: React.FC<HeaderbottomleftProps> = ({ categories }) => {
         <p>TOUTES NOS CATEGORIES</p>
       </div>
 
+      {/* ====================== Desktop dropdown (hover) ====================== */}
       {isMenuOpen && (
         <div
           ref={menuWrapperRef}
           onClick={(e) => e.stopPropagation()}
-          className="absolute z-30 top-12 left-1/2 -translate-x-1/2 bg-white shadow-lg mt-4 border-2 border-white select-none"
+          className="absolute z-30 top-12 left-1/2 -translate-x-1/2 bg-white shadow-lg mt-4 border-2 border-white select-none hidden lg:block"
         >
           <div className="flex flex-col w-[300px] bg-white">
             {categories.map((cat) => {
               const open = activeCategory === cat.slug && hasSubs(cat);
-
               return (
                 <div
                   key={cat.slug}
                   className="relative"
-                  onMouseEnter={() => handleMouseEnter(cat.slug)}
-                  onMouseLeave={() => isDesktop() && setActiveCategory(null)}
+                  onMouseEnter={() => setActiveCategory(cat.slug)}
+                  onMouseLeave={() => setActiveCategory(null)}
                 >
-                  {/* Category row */}
                   <Link
                     href={`/${cat.slug}`}
-                    role={!isDesktop() && hasSubs(cat) ? "button" : undefined}
-                    aria-expanded={!isDesktop() && hasSubs(cat) ? open : undefined}
-                    onPointerDown={(e) => handleRowPointerDown(e, cat)}
-                    onClick={(e) => handleRowClick(e, cat)}
-                    className="group flex items-center justify-between lg:justify-start gap-3 px-4 py-2 duration-300 hover:bg-primary hover:text-white"
+                    onClick={closeMenu}
+                    className="group flex items-center gap-3 px-4 py-2 duration-300 hover:bg-primary hover:text-white"
                   >
                     <span className="font-bold text-base">{cat.name}</span>
-
-                    {/* Mobile-only expand/collapse icon */}
-                    {hasSubs(cat) && (
-                      <span className="lg:hidden ml-auto" aria-hidden="true">
-                        {open ? (
-                          <AiOutlineMinus className="text-base font-bold text-primary" />
-                        ) : (
-                          <AiOutlinePlus className="text-base font-bold text-primary" />
-                        )}
-                      </span>
-                    )}
                   </Link>
 
-                  {/* Desktop sub-cats (hover) */}
-                  {isDesktop() && open && (
-                    <div className="hidden lg:block absolute top-0 left-full pl-4 w-[300px]">
+                  {open && (
+                    <div className="absolute top-0 left-full pl-4 w-[300px]">
                       {cat.subcategories.map((sub) => (
                         <Link
                           key={sub.slug}
@@ -181,30 +136,96 @@ const Headerbottomleft: React.FC<HeaderbottomleftProps> = ({ categories }) => {
                       ))}
                     </div>
                   )}
-
-                  {/* Mobile sub-cats (accordion) */}
-                  <div
-                    className={`lg:hidden flex flex-col pl-8 bg-gray-50 overflow-hidden transition-all duration-300 ease-in-out ${
-                      open ? "max-h-96 py-2" : "max-h-0 py-0"
-                    }`}
-                  >
-                    {cat.subcategories?.map((sub) => (
-                      <Link
-                        key={sub.slug}
-                        href={`/${sub.slug}`}
-                        onClick={closeMenu}
-                        className="flex items-center gap-3 px-4 py-2 duration-300 hover:bg-primary hover:text-white"
-                      >
-                        <span className="font-bold text-base">{sub.name}</span>
-                      </Link>
-                    ))}
-                  </div>
                 </div>
               );
             })}
           </div>
         </div>
       )}
+
+      {/* ====================== Mobile drawer (slides from left) ====================== */}
+      {/* Backdrop */}
+      {isMenuOpen && (
+        <div
+          className="lg:hidden fixed inset-0 z-40 bg-black/30"
+          onClick={closeMenu}
+        />
+      )}
+
+      {/* Drawer */}
+      <div
+        className={`lg:hidden fixed inset-y-0 left-0 z-50 h-full w-[90%] max-w-[95%] bg-white shadow-2xl transform transition-transform duration-300 ease-out ${
+          isMenuOpen ? "translate-x-0" : "-translate-x-full"
+        }`}
+        onClick={(e) => e.stopPropagation()}
+        role="dialog"
+        aria-modal="true"
+        aria-label="Navigation catégories"
+      >
+        <div className="h-14 px-4 flex items-center gap-3 border-b-2 border-primary">
+          <span className="font-bold">TOUTES NOS CATEGORIES</span>
+          <button
+            onClick={closeMenu}
+            className="ml-auto p-2 rounded hover:bg-gray-100"
+            aria-label="Fermer"
+          >
+            <FaLongArrowAltLeft className="text-xl" />
+          </button>
+        </div>
+
+        <nav className="py-2">
+          {categories.map((cat) => {
+            const open = activeCategory === cat.slug && hasSubs(cat);
+            return (
+              <div key={cat.slug} className="border-b last:border-b-0">
+                <button
+                  type="button"
+                  onClick={() => {
+                    if (hasSubs(cat)) {
+                      setActiveCategory((prev) =>
+                        prev === cat.slug ? null : cat.slug
+                      );
+                    } else {
+                      closeMenu();
+                      router.push(`/${cat.slug}`);
+                    }
+                  }}
+                  className="w-full flex items-center justify-between gap-3 px-4 py-2 text-left hover:bg-gray-50"
+                  aria-expanded={open}
+                >
+                  <span className="font-semibold text-base">{cat.name}</span>
+                  {hasSubs(cat) && (
+                    <span aria-hidden="true">
+                      {open ? (
+                        <FaMinus className="text-base" />
+                      ) : (
+                        <FaPlus className="text-base" />
+                      )}
+                    </span>
+                  )}
+                </button>
+
+                <div
+                  className={`overflow-hidden transition-[max-height,padding] duration-300 ease-in-out ${
+                    open ? "max-h-96 py-2" : "max-h-0 py-0"
+                  }`}
+                >
+                  {cat.subcategories?.map((sub) => (
+                    <Link
+                      key={sub.slug}
+                      href={`/${sub.slug}`}
+                      onClick={closeMenu}
+                      className="block px-8 py-2 hover:bg-primary/10"
+                    >
+                      <span className="font-medium text-sm">{sub.name}</span>
+                    </Link>
+                  ))}
+                </div>
+              </div>
+            );
+          })}
+        </nav>
+      </div>
     </div>
   );
 };
