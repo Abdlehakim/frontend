@@ -10,7 +10,7 @@ export default async function Headerbottom() {
   let categories: Categorie[] = [];
 
   try {
-    const fetched = await fetchData<Categorie[]>("categories/getAll");
+    const fetched = await fetchData<Categorie[]>("categories/getAllName");
     if (Array.isArray(fetched)) {
       categories = fetched;
     }

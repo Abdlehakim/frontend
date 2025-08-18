@@ -1,160 +1,63 @@
-/* ------------------------------------------------------------------ */
 /*  src/components/menu/Headerbottomleft.tsx                          */
-/*  (v4) — mobile:                                                   */
-/*    • if a category has *no* sub-cats → navigate immediately        */
-/*    • otherwise → open smooth accordion                            */
-/* ------------------------------------------------------------------ */
+
 "use client";
 
 import React, { useEffect, useRef, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { FaBars } from "react-icons/fa6";
-import { fetchData } from "@/lib/fetchData";
 
-/* ───────── interfaces ───────── */
-export interface Categorie {
-  _id: string;
-  reference: string;
-  name: string;
-  slug: string;
-  iconUrl?: string | null;
-  imageUrl?: string | null;
-  bannerUrl?: string | null;
-}
+/* Data shapes returned by /api/categories/getAllName */
 export interface SubCategorie {
-  _id: string;
   name: string;
   slug: string;
-  iconUrl?: string | null;
 }
+export interface Categorie {
+  name: string;
+  slug: string;
+  subcategories: SubCategorie[];
+}
+
 interface HeaderbottomleftProps {
   categories: Categorie[];
 }
-interface InlineOrImgProps {
-  url: string;
-  className?: string;
-  alt?: string;
-}
 
-/* ───────── helpers ───────── */
-const InlineOrImg: React.FC<InlineOrImgProps> = ({ url, className, alt }) => {
-  const [svg, setSvg] = useState<string | null>(null);
-  const isSvg = /\.svg($|\?)/i.test(url);
-
-  useEffect(() => {
-    if (!isSvg) return;
-    let canceled = false;
-
-    fetch(url)
-      .then((r) => r.text())
-      .then((txt) => {
-        if (canceled) return;
-        const cleaned = txt
-          .replace(/(fill|stroke)="[^"]*"/gi, "")
-          .replace(/(width|height)="[^"]*"/gi, "")
-          .replace(
-            /<svg([^>]*)>/i,
-            `<svg$1 class="fill-current stroke-current w-full h-full">`
-          );
-        setSvg(cleaned);
-      })
-      .catch(() => {});
-
-    return () => {
-      canceled = true;
-    };
-  }, [url, isSvg]);
-
-  if (isSvg && svg) {
-    return (
-      <span
-        className={className}
-        role="img"
-        aria-label={alt}
-        dangerouslySetInnerHTML={{ __html: svg }}
-      />
-    );
-  }
-
-  return (
-    <Image
-      src={url}
-      alt={alt || ""}
-      width={20}
-      height={20}
-      unoptimized
-      className={className}
-    />
-  );
-};
-
-/* ───────── component ───────── */
 const Headerbottomleft: React.FC<HeaderbottomleftProps> = ({ categories }) => {
   const router = useRouter();
 
-  /** map<catId, subCats[]> */
-  const [subcategories, setSubcategories] = useState<
-    Record<string, SubCategorie[]>
-  >({});
+  // store the category slug (not _id)
   const [activeCategory, setActiveCategory] = useState<string | null>(null);
   const [isMenuOpen, setIsMenuOpen] = useState(false);
 
   const menuWrapperRef = useRef<HTMLDivElement>(null);
   const toggleButtonRef = useRef<HTMLDivElement>(null);
 
-  /* --- fetch sub-cats; return array so caller can inspect --- */
-  const fetchSubcategories = async (catId: string) => {
-    try {
-      const data = await fetchData<SubCategorie[]>(
-        `categories/${catId}/subcategories`
-      );
-      setSubcategories((prev) => ({ ...prev, [catId]: data }));
-      return data;
-    } catch (err) {
-      console.error("fetchSubcategories error:", err);
-      return [];
-    }
-  };
+  const handleMouseEnter = (catSlug: string) => setActiveCategory(catSlug);
 
-  /* --- desktop hover (≥ lg) --- */
-  const handleMouseEnter = (catId: string) => {
-    setActiveCategory(catId);
-    if (!subcategories[catId]) fetchSubcategories(catId);
-  };
-
-  /* --- mobile click (< lg) --- */
   const handleCategoryClick = async (
     e: React.MouseEvent<HTMLAnchorElement>,
     cat: Categorie
   ) => {
     if (typeof window === "undefined" || window.innerWidth >= 1024) {
-      // desktop → let <Link> handle navigation, then close
+      // desktop → navigate and close
       closeMenu();
       return;
     }
 
-    // ---- mobile branch ----
-    const alreadyLoaded = subcategories[cat._id];
-    const subs =
-      alreadyLoaded ?? (await fetchSubcategories(cat._id)); // ensure we know
-
-    if (!subs.length) {
-      // no sub-cats → navigate immediately
-      // because we'll preventDefault below, navigate programmatically:
+    // mobile:
+    const hasSubs = (cat.subcategories?.length || 0) > 0;
+    if (!hasSubs) {
       e.preventDefault();
       closeMenu();
       router.push(`/${cat.slug}`);
       return;
     }
 
-    // has sub-cats → keep menu open & toggle accordion
+    // has subcats → toggle accordion
     e.preventDefault();
-    setActiveCategory(cat._id);
+    setActiveCategory((prev) => (prev === cat.slug ? null : cat.slug));
   };
 
-  /* --- menu visibility --- */
   const toggleMenu = (e: React.MouseEvent) => {
     e.stopPropagation();
     setIsMenuOpen((p) => !p);
@@ -164,7 +67,6 @@ const Headerbottomleft: React.FC<HeaderbottomleftProps> = ({ categories }) => {
     setActiveCategory(null);
   };
 
-  /* --- click outside & scroll hide --- */
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (
@@ -185,7 +87,6 @@ const Headerbottomleft: React.FC<HeaderbottomleftProps> = ({ categories }) => {
     };
   }, [isMenuOpen]);
 
-  /* ───────── render ───────── */
   return (
     <div
       className="relative w-[300px] h-[70%] bg-white text-primary font-bold flex justify-center items-center cursor-pointer"
@@ -197,7 +98,6 @@ const Headerbottomleft: React.FC<HeaderbottomleftProps> = ({ categories }) => {
         <p>TOUTES NOS CATEGORIES</p>
       </div>
 
-      {/* ---------------- dropdown ---------------- */}
       {isMenuOpen && (
         <div
           ref={menuWrapperRef}
@@ -206,79 +106,56 @@ const Headerbottomleft: React.FC<HeaderbottomleftProps> = ({ categories }) => {
         >
           <div className="flex flex-col w-[300px] bg-white">
             {categories.map((cat) => {
-              const mobileOpen =
-                activeCategory === cat._id &&
-                (subcategories[cat._id]?.length || 0) > 0;
+              const hasSubs = (cat.subcategories?.length || 0) > 0;
+              const mobileOpen = activeCategory === cat.slug && hasSubs;
 
               return (
                 <div
-                  key={cat._id}
+                  key={cat.slug} // 👈 use slug as unique key
                   className="relative"
-                  onMouseEnter={() => handleMouseEnter(cat._id)}
+                  onMouseEnter={() => handleMouseEnter(cat.slug)}
                   onMouseLeave={() => setActiveCategory(null)}
                 >
-                  {/* ---- category row ---- */}
+                  {/* Category row */}
                   <Link
                     href={`/${cat.slug}`}
                     onClick={(e) => handleCategoryClick(e, cat)}
                     className="group flex items-center gap-3 px-4 py-2 duration-300 hover:bg-primary hover:text-white"
                   >
-                    {cat.iconUrl && (
-                      <InlineOrImg
-                        url={cat.iconUrl}
-                        alt={cat.name}
-                        className="w-5 h-5 group-hover:text-white"
-                      />
-                    )}
                     <span className="font-bold text-base">{cat.name}</span>
                   </Link>
 
-                  {/* ---- desktop sub-cats (hover) ---- */}
-                  {activeCategory === cat._id &&
-                    subcategories[cat._id]?.length > 0 && (
-                      <div className="hidden lg:block absolute top-0 left-full pl-4 w-[300px]">
-                        {subcategories[cat._id].map((sub) => (
-                          <Link
-                            key={sub._id}
-                            href={`/${sub.slug}`}
-                            onClick={closeMenu}
-                            className="flex items-center gap-3 bg-white px-4 py-2 border-2 border-white duration-300 hover:bg-primary hover:text-white"
-                          >
-                            {sub.iconUrl && (
-                              <InlineOrImg
-                                url={sub.iconUrl}
-                                alt={sub.name}
-                                className="w-5 h-5 group-hover:text-white"
-                              />
-                            )}
-                            <span className="font-bold text-base">
-                              {sub.name}
-                            </span>
-                          </Link>
-                        ))}
-                      </div>
-                    )}
+                  {/* Desktop sub-cats (hover) */}
+                  {activeCategory === cat.slug && hasSubs && (
+                    <div className="hidden lg:block absolute top-0 left-full pl-4 w-[300px]">
+                      {cat.subcategories.map((sub) => (
+                        <Link
+                          key={sub.slug} // 👈 use sub slug as unique key
+                          href={`/${sub.slug}`}
+                          onClick={closeMenu}
+                          className="flex items-center gap-3 bg-white px-4 py-2 border-2 border-white duration-300 hover:bg-primary hover:text-white"
+                        >
+                          <span className="font-bold text-base">
+                            {sub.name}
+                          </span>
+                        </Link>
+                      ))}
+                    </div>
+                  )}
 
-                  {/* ---- mobile sub-cats (< lg) – smooth accordion ---- */}
+                  {/* Mobile sub-cats (accordion) */}
                   <div
                     className={`lg:hidden flex flex-col pl-8 bg-gray-50 overflow-hidden transition-all duration-300 ease-in-out ${
                       mobileOpen ? "max-h-96 py-2" : "max-h-0 py-0"
                     }`}
                   >
-                    {subcategories[cat._id]?.map((sub) => (
+                    {cat.subcategories?.map((sub) => (
                       <Link
-                        key={sub._id}
+                        key={sub.slug} // 👈 use sub slug as unique key
                         href={`/${sub.slug}`}
                         onClick={closeMenu}
                         className="flex items-center gap-3 px-4 py-2 duration-300 hover:bg-primary hover:text-white"
                       >
-                        {sub.iconUrl && (
-                          <InlineOrImg
-                            url={sub.iconUrl}
-                            alt={sub.name}
-                            className="w-5 h-5 group-hover:text-white"
-                          />
-                        )}
                         <span className="font-bold text-base">{sub.name}</span>
                       </Link>
                     ))}
