@@ -16,10 +16,7 @@ import { fetchData } from "@/lib/fetchData";
 /* ---------- font ---------- */
 const poppins = Poppins({
   subsets: ["latin", "latin-ext"],
-  weight: [
-    "100", "200", "300", "400",
-    "500", "600", "700", "800", "900",
-  ],
+  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
   style: ["normal", "italic"],
   display: "swap",
 });
@@ -53,7 +50,7 @@ export default async function RootLayout({
       "/website/currency/primary",
       {
         next: { revalidate },
-      },
+      }
     );
     primary = primaryCurrency;
   } catch {
@@ -70,7 +67,6 @@ export default async function RootLayout({
             <ClientShell>{children}</ClientShell>
           </Providers>
         </CurrencyProvider>
-
         {/* Google One‑tap & friends (outside React tree) */}
         <GoogleIdentityLoader />
       </body>
