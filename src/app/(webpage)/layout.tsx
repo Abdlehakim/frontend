@@ -1,7 +1,6 @@
 /* ------------------------------------------------------------------
-   src/app/(webpage)/Layout.tsx
+   src/app/(webpage)/layout.tsx
 ------------------------------------------------------------------ */
-
 import Footer from "@/components/menu/Footer";
 import Header from "@/components/menu/Header";
 import StoreProviders from "@/components/Provider/StoreProvider";
@@ -13,7 +12,7 @@ import { fetchData } from "@/lib/fetchData";
 
 export const revalidate = 10;
 
-export default async function SubLayout({ children }: { children: React.ReactNode }) {
+export default async function Layout({ children }: { children: React.ReactNode }) {
   let primary = "TND";
   try {
     const { primaryCurrency } = await fetchData<{ primaryCurrency: string }>(
@@ -27,7 +26,8 @@ export default async function SubLayout({ children }: { children: React.ReactNod
     <div className="flex flex-col">
       <CurrencyProvider initial={primary}>
         <Providers>
-          <ClientShell>
+          {/* Public: no auth required */}
+          <ClientShell requireAuth={false}>
             <StoreProviders>
               <Header />
               {children}
