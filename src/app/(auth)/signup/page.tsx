@@ -1,21 +1,17 @@
 // src/app/(auth)/signup/page.tsx
 import SignUpForm from "@/components/signin/SignUpForm";
 
-type SP = Record<string, string | string[] | undefined>;
+
+type SearchParams = Record<string, string | string[] | undefined>;
 
 export default async function SignUpPage({
   searchParams,
 }: {
-  searchParams?: Promise<SP>;
+  searchParams: Promise<SearchParams>;
 }) {
-  const params: SP = await (searchParams ?? Promise.resolve({}));
+  const sp = await searchParams;
+  const raw = Array.isArray(sp.redirectTo) ? sp.redirectTo[0] : sp.redirectTo;
+  const safe = typeof raw === "string" && raw.startsWith("/") ? raw : "/";
 
-  const raw = Array.isArray(params.redirectTo) ? params.redirectTo[0] : params.redirectTo;
-  const decodedOnce  = typeof raw === "string" ? decodeURIComponent(raw) : undefined;
-  const decodedTwice = decodedOnce ? decodeURIComponent(decodedOnce) : undefined;
-
-  const target = decodedTwice || decodedOnce;
-  const redirectTo = target && target.startsWith("/") ? target : "/";
-
-  return <SignUpForm redirectTo={redirectTo} />;
+  return <SignUpForm redirectTo={safe}/>;
 }

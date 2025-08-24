@@ -5,11 +5,15 @@ import React, { useState } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
+
 import { fetchData } from "@/lib/fetchData";
 import LoadingDots from "@/components/LoadingDots";
 
+interface SignUpFormProps {
+  redirectTo: string;
+}
 
-export default function SignUpForm() {
+export default function SignUpForm({ redirectTo }: SignUpFormProps) {
 
   const [username, setUsername]   = useState("");
   const [phone, setPhone]         = useState("");
@@ -37,7 +41,8 @@ export default function SignUpForm() {
         credentials: "include",
         body: JSON.stringify({ username, phone, email, password }),
       });
-
+      // Hard reload to ensure cookies/state are picked up in prod
+      window.location.assign(redirectTo);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Échec de l’inscription");
       setIsSubmitting(false);
