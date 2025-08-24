@@ -17,8 +17,6 @@ import DeliveryMethod from "@/components/checkout/DeliveryMethod";
 import OrderSummary from "@/components/checkout/OrderSummary";
 import Magasins, { Magasin } from "@/components/checkout/MagasinSelected";
 
-import { useAuth } from "@/hooks/useAuth";
-import { useRouter, useSearchParams } from "next/navigation";
 import { fetchData } from "@/lib/fetchData";
 
 interface PaymentMethodAPI {
@@ -43,9 +41,6 @@ const Checkout: React.FC = () => {
   const items = useSelector((s: RootState) => s.cart.items);
   const dispatch = useDispatch();
 
-  const { isAuthenticated, loading } = useAuth();
-  const router = useRouter();
-  const searchParams = useSearchParams();
 
   const [currentStep, setCurrentStep] =
     useState<"cart" | "checkout" | "order-summary">("cart");
@@ -70,12 +65,6 @@ const Checkout: React.FC = () => {
 
   const addressSectionRef = useRef<HTMLDivElement>(null);
 
-  useEffect(() => {
-    if (!loading && !isAuthenticated) {
-      const redirectTo = searchParams.get("redirectTo") || "/";
-      router.push(`/signin?redirectTo=${redirectTo}`);
-    }
-  }, [loading, isAuthenticated, router, searchParams]);
 
   useEffect(() => {
     (async () => {
