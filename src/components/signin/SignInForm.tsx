@@ -2,7 +2,7 @@
    src/components/signin/SignInForm.tsx
 ------------------------------------------------------------------ */
 "use client";
-
+import { FaFacebookF, FaInstagram, FaTwitter, FaYoutube } from "react-icons/fa";
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
@@ -190,6 +190,30 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
 
               <hr className="border-t border-gray-300" />
             </form>
+            <div className="flex items-center w-full gap-2 justify-center">
+              <div className="flex-grow border-t border-gray-400" />
+              <Link
+                href="/signup"
+                className="text-primary text-center text-sm font-semibold hover:underline"
+              >
+                Vous n’avez pas de compte ? Cliquez ici pour en créer un.
+              </Link>
+              <div className="flex-grow border-t border-gray-400" />
+            </div>
+
+            <hr className="border-t border-gray-300" />
+
+            <div className="flex gap-4 justify-center">
+              {[FaFacebookF, FaInstagram, FaTwitter, FaYoutube].map((Icon, i) => (
+                <a
+                  key={i}
+                  href="#"
+                  className="w-12 h-12 border-4 border-gray-500 rounded-full flex items-center justify-center text-gray-500"
+                >
+                  <Icon className="text-2xl" />
+                </a>
+              ))}
+            </div>
           </div>
         </div>
       </div>
