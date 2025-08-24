@@ -6,7 +6,6 @@
 import React, { useEffect, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useAuth } from "@/hooks/useAuth";
 import Pagination from "@/components/PaginationClient";
 import { fetchData } from "@/lib/fetchData";
 import { useCurrency } from "@/contexts/CurrencyContext";
@@ -20,19 +19,16 @@ interface OrderItem {
   discount: number;
   quantity: number;
 }
-
 interface PaymentMethodItem {
   PaymentMethodID: string;
   PaymentMethodLabel: string;
 }
-
 interface DeliveryMethodItem {
   deliveryMethodID: string;
   deliveryMethodName?: string;
   Cost: string | number;
   expectedDeliveryDate?: string | Date;
 }
-
 interface Order {
   _id: string;
   ref: string;
@@ -47,7 +43,6 @@ interface Order {
 
 export default function OrderHistory() {
   const router = useRouter();
-  const { isAuthenticated, loading } = useAuth();
   const { fmt } = useCurrency();
 
   const [orders, setOrders] = useState<Order[]>([]);
@@ -59,25 +54,51 @@ export default function OrderHistory() {
   const [pages, setPages] = useState(1);
 
   useEffect(() => {
-    if (!loading && !isAuthenticated) router.push("/signin");
-  }, [loading, isAuthenticated, router]);
+    let cancelled = false;
 
-  useEffect(() => {
     const fetchOrders = async () => {
+      setOrdersLoading(true);
+      setOrdersError("");
+
       try {
         const data = await fetchData<Order[]>("/client/order/getOrdersByClient", {
           credentials: "include",
         });
+        if (cancelled) return;
         setOrders(data);
-        setPages(Math.ceil(data.length / PAR_PAGE));
+        setPages(Math.ceil((data?.length ?? 0) / PAR_PAGE));
       } catch (err: unknown) {
-        setOrdersError(err instanceof Error ? err.message : "Erreur inattendue.");
+        const message = err instanceof Error ? err.message : String(err);
+
+        // Safely read a numeric `status` field if present
+        const status: number | undefined = (() => {
+          if (typeof err === "object" && err !== null && "status" in err) {
+            const s = (err as { status?: unknown }).status;
+            return typeof s === "number" ? s : undefined;
+          }
+          return undefined;
+        })();
+
+        if (status === 401) {
+          const target =
+            typeof window !== "undefined"
+              ? `${window.location.pathname}${window.location.search || ""}`
+              : "/orderhistory";
+          router.replace(`/signin?redirectTo=${encodeURIComponent(target)}`);
+          return;
+        }
+
+        if (!cancelled) setOrdersError(message || "Erreur inattendue.");
       } finally {
-        setOrdersLoading(false);
+        if (!cancelled) setOrdersLoading(false);
       }
     };
-    if (!loading && isAuthenticated) fetchOrders();
-  }, [loading, isAuthenticated]);
+
+    fetchOrders();
+    return () => {
+      cancelled = true;
+    };
+  }, [router]);
 
   const dateFr = (iso: string) =>
     new Date(iso).toLocaleDateString("fr-FR", {
@@ -99,7 +120,7 @@ export default function OrderHistory() {
   const deliveryMethodText = (dm: DeliveryMethodItem[], legacy?: string) => {
     const names = dm.map((d) => d.deliveryMethodName || "").filter(Boolean);
     return names.length ? names.join(", ") : legacy || "—";
-    };
+  };
 
   const deliveryCostFromDM = (dm: DeliveryMethodItem[], legacy?: number) => {
     if (typeof legacy === "number") return legacy;
@@ -118,6 +139,7 @@ export default function OrderHistory() {
             Suivez l’état de vos commandes récentes, gérez les retours et téléchargez vos factures.
           </p>
         </aside>
+
         {ordersLoading ? (
           <div className="flex flex-col gap-4">
             {Array.from({ length: PAR_PAGE }).map((_, i) => (
@@ -179,6 +201,7 @@ export default function OrderHistory() {
           </>
         )}
       </div>
+
       <Pagination currentPage={courante} totalPages={pages} onPageChange={setCourante} />
     </div>
   );
