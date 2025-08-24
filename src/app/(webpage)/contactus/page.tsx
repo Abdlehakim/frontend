@@ -13,7 +13,7 @@ const fetchContactBannerData = cache(async function <T>(endpoint: string): Promi
   const backendUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:3000";
   const res = await fetch(`${backendUrl}${endpoint}`, { cache: "no-store" });
   if (!res.ok) {
-    return null; // <-- changed from "throw new Error(...)" to "return null"
+    return null; 
   }
   return res.json();
 });

@@ -5,15 +5,15 @@
 
 import * as React from "react";
 import type { ReactNode } from "react";
-import { useRouter, usePathname, useSearchParams } from "next/navigation";
+import { useRouter } from "next/navigation";
 import { useAuth } from "@/hooks/useAuth";
 import useAutoLogout from "@/hooks/useAutoLogout";
 import LoadingDots from "@/components/LoadingDots";
 
 interface Props {
   children: ReactNode;
-  requireAuth?: boolean;           // ⬅️ default public
-  redirectTo?: string;             // optional override
+  requireAuth?: boolean;    // default public
+  redirectTo?: string;      // signin page
 }
 
 export default function ClientShell({
@@ -23,20 +23,20 @@ export default function ClientShell({
 }: Props) {
   const { isAuthenticated, loading } = useAuth();
   const router = useRouter();
-  const pathname = usePathname();
-  const searchParams = useSearchParams();
 
   // Only run auto-logout on protected views once user state is known
   useAutoLogout(requireAuth && isAuthenticated && !loading);
 
-  // If protection is ON, and user isn't authed, redirect to signin with return URL
+  // If protection is ON and user isn't authed, redirect to signin with return URL
   React.useEffect(() => {
     if (!requireAuth) return;
     if (!loading && !isAuthenticated) {
-      const target = `${pathname}${searchParams?.toString() ? `?${searchParams!.toString()}` : ""}`;
+      const loc = typeof window !== "undefined" ? window.location : null;
+      const target =
+        loc ? `${loc.pathname}${loc.search || ""}` : "/";
       router.replace(`${redirectTo}?redirectTo=${encodeURIComponent(target)}`);
     }
-  }, [requireAuth, loading, isAuthenticated, pathname, searchParams, router, redirectTo]);
+  }, [requireAuth, loading, isAuthenticated, router, redirectTo]);
 
   if (requireAuth && loading) {
     return (
