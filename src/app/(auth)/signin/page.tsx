@@ -11,7 +11,7 @@ export default async function DashboardSignInPage({
   const sp = await searchParams;
   const raw = Array.isArray(sp.redirectTo) ? sp.redirectTo[0] : sp.redirectTo;
   const decoded = typeof raw === "string" ? decodeURIComponent(raw) : undefined;
-  const redirectTo = decoded && decoded.startsWith("/signin") ? decoded : "/";
+  const redirectTo = decoded && decoded.startsWith("/") ? decoded : "/";
 
   return <SignInForm redirectTo={redirectTo} />;
 }
