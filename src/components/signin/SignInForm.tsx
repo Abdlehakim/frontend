@@ -64,9 +64,10 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
       else localStorage.removeItem("rememberedEmail");
       window.location.replace(redirectTo);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Échec de la connexion");
-      setIsSubmitting(false);
-    }
+  console.error(err); // optional: keep for debugging
+  setIsSubmitting(false);
+  setError("E-mail ou mot de passe incorrect.");
+}
   }
 
   const handleGoogleSignIn = async (resp: CredentialResponse) => {
