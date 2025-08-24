@@ -7,7 +7,7 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
-import { GoogleLogin, type CredentialResponse } from "@react-oauth/google";
+import { GoogleLogin, type CredentialResponse, GoogleOAuthProvider } from "@react-oauth/google";
 import { fetchData } from "@/lib/fetchData";
 import LoadingDots from "@/components/LoadingDots";
 
@@ -33,10 +33,7 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
 
   useEffect(() => {
     const t = setTimeout(
-      () =>
-        setHasGoogleLoaded(
-          typeof window !== "undefined" && !!window.google?.accounts
-        ),
+      () => setHasGoogleLoaded(typeof window !== "undefined" && !!window.google?.accounts),
       3000
     );
     return () => clearTimeout(t);
@@ -53,25 +50,18 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
   async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (isSubmitting) return;
-
     setError("");
     setIsSubmitting(true);
-
     try {
-      // Clear any stale client timer cookie to avoid instant auto-logout races
       document.cookie = "token_FrontEnd_exp=; Max-Age=0; path=/";
-
       await fetchData("/signin", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ email, password }),
       });
-
       if (rememberMe) localStorage.setItem("rememberedEmail", email);
       else localStorage.removeItem("rememberedEmail");
-
-      // Hard reload so middleware and HttpOnly cookie are respected
       window.location.replace(redirectTo);
     } catch (err: unknown) {
       setError(err instanceof Error ? err.message : "Échec de la connexion");
@@ -81,31 +71,28 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
 
   const handleGoogleSignIn = async (resp: CredentialResponse) => {
     if (!resp.credential || isGoogleLoading) return;
-
     setError("");
     setIsGoogleLoading(true);
     try {
       document.cookie = "token_FrontEnd_exp=; Max-Age=0; path=/";
-
-      await fetchData<{ message?: string }>("/signin/google", {
+      await fetchData("/signin/google", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         credentials: "include",
         body: JSON.stringify({ idToken: resp.credential }),
       });
-
       window.location.replace(redirectTo);
     } catch (err: unknown) {
-      setError(
-        err instanceof Error ? err.message : "Échec de la connexion Google"
-      );
+      setError(err instanceof Error ? err.message : "Échec de la connexion Google");
       setIsGoogleLoading(false);
       setIsSubmitting(false);
     }
   };
 
+  const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
+
   return (
-    <>
+    <GoogleOAuthProvider clientId={clientId}>
       {(isSubmitting || isGoogleLoading) && (
         <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
           <LoadingDots />
@@ -123,9 +110,7 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
 
             <form onSubmit={handleSubmit} className="flex flex-col gap-2">
               <div className="flex flex-col gap-1">
-                <label htmlFor="email" className="block mb-1 font-medium">
-                  E-mail
-                </label>
+                <label htmlFor="email" className="block mb-1 font-medium">E-mail</label>
                 <input
                   id="email"
                   type="email"
@@ -139,9 +124,7 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
               </div>
 
               <div className="flex flex-col gap-1 relative">
-                <label htmlFor="password" className="block mb-1 font-medium">
-                  Mot de passe
-                </label>
+                <label htmlFor="password" className="block mb-1 font-medium">Mot de passe</label>
                 <div className="relative">
                   <input
                     id="password"
@@ -157,17 +140,9 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
                     type="button"
                     onClick={() => setShowPassword((v) => !v)}
                     className="absolute inset-y-0 right-3 flex items-center text-gray-500"
-                    aria-label={
-                      showPassword
-                        ? "Masquer le mot de passe"
-                        : "Afficher le mot de passe"
-                    }
+                    aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
                   >
-                    {showPassword ? (
-                      <AiOutlineEyeInvisible size={22} />
-                    ) : (
-                      <AiOutlineEye size={22} />
-                    )}
+                    {showPassword ? <AiOutlineEyeInvisible size={22} /> : <AiOutlineEye size={22} />}
                   </button>
                 </div>
               </div>
@@ -190,10 +165,7 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
                   />
                   Se souvenir de moi
                 </label>
-                <Link
-                  href="/forgot-password"
-                  className="text-primary hover:underline max-md:text-xs"
-                >
+                <Link href="/forgot-password" className="text-primary hover:underline max-md:text-xs">
                   Mot de passe oublié&nbsp;?
                 </Link>
               </div>
@@ -217,30 +189,13 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
 
               <hr className="border-t border-gray-300" />
             </form>
-
-            <div className="flex items-center w-full gap-2 justify-center">
-              <div className="flex-grow border-t border-gray-400" />
-              <Link
-                href="/signup"
-                className="text-primary text-center text-sm font-semibold hover:underline"
-              >
-                Vous n’avez pas de compte ? Cliquez ici pour en créer un.
-              </Link>
-              <div className="flex-grow border-t border-gray-400" />
-            </div>
           </div>
         </div>
       </div>
 
       <div className="fixed inset-0 -z-10">
-        <Image
-          src="/signin.jpg"
-          alt="Arrière-plan de connexion"
-          fill
-          priority
-          className="object-cover"
-        />
+        <Image src="/signin.jpg" alt="Arrière-plan de connexion" fill priority className="object-cover" />
       </div>
-    </>
+    </GoogleOAuthProvider>
   );
 }
