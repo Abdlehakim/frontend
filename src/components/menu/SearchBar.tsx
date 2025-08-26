@@ -170,7 +170,7 @@ const SearchBar: React.FC = () => {
         <div
           id="search-suggest-listbox"
           role="listbox"
-          className="absolute top-14 left-0 w-full bg-white shadow-lg max-h-72 overflow-y-auto z-50 rounded-xl border border-gray-200"
+          className="absolute top-14 left-0 w-full bg-white shadow-lg max-h-72 overflow-y-auto z-50 rounded border border-gray-200"
         >
           {loading && (
             <div className="p-4 text-sm text-gray-500">Recherche…</div>
