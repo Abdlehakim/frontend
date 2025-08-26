@@ -2,7 +2,7 @@
 /*  src/app/(webpage)/[slugCategorie]/[slugProduct]/page.tsx          */
 /* ------------------------------------------------------------------ */
 import { notFound } from "next/navigation";
-import ProductDetails      from "@/components/product/ProductDetails";
+import ProductDetails from "@/components/product/ProductDetails";
 import MainProductSection from "@/components/product/MainProductSection";
 import SimilarProducts from "@/components/product/SimilarProducts";
 import { fetchData } from "@/lib/fetchData";
@@ -24,7 +24,14 @@ type PageParams = {
 /* ---------- “light” Product type sent to MainProductSection ------- */
 type ProductStub = Pick<
   Product,
-  | "slug" | "name" | "reference" | "price" | "discount" | "stock" | "mainImageUrl" | "tva"
+  | "slug"
+  | "name"
+  | "reference"
+  | "price"
+  | "discount"
+  | "stock"
+  | "mainImageUrl"
+  | "tva"
 >;
 
 interface ProductDetailsDataType {
@@ -99,19 +106,18 @@ export default async function ProductPage({
     // ^ typo "prodcut" corrigé ➜ "productDetails"
   ).catch(() => null);
 
-
   /* ----- render --------------------------------------------------- */
   return (
     <div className="flex flex-col w-[90%] gap-16 max-lg:gap-4 mx-auto">
       <MainProductSection initialProduct={initialProduct} />
 
-<ProductDetails
+      <ProductDetails
         description={details?.description}
         productDetails={details?.productDetails}
       />
 
       {/* -------- Similar products -------- */}
-       <SimilarProducts
+      <SimilarProducts
         categorieId={prod.categorie._id}
         subcategorieId={prod.subcategorie?._id}
         excludeSlug={prod.slug}
