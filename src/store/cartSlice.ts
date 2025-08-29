@@ -6,7 +6,6 @@
 ------------------------------------------------------------------ */
 import { createSlice, PayloadAction } from "@reduxjs/toolkit";
 
-/* ───────── types ───────── */
 export interface CartItem {
   _id: string;
   name: string;
@@ -32,14 +31,72 @@ interface AddItemPayload {
   quantity: number;
 }
 
+/* ---------- small type guards / coercers ---------- */
+const isObj = (v: unknown): v is Record<string, unknown> =>
+  typeof v === "object" && v !== null && !Array.isArray(v);
+
+const toStr = (v: unknown, fallback = ""): string => {
+  if (typeof v === "string") return v;
+  if (v === undefined || v === null) return fallback;
+  return String(v);
+};
+
+const toNum = (v: unknown, fallback = 0): number => {
+  const n = typeof v === "number" ? v : Number(v);
+  return Number.isFinite(n) ? n : fallback;
+};
+
+const toDictStr = (v: unknown): Record<string, string> | undefined => {
+  if (!isObj(v)) return undefined;
+  const out: Record<string, string> = {};
+  for (const [k, val] of Object.entries(v)) out[String(k)] = toStr(val);
+  return out;
+};
+
+/* ---------- normalizer to avoid NaN / bad types from storage ---------- */
+const normalizeItem = (raw: unknown): CartItem => {
+  const i = isObj(raw) ? raw : {};
+
+  const cat = isObj(i.categorie)
+    ? { name: toStr(i.categorie.name), slug: toStr(i.categorie.slug) }
+    : undefined;
+
+  const subcat = isObj(i.subcategorie)
+    ? { name: toStr(i.subcategorie.name), slug: toStr(i.subcategorie.slug) }
+    : undefined;
+
+  return {
+    _id: toStr(i._id),
+    name: toStr(i.name),
+    reference: toStr(i.reference),
+    price: toNum(i.price, 0),
+    tva: toNum(i.tva, 0),
+    mainImageUrl: toStr(i.mainImageUrl),
+    discount:
+      i.discount === undefined || i.discount === null ? 0 : toNum(i.discount, 0),
+    slug: toStr(i.slug),
+    categorie: cat,
+    subcategorie: subcat,
+    selected: toDictStr(i.selected),
+    selectedNames: toDictStr(i.selectedNames),
+    quantity: Math.max(1, toNum(i.quantity, 1)),
+  };
+};
+
 /* ───────── helpers ───────── */
 const loadCartState = (): CartState => {
   if (typeof window !== "undefined") {
     try {
       const saved = localStorage.getItem("cart");
-      if (saved) return JSON.parse(saved) as CartState;
+      if (saved) {
+        const parsed = JSON.parse(saved) as Partial<CartState>;
+        const items = Array.isArray(parsed?.items)
+          ? parsed!.items.map(normalizeItem)
+          : [];
+        return { items };
+      }
     } catch {
-      // ignore corrupted storage
+      /* ignore corrupted storage */
     }
   }
   return { items: [] };
@@ -50,7 +107,7 @@ const saveCartState = (state: CartState) => {
     try {
       localStorage.setItem("cart", JSON.stringify(state));
     } catch {
-      // storage may be full/blocked; fail silently
+      /* storage may be full/blocked; fail silently */
     }
   }
 };
@@ -79,25 +136,33 @@ const cartSlice = createSlice({
   name: "cart",
   initialState,
   reducers: {
-    /* ------------------------------------ addItem (variant-aware) */
+    /* addItem (variant-aware with numeric coercion) */
     addItem: (state, action: PayloadAction<AddItemPayload>) => {
       const { item, quantity } = action.payload;
 
+      const clean: Omit<CartItem, "quantity"> = {
+        ...item,
+        price: toNum(item.price, 0),
+        tva: toNum(item.tva, 0),
+        discount:
+          item.discount === undefined || item.discount === null
+            ? 0
+            : toNum(item.discount, 0),
+      };
+
       const existing = state.items.find(
-        (i) => i._id === item._id && sameSelection(i.selected, item.selected)
+        (i) => i._id === clean._id && sameSelection(i.selected, clean.selected)
       );
 
       if (existing) {
-        existing.quantity += quantity;
+        existing.quantity += Math.max(1, toNum(quantity, 1));
       } else {
-        state.items.push({ ...item, quantity });
+        state.items.push({ ...clean, quantity: Math.max(1, toNum(quantity, 1)) });
       }
       saveCartState(state);
     },
 
-    /* ------------------------------------ removeItem
-       If `selected` provided → remove only that variant
-       Else → remove all lines with this _id (back-compat) */
+    /* removeItem: If `selected` provided → remove only that variant */
     removeItem: (
       state,
       action: PayloadAction<{ _id: string; selected?: Record<string, string> }>
@@ -111,9 +176,7 @@ const cartSlice = createSlice({
       saveCartState(state);
     },
 
-    /* ------------------------------------ updateItemQuantity
-       If `selected` provided → update that variant line
-       Else → update the first matching _id (back-compat) */
+    /* updateItemQuantity (variant-aware) */
     updateItemQuantity: (
       state,
       action: PayloadAction<{
@@ -131,7 +194,7 @@ const cartSlice = createSlice({
       );
 
       if (item) {
-        item.quantity = quantity;
+        item.quantity = Math.max(0, toNum(quantity, 0));
         if (item.quantity <= 0) {
           state.items = state.items.filter((i) =>
             selected
@@ -143,7 +206,7 @@ const cartSlice = createSlice({
       }
     },
 
-    /* ------------------------------------ clearCart */
+    /* clearCart */
     clearCart: (state) => {
       state.items = [];
       saveCartState(state);

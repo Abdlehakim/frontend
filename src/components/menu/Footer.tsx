@@ -81,18 +81,18 @@ export default async function Footer() {
               />
             )}
             <div className="gap-[20px] flex flex-col max-md:items-center">
-              <p className="flex items-center gap-[8px]">
-                <FiMapPin className="w-10 " size={25} />
+              <p className="flex items-left gap-[8px]">
+                <FiMapPin className="w-10" size={25} />
               <span className='text-sm text-center'> {address}, {zipcode} {city} {governorate}</span> 
               </p>
               {phone !== undefined && (
                 <p className="flex items-center gap-[8px]">
-                  <FiPhone size={25} />
+                  <FiPhone className="w-10" size={25} />
                   +216 {formatPhoneNumber(phone)}
                 </p>
               )}
               <p className="flex gap-[8px] items-center">
-                <FiMail size={25} />
+                <FiMail  className="w-10" size={25} />
                 {email}
               </p>
             </div>

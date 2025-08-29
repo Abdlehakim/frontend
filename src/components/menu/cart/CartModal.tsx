@@ -141,7 +141,7 @@ const CartModal: React.FC<CartModalProps> = ({ items, onClose }) => {
             return (
               <div
                 key={`${item._id}-${JSON.stringify(item.selected ?? {})}`}
-                className="flex items-center gap-2 justify-between py-2 border-b-2"
+                className="flex items-center gap-2 justify-start py-2 border-b-2 w-full"
               >
                 {/* image */}
                 <div className="relative h-16 aspect-square bg-gray-200">
@@ -159,10 +159,7 @@ const CartModal: React.FC<CartModalProps> = ({ items, onClose }) => {
 
                 {/* info */}
                 <div className="text-black flex flex-col gap-1 min-w-0">
-                  <p className="text-sm font-bold truncate">{item.name}</p>
-                  <p className="text-[11px] text-gray-600 truncate">{item.reference}</p>
-
-                  {/* >>> This prints exactly "Couleur : Blanc" style <<< */}
+                  <p className="text-sm font-bold truncate">{item.name}</p>                
                   {displayAttrs.length > 0 && (
                     <div className="text-xs text-gray-800">
                       {displayAttrs.map(([label, val], idx) =>
@@ -185,7 +182,7 @@ const CartModal: React.FC<CartModalProps> = ({ items, onClose }) => {
                 </div>
 
                 {/* actions */}
-                <div className="flex flex-col gap-2">
+                <div className="ml-auto flex flex-col gap-2 items-end shrink-0">
                   {/* quantity buttons */}
                   <div className="flex items-center gap-2">
                     <button
@@ -207,7 +204,7 @@ const CartModal: React.FC<CartModalProps> = ({ items, onClose }) => {
 
                   {/* remove button */}
                   <button
-                    className="flex items-center gap-2 justify-center border-2 border-[#15335E] rounded text-black hover:bg-[#15335E] hover:text-white"
+                    className="flex items-center gap-2 justify-center border-2 border-[#15335E] rounded text-black hover:bg-[#15335E] hover:text-white w-full"
                     onClick={(e) => removeCartHandler(item, e)}
                   >
                     <FaRegTrashAlt size={15} /> Remove

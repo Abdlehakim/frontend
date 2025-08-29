@@ -162,8 +162,10 @@ const OrderSummary: React.FC<{ data: string }> = ({ data }) => {
             <div className="flex flex-col divide-y divide-gray-200">
               {order.orderItems.length > 0 ? (
                 order.orderItems.map((item) => {
-                  const unit = item.discount > 0 ? item.price * (1 - item.discount / 100) : item.price;
+                  const unit =
+                    item.discount > 0 ? item.price * (1 - item.discount / 100) : item.price;
                   const lineTotal = unit * item.quantity;
+                  const attrs = Array.isArray(item.attributes) ? item.attributes : [];
                   return (
                     <div
                       key={item._id}
@@ -190,6 +192,18 @@ const OrderSummary: React.FC<{ data: string }> = ({ data }) => {
                           <p className="text-sm text-gray-500">
                             Quantité&nbsp;: {item.quantity}
                           </p>
+
+                          {/* attributes (if any) */}
+                          {attrs.length > 0 && (
+                            <div className="mt-1 text-xs text-gray-800 space-y-0.5">
+                              {attrs.map((a, idx) => (
+                                <div key={`${a.attribute}-${idx}`}>
+                                  <span className="font-semibold">{a.name} :</span>{" "}
+                                  <span className="text-gray-700">{a.value}</span>
+                                </div>
+                              ))}
+                            </div>
+                          )}
                         </div>
                       </div>
                       <p className="text-lg font-bold">{fmt(lineTotal)}</p>

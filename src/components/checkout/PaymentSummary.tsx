@@ -3,13 +3,7 @@
 ------------------------------------------------------------------ */
 "use client";
 
-import React, {
-  useEffect,
-  useState,
-  FormEvent,
-  ReactNode,
-  useMemo,
-} from "react";
+import React, { useEffect, useState, FormEvent, ReactNode, useMemo } from "react";
 import Link from "next/link";
 import { useDispatch } from "react-redux";
 import { toast } from "react-toastify";
@@ -35,10 +29,42 @@ interface PaymentSummaryProps {
   onCheckout(): void;
   backcarte(): void;
   handleOrderSummary(ref: string): void;
-
   isPickup?: boolean;
   selectedMagasinId?: string | null;
   selectedMagasin?: Magasin | null;
+}
+
+type OrderLineAttribute = { attribute: string; name: string; value: string };
+type OrderLine = {
+  _id: string;
+  reference: string;
+  name: string;
+  quantity: number;
+  tva: number;
+  mainImageUrl?: string;
+  discount: number;
+  price: number;
+  attributes: OrderLineAttribute[];
+};
+
+interface OrderPayload {
+  paymentMethod: string;
+  items: OrderLine[];
+  deliveryMethod: {
+    deliveryMethodID?: string;
+    deliveryMethodName?: string;
+    Cost: string;
+    expectedDeliveryDate?: string;
+  }[];
+  pickupMagasin?: {
+    MagasinID: string | null;
+    MagasinName: string;
+    MagasinAddress: string;
+  }[];
+  DeliveryAddress?: {
+    AddressID: string;
+    DeliverToAddress: string;
+  }[];
 }
 
 function formattedMissing(list: string[]): ReactNode {
@@ -72,18 +98,13 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
   const { fmt } = useCurrency();
 
   const [isSubmittingOrder, setIsSubmittingOrder] = useState(false);
-
-  const [totalWithShipping, setTotalWithShipping] = useState(
-    totalPrice + deliveryCost
-  );
+  const [totalWithShipping, setTotalWithShipping] = useState(totalPrice + deliveryCost);
   const [totalTva, setTotalTva] = useState(0);
 
   useEffect(() => {
     setTotalWithShipping(totalPrice + deliveryCost);
     const tvaSum = items.reduce((sum, it) => {
-      const ttc = it.discount
-        ? (it.price * (100 - it.discount)) / 100
-        : it.price;
+      const ttc = it.discount ? (it.price * (100 - it.discount)) / 100 : it.price;
       const unitTva = ttc - ttc / (1 + it.tva / 100);
       return sum + unitTva * it.quantity;
     }, 0);
@@ -92,12 +113,10 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
 
   const isFormValid = useMemo(() => {
     if (!selectedMethodId || !selectedPaymentMethod) return false;
-
     if (isPickup) {
       const addr = selectedMagasin?.address?.trim();
       return Boolean(selectedMagasinId && addr);
     }
-
     return Boolean(address.AddressId);
   }, [
     isPickup,
@@ -121,35 +140,44 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ ref }),
       });
-    } catch (err) {
-      console.error(err);
+    } catch {
+      /* noop */
     }
   };
 
   const postOrder = async () => {
-    const lines = items.map(
-      ({
+    const attrsFromCartItem = (
+      selected?: Record<string, string>,
+      selectedNames?: Record<string, string>
+    ): OrderLineAttribute[] => {
+      if (!selected) return [];
+      const out: OrderLineAttribute[] = [];
+      for (const [attrId, value] of Object.entries(selected)) {
+        let name = "Attribute";
+        if (selectedNames) {
+          const lbl = Object.keys(selectedNames).find((k) => selectedNames[k] === value);
+          if (lbl) name = lbl;
+        }
+        out.push({ attribute: attrId, name, value });
+      }
+      return out;
+    };
+
+    const lines: OrderLine[] = items.map(
+      ({ _id, reference, name, quantity, tva, mainImageUrl, discount, price, selected, selectedNames }) => ({
         _id,
         reference,
         name,
         quantity,
         tva,
         mainImageUrl,
-        discount,
+        discount: discount ?? 0, // <- FIX: ensure number
         price,
-      }) => ({
-        _id,
-        reference,
-        name,
-        quantity,
-        tva,
-        mainImageUrl,
-        discount,
-        price,
+        attributes: attrsFromCartItem(selected, selectedNames),
       })
     );
 
-    const payload: Record<string, unknown> = {
+    const payload: OrderPayload = {
       paymentMethod: selectedPaymentMethod,
       items: lines,
       deliveryMethod: [
@@ -157,16 +185,13 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
           deliveryMethodID: selectedMethodId,
           deliveryMethodName: selectedMethod,
           Cost: Number.isFinite(deliveryCost) ? deliveryCost.toFixed(2) : "0.00",
-          ...(selectedExpectedDeliveryDate
-            ? { expectedDeliveryDate: selectedExpectedDeliveryDate }
-            : {}),
+          ...(selectedExpectedDeliveryDate ? { expectedDeliveryDate: selectedExpectedDeliveryDate } : {}),
         },
       ],
     };
 
     if (isPickup) {
-      const magasinName =
-        selectedMagasin?.MagasinName ?? selectedMagasin?.name ?? "";
+      const magasinName = selectedMagasin?.MagasinName ?? selectedMagasin?.name ?? "";
       const magasinAddress = selectedMagasin?.address ?? "";
       payload.pickupMagasin = [
         {
@@ -184,15 +209,12 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
       ];
     }
 
-    const { ref } = await fetchData<{ ref: string }>(
-      "/client/order/postOrderClient",
-      {
-        method: "POST",
-        credentials: "include",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
-      }
-    );
+    const { ref } = await fetchData<{ ref: string }>("/client/order/postOrderClient", {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
 
     await sendMail(ref);
     toast.success("Commande envoyée avec succès !");
@@ -209,8 +231,7 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
       if (!selectedMethodId) missing.push("la méthode de livraison");
       if (isPickup) {
         if (!selectedMagasinId) missing.push("le magasin de retrait");
-        if (!selectedMagasin?.address?.trim())
-          missing.push("l’adresse du magasin");
+        if (!selectedMagasin?.address?.trim()) missing.push("l’adresse du magasin");
       } else {
         if (!address.AddressId) missing.push("l’adresse de livraison");
       }
@@ -225,29 +246,23 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
     setIsSubmittingOrder(true);
     try {
       await postOrder();
-    } catch (err) {
+    } catch {
       setNotification({
         message: "Échec de l’envoi de la commande. Veuillez réessayer.",
         type: "error",
       });
-      console.error(err);
     } finally {
       setIsSubmittingOrder(false);
     }
   };
 
   const handlePayPalSuccess = () => handleOrderSubmit();
-
   const isPayPal = selectedPaymentMethod.toLowerCase() === "paypal";
 
   return (
     <>
       {notification && (
-        <Notification
-          message={notification.message}
-          type={notification.type}
-          onClose={hideNotification}
-        />
+        <Notification message={notification.message} type={notification.type} onClose={hideNotification} />
       )}
 
       {isSubmittingOrder && (
@@ -259,14 +274,8 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
       <div className="bg-gray-100 rounded-md p-4 w-[420px] max-lg:w-full">
         <div className="mt-8 sticky top-4 space-y-8">
           <div className="flex border border-[#15335E] overflow-hidden rounded-md">
-            <input
-              type="text"
-              placeholder="Code promo"
-              className="w-full bg-white px-4 py-2.5 text-sm"
-            />
-            <button className="bg-primary px-4 text-sm font-semibold text-white">
-              Appliquer
-            </button>
+            <input type="text" placeholder="Code promo" className="w-full bg-white px-4 py-2.5 text-sm" />
+            <button className="bg-primary px-4 text-sm font-semibold text-white">Appliquer</button>
           </div>
 
           <ul className="space-y-4 text-gray-800">
@@ -295,9 +304,7 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
                   onClick={handleOrderSubmit}
                   disabled={!isFormValid}
                   className={`mt-2 w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm ${
-                    isFormValid
-                      ? "text-black hover:bg-primary hover:text-white"
-                      : "bg-gray-200 text-gray-400 cursor-not-allowed"
+                    isFormValid ? "text-black hover:bg-primary hover:text-white" : "bg-gray-200 text-gray-400 cursor-not-allowed"
                   }`}
                 >
                   Confirmer la commande
@@ -306,10 +313,7 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
 
               {isPayPal && (
                 <div className={isFormValid ? "" : "opacity-50 pointer-events-none"}>
-                  <PaypalButton
-                    amount={totalWithShipping.toFixed(2)}
-                    onSuccess={handlePayPalSuccess}
-                  />
+                  <PaypalButton amount={totalWithShipping.toFixed(2)} onSuccess={handlePayPalSuccess} />
                 </div>
               )}
 
@@ -333,9 +337,7 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
               <button
                 onClick={onCheckout}
                 className={`mt-2 w-full rounded-md border border-gray-300 px-4 py-2.5 text-sm ${
-                  items.length
-                    ? "text-black hover:bg-primary hover:text-white"
-                    : "bg-gray-200 text-gray-400 cursor-not-allowed pointer-events-none"
+                  items.length ? "text-black hover:bg-primary hover:text-white" : "bg-gray-200 text-gray-400 cursor-not-allowed pointer-events-none"
                 }`}
               >
                 Continuer

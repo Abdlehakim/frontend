@@ -63,9 +63,7 @@ const RecapProduct: React.FC<RecapProductProps> = ({
     (async () => {
       for (const id of missing) {
         try {
-          const rows = await fetchData<AttributeRow[]>(
-            `products/MainProductSection/attributes/${id}`
-          );
+          const rows = await fetchData<AttributeRow[]>(`products/MainProductSection/attributes/${id}`);
           if (!cancelled) setAttrsById((prev) => ({ ...prev, [id]: rows ?? [] }));
         } catch {
           if (!cancelled) setAttrsById((prev) => ({ ...prev, [id]: [] }));
@@ -109,23 +107,24 @@ const RecapProduct: React.FC<RecapProductProps> = ({
   );
 
   return (
-    <div className="w-[70%] max-lg:w-full h-fit">
+    <div className="w-[70%] max-lg:w-full">
       {items.length > 0 ? (
-        <div className="flex flex-col gap-2">
+        <div className="flex justify-between flex-col gap-2 h-full">
           {items.map((raw) => {
             const item = raw as CartItemWithAttrs;
             const attributeRows = item.attributes ?? attrsById[item._id] ?? [];
 
-            const priceTtc =
-              item.discount && item.discount > 0
-                ? (item.price * (100 - item.discount)) / 100
-                : item.price;
+            const price = Number(item.price ?? 0);
+            const discountPct = Number(item.discount ?? 0);
+            const tvaPct = Number(item.tva ?? 0);
+            const qty = Number(item.quantity ?? 1);
 
-            const factor = 1 + item.tva / 100;
-            const unitHt = priceTtc / factor;
+            const priceTtc = discountPct > 0 ? (price * (100 - discountPct)) / 100 : price;
+            const factor = 1 + tvaPct / 100;
+            const unitHt = factor > 0 ? priceTtc / factor : priceTtc;
             const unitTva = priceTtc - unitHt;
-            const lineHt = unitHt * item.quantity;
-            const lineTva = unitTva * item.quantity;
+            const lineHt = unitHt * qty;
+            const lineTva = unitTva * qty;
             const lineTtc = lineHt + lineTva;
 
             const renderAttrSelector = (row: AttributeRow) => {
@@ -194,25 +193,25 @@ const RecapProduct: React.FC<RecapProductProps> = ({
 
                   <div className="flex gap-2 items-center">
                     {item.categorie && (
-                      <p className="text-gray-500 uppercase text-sm">
+                      <p className="text-gray-500 uppercase text-xs">
                         {item.categorie.name}
                         {item.subcategorie && ` ▸ ${item.subcategorie.name}`} :
                       </p>
                     )}
-                    <p className="text-sm font-bold break-words">{item.name}</p>
+                    <p className="text-xs font-bold break-words">{item.name}</p>
                   </div>
 
                   <p className="font-semibold flex gap-2">
-                    {item.discount && item.discount > 0 && (
+                    {discountPct > 0 && (
                       <span className="line-through text-gray-500 ml-2">
-                        {fmt(item.price)}
+                        {fmt(price)}
                       </span>
                     )}
                     {fmt(priceTtc)} TTC
                   </p>
 
-                  <p className="text-sm max-lg:text-xs text-gray-600">
-                    HT&nbsp;: {fmt(unitHt)} • TVA&nbsp;({item.tva}%)&nbsp;: {fmt(unitTva)}
+                  <p className="text-xs text-gray-600">
+                    HT&nbsp;: {fmt(unitHt)} • TVA&nbsp;({tvaPct}%)&nbsp;: {fmt(unitTva)}
                   </p>
 
                   {attributeRows.length > 0 ? (

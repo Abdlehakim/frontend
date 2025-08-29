@@ -12,6 +12,11 @@ import InvoiceProforma from "@/components/InvoiceProforma";
 import { useCurrency } from "@/contexts/CurrencyContext";
 
 /* ---------- types ---------- */
+interface OrderItemAttr {
+  attribute: string;
+  name: string;
+  value: string;
+}
 interface OrderItem {
   _id: string;
   reference: string;
@@ -21,6 +26,7 @@ interface OrderItem {
   quantity: number;
   mainImageUrl: string;
   price: number;
+  attributes?: OrderItemAttr[];
 }
 
 interface DeliveryMethodItem {
@@ -187,7 +193,7 @@ export default function OrderByRef() {
   const addressLabel = isPickup ? "Magasin de retrait" : "Adresse de livraison";
   const addressValue = isPickup ? magasinDisplay : deliverAddress;
 
-  // ⇩ CHANGED: show only the date(s), no "Livraison Express :" prefix
+  // dates only
   let expectedDatesText: string | null = null;
   if (!isPickup && dmArray.length) {
     const dates = dmArray
@@ -220,9 +226,7 @@ export default function OrderByRef() {
             ["Moyen de paiement", paymentLabels],
             [addressLabel, addressValue],
             ...(expectedDatesText
-              ? ([
-                  ["Date de livraison prévue", expectedDatesText],
-                ] as const)
+              ? ([["Date de livraison prévue", expectedDatesText]] as const)
               : []),
           ] as const).map(([label, value]) => (
             <div key={label} className="flex-1 pb-4 md:pb-0 md:pl-6 space-y-1">
@@ -248,6 +252,7 @@ export default function OrderByRef() {
                     ? (it.price * (100 - it.discount)) / 100
                     : it.price;
                 const lineTotal = unit * it.quantity;
+                const attrs = Array.isArray(it.attributes) ? it.attributes : [];
                 return (
                   <div key={it._id} className="flex items-start justify-between gap-4">
                     <div className="relative w-20 h-20 rounded-lg">
@@ -269,6 +274,18 @@ export default function OrderByRef() {
                       <p className="text-sm text-gray-500 max-md:text-xs">
                         Quantité :&nbsp;{it.quantity}
                       </p>
+
+                      {/* attributes (if any) */}
+                      {attrs.length > 0 && (
+                        <div className="mt-1 text-xs text-gray-800 space-y-0.5">
+                          {attrs.map((a, idx) => (
+                            <div key={`${a.attribute}-${idx}`}>
+                              <span className="font-semibold">{a.name} :</span>{" "}
+                              <span className="text-gray-700">{a.value}</span>
+                            </div>
+                          ))}
+                        </div>
+                      )}
                     </div>
                     <p className="font-semibold whitespace-nowrap max-md:text-xs">
                       {fmt(lineTotal)}

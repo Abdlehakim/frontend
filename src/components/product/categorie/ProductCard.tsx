@@ -95,6 +95,13 @@ async function getSelections(product: Product): Promise<Selections> {
   }
 }
 
+/* -------- number coercion helper (no any) -------- */
+const toNumber = (v: unknown, fallback = 0): number => {
+  const n =
+    typeof v === "number" ? v : typeof v === "string" ? Number(v) : NaN;
+  return Number.isFinite(n) ? n : fallback;
+};
+
 interface ProductCardProps {
   products: Product[];
 }
@@ -111,22 +118,20 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
 
   const handleWishlistClick = (product: Product) => {
     if (!product.categorie) return;
-    if (isInWishlist(product.slug)) {
-      dispatch(removeFromWishlist(product.slug));
-    } else {
-      dispatch(
-        addToWishlist({
-          name: product.name,
-          mainImageUrl: product.mainImageUrl,
-          price: product.price,
-          categorie: {
-            name: product.categorie.name,
-            slug: product.categorie.slug,
-          },
-          slug: product.slug,
-        })
-      );
-    }
+    dispatch(
+      isInWishlist(product.slug)
+        ? removeFromWishlist(product.slug)
+        : addToWishlist({
+            name: product.name,
+            mainImageUrl: product.mainImageUrl,
+            price: toNumber(product.price),
+            categorie: {
+              name: product.categorie.name,
+              slug: product.categorie.slug,
+            },
+            slug: product.slug,
+          })
+    );
   };
 
   /* add to cart: include default attributes (fetch if missing) */
@@ -137,14 +142,20 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
 
     const { selected, selectedNames } = await getSelections(product);
 
+    // ---- normalize risky numeric fields WITHOUT any ----
+    type TvaLike = { tva?: number | string | null | undefined };
+    const priceNum = toNumber(product.price);
+    const tvaNum = toNumber((product as Product & TvaLike).tva);
+    const discountNum = toNumber(product.discount);
+
     const base: Omit<CartItem, "quantity"> = {
       _id: product._id,
       name: product.name,
       reference: product.reference,
-      price: product.price,
-      tva: product.tva,
+      price: priceNum,
+      tva: tvaNum,
       mainImageUrl: product.mainImageUrl,
-      discount: product.discount ?? 0,
+      discount: discountNum,
       slug: product.slug,
       categorie: product.categorie
         ? { name: product.categorie.name, slug: product.categorie.slug }
@@ -176,9 +187,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
   return (
     <div className="group w-fit h-fit grid grid-cols-4 max-2xl:grid-cols-3 max-lg:grid-cols-2 max-sm:grid-cols-1 gap-[40px]">
       {products.map((product) => {
-        const discountedPrice = product.discount
-          ? product.price - product.price * (product.discount / 100)
-          : product.price;
+        const priceNum = toNumber(product.price);
+        const discountNum = toNumber(product.discount);
+
+        const discountedPrice = discountNum
+          ? priceNum - priceNum * (discountNum / 100)
+          : priceNum;
 
         const isOutOfStock =
           product.stockStatus === "out of stock" || product.stock === 0;
@@ -222,18 +236,18 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
                   </div>
 
                   <div className="flex flex-col gap-[4px] text-right truncate">
-                    {product.discount ? (
+                    {discountNum ? (
                       <>
                         <p className="text-base max-md:text-lg font-bold text-primary">
                           {fmt(discountedPrice)}
                         </p>
                         <p className="text-sm max-md:text-sm font-bold text-gray-500 line-through">
-                          {fmt(product.price)}
+                          {fmt(priceNum)}
                         </p>
                       </>
                     ) : (
                       <p className="text-base max-md:text-lg font-bold text-primary">
-                        {fmt(product.price)}
+                        {fmt(priceNum)}
                       </p>
                     )}
                   </div>
