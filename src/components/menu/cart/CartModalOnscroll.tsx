@@ -18,12 +18,25 @@ interface CartModalOnscrollProps {
   onClose: () => void;
 }
 
-/* ---------- helper to merge by _id ---------- */
+/* ---------- helpers ---------- */
+type CartItemWithNames = CartItem & {
+  selectedNames?: Record<string, string>;
+};
+
+const looksLikeObjectId = (s: string) => /^[a-f0-9]{24}$/i.test(s);
+
+const selectionKey = (sel?: Record<string, string>) => {
+  if (!sel) return "";
+  const keys = Object.keys(sel).sort();
+  return keys.map((k) => `${k}:${sel[k]}`).join("|");
+};
+
+/* Merge by (_id + selected) so different variants never collapse */
 const useMergedItems = (items: CartItem[]) =>
   useMemo(() => {
     const map = new Map<string, CartItem>();
     for (const it of items) {
-      const key = String(it._id);
+      const key = `${it._id}|${selectionKey(it.selected)}`;
       const found = map.get(key);
       if (found) {
         found.quantity += it.quantity;
@@ -41,7 +54,7 @@ const CartModalOnscroll: React.FC<CartModalOnscrollProps> = ({
   const { fmt } = useCurrency();                                  // ← NEW
   const dispatch = useDispatch();
 
-  /* merge duplicates so UI shows one line */
+  /* merge duplicates by variant so UI shows one line per variant */
   const mergedItems = useMergedItems(items);
 
   const totalPrice = useMemo(() => {
@@ -53,12 +66,16 @@ const CartModalOnscroll: React.FC<CartModalOnscrollProps> = ({
     }, 0);
   }, [mergedItems]);
 
-  /* ---------- handlers ---------- */
+  /* ---------- handlers (variant-aware) ---------- */
   const incrementHandler = useCallback(
     (item: CartItem, e: React.MouseEvent) => {
       e.stopPropagation();
       dispatch(
-        updateItemQuantity({ _id: item._id, quantity: item.quantity + 1 })
+        updateItemQuantity({
+          _id: item._id,
+          quantity: item.quantity + 1,
+          selected: item.selected, // keep variant identity
+        })
       );
     },
     [dispatch]
@@ -69,7 +86,11 @@ const CartModalOnscroll: React.FC<CartModalOnscrollProps> = ({
       e.stopPropagation();
       if (item.quantity > 1) {
         dispatch(
-          updateItemQuantity({ _id: item._id, quantity: item.quantity - 1 })
+          updateItemQuantity({
+            _id: item._id,
+            quantity: item.quantity - 1,
+            selected: item.selected, // keep variant identity
+          })
         );
       }
     },
@@ -77,9 +98,9 @@ const CartModalOnscroll: React.FC<CartModalOnscrollProps> = ({
   );
 
   const removeCartHandler = useCallback(
-    (_id: string, e: React.MouseEvent) => {
+    (item: CartItem, e: React.MouseEvent) => {
       e.stopPropagation();
-      dispatch(removeItem({ _id }));
+      dispatch(removeItem({ _id: item._id, selected: item.selected })); // remove only this variant
     },
     [dispatch]
   );
@@ -106,7 +127,7 @@ const CartModalOnscroll: React.FC<CartModalOnscrollProps> = ({
   /* ---------- render ---------- */
   return (
     <div
-      className="flex flex-col px-4 w-[400px] max-md:w-[350px] border-[#15335D] border-4 rounded-lg bg-white z-30"
+      className="flex flex-col px-2 w-[420px] max-md:w-[350px] border-[#15335D] border-4 rounded-lg bg-white z-30"
       onClick={(e) => e.stopPropagation()}
     >
       <h1 className="text-lg font-bold text-black border-b-2 text-center py-2 max-md:text-sm">
@@ -122,16 +143,24 @@ const CartModalOnscroll: React.FC<CartModalOnscrollProps> = ({
       </div>
 
       <div className="flex flex-col">
-        {paginatedItems.map((item) => {
+        {paginatedItems.map((raw) => {
+          const item = raw as CartItemWithNames;
           const discount = item.discount ?? 0;
           const unitPrice =
-            discount > 0
-              ? item.price - (item.price * discount) / 100
-              : item.price;
+            discount > 0 ? item.price - (item.price * discount) / 100 : item.price;
+
+          // Build display attributes exactly "Label : Value"
+          const displayAttrs: Array<[string | null, string]> = item.selectedNames
+            ? Object.entries(item.selectedNames)
+            : item.selected
+            ? Object.entries(item.selected).map(([k, v]) =>
+                looksLikeObjectId(k) ? [null, v] : [k, v]
+              )
+            : [];
 
           return (
             <div
-              key={item._id}
+              key={`${item._id}-${selectionKey(item.selected)}`}
               className="flex items-center justify-between py-2 max-md:mx-[10%] border-b-2"
             >
               {/* image */}
@@ -149,13 +178,32 @@ const CartModalOnscroll: React.FC<CartModalOnscrollProps> = ({
               </div>
 
               {/* info */}
-              <div className="text-black flex flex-col gap-[8px]">
-                <p className="text-sm font-bold">{item.name}</p>
-                <p className="text-gray-800 text-xs">
-                  Quantity: {item.quantity}
-                </p>
+              <div className="text-black flex flex-col gap-[6px] min-w-0">
+                <p className="text-sm font-bold truncate">{item.name}</p>
+                <p className="text-[11px] text-gray-600 truncate">{item.reference}</p>
+
+                {/* Attributes like "Couleur : Blanc" */}
+                {displayAttrs.length > 0 && (
+                  <div className="text-xs text-gray-800">
+                    {displayAttrs.map(([label, val], idx) =>
+                      label ? (
+                        <div key={`${label}-${val}-${idx}`}>
+                          {label} : <span className="text-gray-700">{val}</span>
+                        </div>
+                      ) : (
+                        <div key={`${val}-${idx}`}>
+                          <span className="text-gray-700">{val}</span>
+                        </div>
+                      )
+                    )}
+                  </div>
+                )}
+
                 <p className="text-gray-800 text-xs max-md:hidden">
                   Price Unit: {fmt(unitPrice)}                 {/* ← NEW */}
+                </p>
+                <p className="text-gray-800 text-xs md:hidden">
+                  Qty: {item.quantity}
                 </p>
               </div>
 
@@ -180,7 +228,7 @@ const CartModalOnscroll: React.FC<CartModalOnscrollProps> = ({
                 </div>
                 <button
                   className="flex gap-[8px] items-center justify-center hover:bg-[#15335E] border-2 max-md:border-none border-[#15335E] rounded text-black hover:text-white cursor-pointer"
-                  onClick={(e) => removeCartHandler(item._id, e)}
+                  onClick={(e) => removeCartHandler(item, e)}
                 >
                   <span className="max-md:hidden">Remove</span>
                   <FaRegTrashAlt size={15} />

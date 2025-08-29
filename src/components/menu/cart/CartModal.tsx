@@ -10,7 +10,7 @@ import Link from "next/link";
 import { useDispatch } from "react-redux";
 import { removeItem, updateItemQuantity, CartItem } from "@/store/cartSlice";
 import Pagination from "@/components/PaginationClient";
-import { useCurrency } from "@/contexts/CurrencyContext";   // ← NEW
+import { useCurrency } from "@/contexts/CurrencyContext";
 
 /* ---------- props ---------- */
 interface CartModalProps {
@@ -18,8 +18,15 @@ interface CartModalProps {
   onClose: () => void;
 }
 
+/* Optional: items may include human-readable attribute labels */
+type CartItemWithNames = CartItem & {
+  selectedNames?: Record<string, string>;
+};
+
+const looksLikeObjectId = (s: string) => /^[a-f0-9]{24}$/i.test(s);
+
 const CartModal: React.FC<CartModalProps> = ({ items, onClose }) => {
-  const { fmt } = useCurrency();                           // ← NEW
+  const { fmt } = useCurrency();
   const dispatch = useDispatch();
 
   /* ---------- totals ---------- */
@@ -27,19 +34,21 @@ const CartModal: React.FC<CartModalProps> = ({ items, onClose }) => {
     return items.reduce((total, item) => {
       const discount = item.discount ?? 0;
       const finalPrice =
-        discount > 0
-          ? item.price - (item.price * discount) / 100
-          : item.price;
+        discount > 0 ? item.price - (item.price * discount) / 100 : item.price;
       return total + finalPrice * item.quantity;
     }, 0);
   }, [items]);
 
-  /* ---------- quantity handlers ---------- */
+  /* ---------- quantity handlers (variant-aware) ---------- */
   const incrementHandler = useCallback(
     (item: CartItem, event: React.MouseEvent) => {
       event.stopPropagation();
       dispatch(
-        updateItemQuantity({ _id: item._id, quantity: item.quantity + 1 })
+        updateItemQuantity({
+          _id: item._id,
+          quantity: item.quantity + 1,
+          selected: item.selected, // keep variant identity
+        })
       );
     },
     [dispatch]
@@ -50,7 +59,11 @@ const CartModal: React.FC<CartModalProps> = ({ items, onClose }) => {
       event.stopPropagation();
       if (item.quantity > 1) {
         dispatch(
-          updateItemQuantity({ _id: item._id, quantity: item.quantity - 1 })
+          updateItemQuantity({
+            _id: item._id,
+            quantity: item.quantity - 1,
+            selected: item.selected,
+          })
         );
       }
     },
@@ -58,9 +71,9 @@ const CartModal: React.FC<CartModalProps> = ({ items, onClose }) => {
   );
 
   const removeCartHandler = useCallback(
-    (_id: string, event: React.MouseEvent) => {
+    (item: CartItem, event: React.MouseEvent) => {
       event.stopPropagation();
-      dispatch(removeItem({ _id }));
+      dispatch(removeItem({ _id: item._id, selected: item.selected }));
     },
     [dispatch]
   );
@@ -79,15 +92,13 @@ const CartModal: React.FC<CartModalProps> = ({ items, onClose }) => {
   }, [items, currentPage]);
 
   useEffect(() => {
-    if (currentPage > totalPages) {
-      setCurrentPage(totalPages);
-    }
+    if (currentPage > totalPages) setCurrentPage(totalPages);
   }, [currentPage, totalPages]);
 
   /* ---------- render ---------- */
   return (
     <div
-      className="flex flex-col px-4 w-[400px] max-md:mx-auto max-md:w-[90%] border-[#15335D] border-4 rounded-lg bg-white z-30"
+      className="flex flex-col px-2 w-[420px] max-md:mx-auto max-md:w-[90%] border-[#15335D] border-4 rounded-lg bg-white z-30"
       onClick={(e) => e.stopPropagation()}
     >
       {/* header */}
@@ -109,16 +120,27 @@ const CartModal: React.FC<CartModalProps> = ({ items, onClose }) => {
         {items.length === 0 ? (
           <p className="text-center text-black">Your cart is empty.</p>
         ) : (
-          paginatedItems.map((item) => {
+          paginatedItems.map((raw) => {
+            const item = raw as CartItemWithNames;
             const discount = item.discount ?? 0;
             const unitPrice =
               discount > 0
                 ? item.price - (item.price * discount) / 100
                 : item.price;
 
+            // Prefer display labels ("Couleur" -> "Blanc")
+            // Fallback: if only selected with ObjectId keys, hide the key
+            const displayAttrs: Array<[string | null, string]> = item.selectedNames
+              ? Object.entries(item.selectedNames)
+              : item.selected
+              ? Object.entries(item.selected).map(([k, v]) =>
+                  looksLikeObjectId(k) ? [null, v] : [k, v]
+                )
+              : [];
+
             return (
               <div
-                key={item._id}
+                key={`${item._id}-${JSON.stringify(item.selected ?? {})}`}
                 className="flex items-center gap-2 justify-between py-2 border-b-2"
               >
                 {/* image */}
@@ -136,15 +158,30 @@ const CartModal: React.FC<CartModalProps> = ({ items, onClose }) => {
                 </div>
 
                 {/* info */}
-                <div className="text-black flex flex-col gap-2">
-                  <p className="text-sm font-bold">{item.name}</p>
-                  <p className="text-gray-800 text-xs">
-                    Quantity: {item.quantity}
-                  </p>
-                  <p className="text-gray-800 text-xs">
-                    <span className="max-md:hidden">Price Unit:</span>{" "}
-                    {fmt(unitPrice)}                         {/* ← NEW */}
-                  </p>
+                <div className="text-black flex flex-col gap-1 min-w-0">
+                  <p className="text-sm font-bold truncate">{item.name}</p>
+                  <p className="text-[11px] text-gray-600 truncate">{item.reference}</p>
+
+                  {/* >>> This prints exactly "Couleur : Blanc" style <<< */}
+                  {displayAttrs.length > 0 && (
+                    <div className="text-xs text-gray-800">
+                      {displayAttrs.map(([label, val], idx) =>
+                        label ? (
+                          <div key={`${label}-${val}-${idx}`}>
+                            {label} : <span className="text-gray-700">{val}</span>
+                          </div>
+                        ) : (
+                          <div key={`${val}-${idx}`}>
+                            <span className="text-gray-700">{val}</span>
+                          </div>
+                        )
+                      )}
+                    </div>
+                  )}
+
+                  <div className="text-gray-800 text-xs mt-1">
+                    <span className="max-md:hidden">Price Unit:</span> {fmt(unitPrice)}
+                  </div>
                 </div>
 
                 {/* actions */}
@@ -171,7 +208,7 @@ const CartModal: React.FC<CartModalProps> = ({ items, onClose }) => {
                   {/* remove button */}
                   <button
                     className="flex items-center gap-2 justify-center border-2 border-[#15335E] rounded text-black hover:bg-[#15335E] hover:text-white"
-                    onClick={(e) => removeCartHandler(item._id, e)}
+                    onClick={(e) => removeCartHandler(item, e)}
                   >
                     <FaRegTrashAlt size={15} /> Remove
                   </button>
@@ -186,7 +223,7 @@ const CartModal: React.FC<CartModalProps> = ({ items, onClose }) => {
       {items.length > 0 && (
         <>
           <p className="text-black text-lg font-bold text-center my-2">
-            Total: {fmt(totalPrice)}                       {/* ← NEW */}
+            Total: {fmt(totalPrice)}
           </p>
 
           <Link href="/checkout">

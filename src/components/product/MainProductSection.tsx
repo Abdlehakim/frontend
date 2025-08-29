@@ -1,7 +1,8 @@
-/* ------------------------------------------------------------------ */
-/*  MainProductSection — Client Component with field-level loaders    */
-/*  + fixed arrows & sliding thumbnail track                          */
-/* ------------------------------------------------------------------ */
+/* ------------------------------------------------------------------
+   src/components/product/MainProductSection.tsx
+   Client Component with field-level loaders
+   + fixed arrows & sliding thumbnail track (variant-aware cart)
+------------------------------------------------------------------ */
 "use client";
 
 import React, { useEffect, useState, useMemo, useRef } from "react";
@@ -40,6 +41,16 @@ interface Props {
   initialProduct: ProductStub;
 }
 
+/* ---------- safe subcategorie narrowing (no any) ---------- */
+type Subcategorie = { name: string; slug: string };
+function getSubcategorie(p: Product): Subcategorie | undefined {
+  // If your Product already has `subcategorie?`, remove this helper and read directly.
+  const maybe = p as Product & { subcategorie?: Subcategorie };
+  return maybe.subcategorie
+    ? { name: maybe.subcategorie.name, slug: maybe.subcategorie.slug }
+    : undefined;
+}
+
 /* ------------------------------------------------------------------ */
 const MainProductSection: React.FC<Props> = ({ initialProduct }) => {
   /* ---------- state ---------- */
@@ -59,7 +70,7 @@ const MainProductSection: React.FC<Props> = ({ initialProduct }) => {
       if (!cancelled && full) {
         setProduct(full);
         setSelectedImage((curr) =>
-          full.extraImagesUrl?.includes(curr) ? curr : full.mainImageUrl
+          full.extraImagesUrl?.includes(curr) ? curr : full.mainImageUrl ?? ""
         );
       }
     })();
@@ -71,7 +82,13 @@ const MainProductSection: React.FC<Props> = ({ initialProduct }) => {
   /* ---------- helpers ---------- */
   const handleImageClick = (img: string) => setSelectedImage(img);
 
-  const addToCartHandler = (p: Product, qty: number) => {
+  // Accepts the user's selected attributes and forwards to Redux
+  const addToCartHandler = (
+    p: Product,
+    qty: number,
+    selected: Record<string, string>,
+    selectedNames?: Record<string, string>
+  ) => {
     const cartItem: Omit<CartItem, "quantity"> = {
       _id: p._id,
       name: p.name,
@@ -84,13 +101,15 @@ const MainProductSection: React.FC<Props> = ({ initialProduct }) => {
       categorie: p.categorie
         ? { name: p.categorie.name, slug: p.categorie.slug }
         : undefined,
+      subcategorie: getSubcategorie(p),
+      selected,       
+      selectedNames,
     };
     dispatch(addItem({ item: cartItem, quantity: qty }));
   };
 
   /* ---------- derived ---------- */
   const loading = !("_id" in product);
-
   const thumbs = useMemo(() => product.extraImagesUrl ?? [], [product.extraImagesUrl]);
 
   /* ---------- thumbnail track refs & scroll helpers ---------- */
@@ -100,7 +119,7 @@ const MainProductSection: React.FC<Props> = ({ initialProduct }) => {
   const scroll = (dir: "left" | "right") => {
     const node = trackRef.current;
     if (!node) return;
-    const thumbWidth = 6.5 * 16;
+    const thumbWidth = 6.5 * 16; // ~6.5rem in px
     const step = pageSize * thumbWidth;
     node.scrollBy({ left: dir === "left" ? -step : step, behavior: "smooth" });
   };
@@ -242,9 +261,7 @@ const MainProductSection: React.FC<Props> = ({ initialProduct }) => {
         ) : (
           <div className="flex items-center gap-2 max-lg:text-sm">
             <p className="font-bold">Disponibilité&nbsp;:</p>
-            <span>
-              {product.magasin?.name ?? "Disponible en magasin"}
-            </span>
+            <span>{product.magasin?.name ?? "Disponible en magasin"}</span>
           </div>
         )}
       </div>

@@ -5,17 +5,15 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import type { Product } from "@/types/Product";
 import { FaSpinner } from "react-icons/fa6";
-import { useCurrency } from "@/contexts/CurrencyContext";     // ← added
+import { useCurrency } from "@/contexts/CurrencyContext";
 
-/* ---------- tiny skeleton helper ---------- */
 const Skel = ({ className = "" }: { className?: string }) => (
   <div className={`animate-pulse bg-gray-200 rounded ${className}`} />
 );
 
-/* ---------- attribute utils (unchanged) ---------- */
 export type AttrValueColour = { name: string; hex: string; image?: string };
 export type AttrValueOther = { name: string; value: string; image?: string };
 export type AttrValue = AttrValueColour | AttrValueOther | string;
@@ -48,14 +46,12 @@ const normaliseAttributes = (p: Product): AttrGroup[] =>
           : attributeSelected.type
         : "other";
 
-    const rawRows: (AttrValue | string)[] = Array.isArray(value)
-      ? value
-      : [value];
+    const rawRows: (AttrValue | string)[] = Array.isArray(value) ? value : [value];
+
     const mapped = rawRows.map((v) => {
       if (typeof v === "string") return { label: v };
       if ("hex" in v) return { label: v.name, hex: v.hex, image: v.image };
-      const label =
-        "value" in v && v.value.trim() ? `${v.name} ${v.value}` : v.name;
+      const label = "value" in v && v.value.trim() ? `${v.name} ${v.value}` : v.name;
       return { label, image: v.image };
     });
 
@@ -81,15 +77,13 @@ const normaliseAttributes = (p: Product): AttrGroup[] =>
     };
   });
 
-/* ------------------------------------------------------------------ */
-/*  Main component                                                    */
-/* ------------------------------------------------------------------ */
 interface ProductActionProps {
   product: Product;
   addToCartHandler: (
     product: Product,
     quantity: number,
-    selected: Record<string, string>
+    selected: Record<string, string>,
+    selectedNames?: Record<string, string>
   ) => void;
   onImageSelect?: (img?: string) => void;
 }
@@ -101,12 +95,10 @@ const ProductAction: React.FC<ProductActionProps> = ({
   addToCartHandler,
   onImageSelect,
 }) => {
-  const { fmt } = useCurrency();                              // ← added
+  const { fmt } = useCurrency();
 
-  /* ---------- loading flag ---------- */
   const loading = !product.attributes;
 
-  /* ---------- quantity ---------- */
   const [quantity, setQuantity] = useState(1);
   const dec = () => quantity > 1 && setQuantity(quantity - 1);
   const inc = () =>
@@ -119,21 +111,56 @@ const ProductAction: React.FC<ProductActionProps> = ({
       )
     );
 
-  /* ---------- attributes ---------- */
   const groups = useMemo(() => normaliseAttributes(product), [product]);
-  const [selected, setSelected] = useState<Record<string, string>>(() => {
-    const obj: Record<string, string> = {};
-    groups.forEach((g) => (obj[g.id] = g.values[0]?.label ?? ""));
-    return obj;
-  });
+
+  const [selected, setSelected] = useState<Record<string, string>>({});
+
+  // Ensure defaults: pick the FIRST option for each attribute, and
+  // keep existing choices if they’re still valid.
+  useEffect(() => {
+    if (groups.length === 0) return;
+    setSelected((prev) => {
+      const next: Record<string, string> = {};
+      let changed = false;
+
+      for (const g of groups) {
+        const allowed = new Set(g.values.map((v) => v.label));
+        const keep = prev[g.id] && allowed.has(prev[g.id]);
+        next[g.id] = keep ? (prev[g.id] as string) : (g.values[0]?.label ?? "");
+        if (!keep) changed = true;
+      }
+
+      if (Object.keys(prev).length !== Object.keys(next).length) changed = true;
+      return changed ? next : prev;
+    });
+  }, [groups]);
+
+  // If we just selected defaults, set the preview image to the first color (if any)
+  useEffect(() => {
+    if (!onImageSelect) return;
+    for (const g of groups) {
+      if (g.type !== "color") continue;
+      const chosen = selected[g.id] ?? g.values[0]?.label;
+      const found = g.values.find((v) => v.label === chosen) ?? g.values[0];
+      if (found?.image) onImageSelect(found.image);
+      break;
+    }
+  }, [groups, selected, onImageSelect]);
+
   const choose = (id: string, val: string, image?: string) => {
     setSelected((prev) => ({ ...prev, [id]: val }));
-    if (image && onImageSelect) {
-      onImageSelect(image);
-    }
+    if (image && onImageSelect) onImageSelect(image);
   };
 
-  /* ---------- price & stock ---------- */
+  const selectedNames = useMemo(() => {
+    const map: Record<string, string> = {};
+    groups.forEach((g) => {
+      const v = selected[g.id] ?? g.values[0]?.label;
+      if (v) map[g.label] = v;
+    });
+    return map;
+  }, [groups, selected]);
+
   const discountPct = product.discount ?? 0;
   const hasDiscount = discountPct > 0;
   const finalPrice = hasDiscount
@@ -143,24 +170,20 @@ const ProductAction: React.FC<ProductActionProps> = ({
   const inStock =
     product.stockStatus === "in stock" && (product.stock || 0) > 0;
 
-  /* ---------- loader/success state ---------- */
   const [btnState, setBtnState] = useState<BtnState | undefined>(undefined);
 
   const onAddToCart = () => {
     if (btnState === "loading") return;
     setBtnState("loading");
-    addToCartHandler(product, quantity, selected);
-
+    addToCartHandler(product, quantity, selected, selectedNames);
     setTimeout(() => {
       setBtnState("success");
       setTimeout(() => setBtnState(undefined), 500);
     }, 1000);
   };
 
-  /* ------------------------------------------------------------------ */
   return (
     <>
-      {/* ---------- ATTRIBUTE PICKERS ---------- */}
       {loading ? (
         <Skel className="h-28 w-full" />
       ) : (
@@ -171,27 +194,28 @@ const ProductAction: React.FC<ProductActionProps> = ({
               <p className="flex gap-4 max-lg:text-sm">
                 <span className="font-bold">{g.label} :</span>
                 {isColor && (
-                  <span className="text-gray-700">{selected[g.id]}</span>
+                  <span className="text-gray-700">
+                    {selected[g.id] ?? g.values[0]?.label}
+                  </span>
                 )}
               </p>
               <div className="flex gap-3 h-20 items-center">
                 {g.values.map((v, idx) => {
                   if (isColor) {
-                    const active = selected[g.id] === v.label;
+                    const active = (selected[g.id] ?? g.values[0]?.label) === v.label;
                     return (
                       <button
                         key={`${g.id}-${idx}`}
                         onClick={() => choose(g.id, v.label, v.image)}
                         className={`w-14 h-14 rounded-md border-2 overflow-hidden transition focus:outline-none ${
-                          active
-                            ? "border-primary scale-105"
-                            : "border-gray-300"
+                          active ? "border-primary scale-105" : "border-gray-300"
                         }`}
                         aria-label={v.label}
                         title={v.label}
+                        type="button"
                       >
                         {v.image ? (
-                          <div className="relative aspect-[16/16]  bg-gray-200">
+                          <div className="relative aspect-[16/16] bg-gray-200">
                             <Image
                               src={v.image}
                               alt={v.label}
@@ -204,24 +228,20 @@ const ProductAction: React.FC<ProductActionProps> = ({
                             />
                           </div>
                         ) : (
-                          <div
-                            className="w-full h-full"
-                            style={{ backgroundColor: v.hex }}
-                          />
+                          <div className="w-full h-full" style={{ backgroundColor: v.hex }} />
                         )}
                       </button>
                     );
                   }
-                  const active = selected[g.id] === v.label;
+                  const active = (selected[g.id] ?? g.values[0]?.label) === v.label;
                   return (
                     <button
                       key={`${g.id}-${idx}`}
                       onClick={() => choose(g.id, v.label)}
                       className={`px-3 border rounded-md transition text-sm flex items-center gap-1 ${
-                        active
-                          ? "bg-primary text-white"
-                          : "bg-gray-100 text-gray-800"
+                        active ? "bg-primary text-white" : "bg-gray-100 text-gray-800"
                       }`}
+                      type="button"
                     >
                       {v.image && (
                         <Image
@@ -242,39 +262,32 @@ const ProductAction: React.FC<ProductActionProps> = ({
         })
       )}
 
-      {/* ---------- PRICE ---------- */}
       <hr className="my-4" />
       {loading ? (
         <Skel className="h-8 w-32 mx-auto" />
       ) : (
         <div className="flex items-center justify-center gap-4 max-lg:flex-col max-lg:gap-2">
-          <p className="text-primary text-2xl font-bold">
-            {fmt(finalPrice)}                                      
-          </p>
-          {hasDiscount && (
-            <p className="text-gray-500 line-through">
-              {fmt(product.price)}                              
-            </p>
-          )}
+          <p className="text-primary text-2xl font-bold">{fmt(finalPrice)}</p>
+          {hasDiscount && <p className="text-gray-500 line-through">{fmt(product.price)}</p>}
         </div>
       )}
 
       <hr className="my-4" />
 
-      {/* ---------- ACTIONS ---------- */}
       {loading ? (
         <Skel className="h-12 w-full" />
       ) : (
         <div className="flex flex-col justify-center items-center gap-4">
           {inStock ? (
             <>
-              {/* qty picker + add / buy */}
               <div className="flex justify-between items-center w-full gap-4 max-md:flex-col">
                 <div className="flex items-center max-lg:justify-center gap-2">
                   <button
                     onClick={dec}
                     disabled={quantity === 1}
                     className="p-2 border hover:bg-primary hover:text-white"
+                    type="button"
+                    aria-label="Diminuer la quantité"
                   >
                     –
                   </button>
@@ -290,13 +303,14 @@ const ProductAction: React.FC<ProductActionProps> = ({
                     onClick={inc}
                     disabled={quantity >= (product.stock || 0)}
                     className="p-2 border hover:bg-primary hover:text-white"
+                    type="button"
+                    aria-label="Augmenter la quantité"
                   >
                     +
                   </button>
                 </div>
 
                 <div className="flex gap-4 w-full">
-                  {/* ---------- ADD TO CART with loader + success ---------- */}
                   <button
                     onClick={onAddToCart}
                     disabled={btnState === "loading"}
@@ -307,6 +321,7 @@ const ProductAction: React.FC<ProductActionProps> = ({
                         ? "bg-gray-400 cursor-default text-white border-2"
                         : "bg-white border-primary border-2 text-black hover:bg-primary hover:text-white"
                     }`}
+                    type="button"
                   >
                     {btnState === "loading" ? (
                       <div className="absolute inset-0 flex items-center justify-center">
@@ -326,9 +341,10 @@ const ProductAction: React.FC<ProductActionProps> = ({
                   <Link href="/checkout" className="flex-1">
                     <button
                       onClick={() =>
-                        addToCartHandler(product, quantity, selected)
+                        addToCartHandler(product, quantity, selected, selectedNames)
                       }
                       className="w-full bg-primary text-white h-10 font-semibold rounded-md max-lg:text-sm hover:bg-secondary"
+                      type="button"
                     >
                       Acheter
                     </button>
@@ -340,6 +356,7 @@ const ProductAction: React.FC<ProductActionProps> = ({
             <button
               disabled
               className="bg-gray-500 text-white h-10 w-full font-bold rounded-md"
+              type="button"
             >
               Rupture de stock
             </button>
