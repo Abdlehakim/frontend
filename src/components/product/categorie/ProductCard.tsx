@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------
-   src/components/product/ProductCard.tsx
+   src/components/product/categorie/ProductCard.tsx
 ------------------------------------------------------------------ */
 "use client";
 
@@ -10,16 +10,91 @@ import { FaEye, FaRegHeart, FaHeart, FaCartShopping } from "react-icons/fa6";
 import { FaSpinner } from "react-icons/fa";
 import { useDispatch, useSelector } from "react-redux";
 import { addItem, type CartItem } from "@/store/cartSlice";
-import {
-  addToWishlist,
-  removeFromWishlist,
-} from "@/store/wishlistSlice";
+import { addToWishlist, removeFromWishlist } from "@/store/wishlistSlice";
 import ReviewClient from "@/components/product/reviews/ReviewClient";
 import { RootState } from "@/store";
 import { Product } from "@/types/Product";
-import { useCurrency } from "@/contexts/CurrencyContext"; 
+import { useCurrency } from "@/contexts/CurrencyContext";
+import { fetchData } from "@/lib/fetchData";
 
-/* ---------- props & helpers ---------- */
+/* attribute types */
+type AttrColor = { name: string; hex: string; image?: string };
+type AttrOther = { name: string; value?: string; image?: string };
+type AttrVal = string | AttrColor | AttrOther;
+
+type AttrSelectedObj = { _id: string; name: string; type: string | string[] };
+type AttrSelected = AttrSelectedObj | string;
+type AttrRow = { attributeSelected: AttrSelected; value?: AttrVal | AttrVal[] };
+
+type ProductWithAttrs = Product & { attributes?: AttrRow[] };
+
+function isAttrSelectedObj(x: AttrSelected): x is AttrSelectedObj {
+  return typeof x === "object" && x !== null && "_id" in x && "name" in x;
+}
+function isAttrColor(x: AttrVal): x is AttrColor {
+  return typeof x === "object" && x !== null && "hex" in x;
+}
+function isAttrOther(x: AttrVal): x is AttrOther {
+  return typeof x === "object" && x !== null && !("hex" in x);
+}
+
+type Selections = {
+  selected?: Record<string, string>;
+  selectedNames?: Record<string, string>;
+};
+
+function pickFirstsFromRows(rows?: AttrRow[]): Selections {
+  if (!rows || rows.length === 0) return {};
+  const selected: Record<string, string> = {};
+  const selectedNames: Record<string, string> = {};
+  for (const row of rows) {
+    const sel = row.attributeSelected;
+    const id = isAttrSelectedObj(sel) ? String(sel._id) : String(sel ?? "");
+    const label = isAttrSelectedObj(sel) ? String(sel.name) : String(sel ?? "");
+    if (!id || !label) continue;
+
+    const v = row.value;
+    let firstLabel: string | undefined;
+
+    if (typeof v === "string") {
+      firstLabel = v;
+    } else if (Array.isArray(v) && v.length > 0) {
+      const first = v[0];
+      if (typeof first === "string") firstLabel = first;
+      else if (isAttrColor(first)) firstLabel = String(first.name ?? "");
+      else if (isAttrOther(first)) {
+        const nm = String(first.name ?? "");
+        const vv = typeof first.value === "string" ? first.value.trim() : "";
+        firstLabel = vv ? `${nm} ${vv}`.trim() : nm;
+      }
+    }
+
+    if (firstLabel) {
+      selected[id] = firstLabel;
+      selectedNames[label] = firstLabel;
+    }
+  }
+  return {
+    selected: Object.keys(selected).length ? selected : undefined,
+    selectedNames: Object.keys(selectedNames).length ? selectedNames : undefined,
+  };
+}
+
+async function getSelections(product: Product): Promise<Selections> {
+  const withAttrs = product as ProductWithAttrs;
+  if (withAttrs.attributes && withAttrs.attributes.length > 0) {
+    return pickFirstsFromRows(withAttrs.attributes);
+  }
+  try {
+    const rows = await fetchData<AttrRow[]>(
+      `products/MainProductSection/attributes/${product._id}`
+    );
+    return pickFirstsFromRows(rows ?? []);
+  } catch {
+    return {};
+  }
+}
+
 interface ProductCardProps {
   products: Product[];
 }
@@ -27,20 +102,15 @@ interface ProductCardProps {
 type BtnState = "loading" | "success";
 
 const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
-  const { fmt } = useCurrency();                       
-  const dispatch  = useDispatch();
-  const wishlist  = useSelector((s: RootState) => s.wishlist.items);
-  const isInWishlist = (slug: string) =>
-    wishlist.some((w) => w.slug === slug);
+  const { fmt } = useCurrency();
+  const dispatch = useDispatch();
+  const wishlist = useSelector((s: RootState) => s.wishlist.items);
+  const isInWishlist = (slug: string) => wishlist.some((w) => w.slug === slug);
 
-  const [btnStates, setBtnStates] = useState<
-    Record<string, BtnState | undefined>
-  >({});
+  const [btnStates, setBtnStates] = useState<Record<string, BtnState | undefined>>({});
 
-  /* -------- wishlist toggle -------- */
   const handleWishlistClick = (product: Product) => {
     if (!product.categorie) return;
-
     if (isInWishlist(product.slug)) {
       dispatch(removeFromWishlist(product.slug));
     } else {
@@ -54,16 +124,18 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
             slug: product.categorie.slug,
           },
           slug: product.slug,
-        }),
+        })
       );
     }
   };
 
-  /* -------- add to cart -------- */
-  const handleAddToCart = (product: Product, isOutOfStock: boolean) => {
+  /* add to cart: include default attributes (fetch if missing) */
+  const handleAddToCart = async (product: Product, isOutOfStock: boolean) => {
     if (isOutOfStock || btnStates[product._id] === "loading") return;
 
     setBtnStates((p) => ({ ...p, [product._id]: "loading" }));
+
+    const { selected, selectedNames } = await getSelections(product);
 
     const base: Omit<CartItem, "quantity"> = {
       _id: product._id,
@@ -75,10 +147,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
       discount: product.discount ?? 0,
       slug: product.slug,
       categorie: product.categorie
-        ? {
-            name: product.categorie.name,
-            slug: product.categorie.slug,
-          }
+        ? { name: product.categorie.name, slug: product.categorie.slug }
         : { name: "inconnue", slug: "categorie" },
       ...(product.subcategorie && {
         subcategorie: {
@@ -86,7 +155,10 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
           slug: product.subcategorie.slug,
         },
       }),
+      ...(selected && { selected }),
+      ...(selectedNames && { selectedNames }),
     };
+
     dispatch(addItem({ item: base, quantity: 1 }));
 
     setTimeout(() => {
@@ -101,11 +173,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
     }, 1000);
   };
 
-  /* ---------- render ---------- */
   return (
     <div className="group w-fit h-fit grid grid-cols-4 max-2xl:grid-cols-3 max-lg:grid-cols-2 max-sm:grid-cols-1 gap-[40px]">
       {products.map((product) => {
-        /* ----- helpers ----- */
         const discountedPrice = product.discount
           ? product.price - product.price * (product.discount / 100)
           : product.price;
@@ -121,13 +191,11 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
         const isLoading = state === "loading";
         const isSuccess = state === "success";
 
-        /* ----- card ----- */
         return (
           <div
             key={product._id}
             className="h-fit w-[280px] flex flex-col gap-[10px] transform duration-200 ease-in-out group-hover:scale-[0.9] hover:!scale-[1.1] max-md:group-hover:scale-[1] max-md:hover:!scale-[1]"
           >
-            {/* image */}
             <Link href={productUrl}>
               <div className="relative aspect-[16/14] bg-gray-200">
                 <Image
@@ -143,15 +211,12 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
               </div>
             </Link>
 
-            {/* info */}
             <div className="flex flex-col w-full h-[80px]">
               <Link href={productUrl}>
                 <div className="flex justify-between h-[65px] max-sm:h-16 max-md:h-20">
                   <div className="flex flex-col gap-[4px]">
                     <p className="text-lg font-bold capitalize">
-                      {product.name?.length > 8
-                        ? product.name.slice(0, 8) + "..."
-                        : product.name}
+                      {product.name?.length > 8 ? product.name.slice(0, 8) + "..." : product.name}
                     </p>
                     <ReviewClient productId={product._id} summary />
                   </div>
@@ -176,9 +241,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
               </Link>
             </div>
 
-            {/* actions */}
             <div className="flex justify-between h-[45px] text-lg max-md:text-sm">
-              {/* add‑to‑cart */}
               <button
                 disabled={isOutOfStock || isLoading}
                 onClick={() => handleAddToCart(product, isOutOfStock)}
@@ -188,7 +251,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
                     : "bg-primary text-white hover:bg-[#15335D]"
                 }`}
               >
-                {/* text / spinner / success */}
                 {isOutOfStock ? (
                   <p className="absolute inset-0 flex items-center justify-center transition-transform duration-300 text-sm">
                     Rupture de stock
@@ -207,7 +269,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
                   </p>
                 )}
 
-                {/* cart icon slide‑in */}
                 {!isOutOfStock && !isLoading && !isSuccess && (
                   <span className="absolute inset-0 flex items-center justify-center -translate-x-full transition-transform duration-300 lg:group-hover/box:translate-x-[-35%]">
                     <FaCartShopping className="w-6 h-6" />
@@ -215,7 +276,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
                 )}
               </button>
 
-              {/* view */}
               <Link href={productUrl} className="w-[25%] max-lg:w-[30%]">
                 <button className="AddtoCart relative h-full w-full bg-white text-primary border border-primary max-md:rounded-[3px] group/box">
                   <span className="absolute inset-0 flex items-center justify-center transition-transform duration-300 lg:group-hover/box:-translate-y-full text-sm">
@@ -227,18 +287,14 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
                 </button>
               </Link>
 
-              {/* wishlist */}
               <button
                 aria-label="wishlist"
                 onClick={() => handleWishlistClick(product)}
-                className={`
-                  AddtoCart relative w-[15%] bg-white border max-lg:hidden max-md:rounded-[3px] group/box border-primary
-                  ${
-                    isInWishlist(product.slug)
-                      ? " text-red-500 hover:bg-red-500 hover:text-white"
-                      : " text-primary hover:bg-primary hover:text-white"
-                  }
-                `}
+                className={`AddtoCart relative w-[15%] bg-white border max-lg:hidden max-md:rounded-[3px] group/box border-primary ${
+                  isInWishlist(product.slug)
+                    ? " text-red-500 hover:bg-red-500 hover:text-white"
+                    : " text-primary hover:bg-primary hover:text-white"
+                }`}
               >
                 {isInWishlist(product.slug) ? (
                   <FaHeart className="w-5 h-5" />
