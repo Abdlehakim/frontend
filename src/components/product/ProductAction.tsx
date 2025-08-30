@@ -1,5 +1,7 @@
 /* ------------------------------------------------------------------
+   src/components/product/ProductAction.tsx
    ProductAction — bouton loader + “Produit ajouté” on success
+   Updated: remove auto-preview effect; clicks drive hero updates
 ------------------------------------------------------------------ */
 "use client";
 
@@ -135,21 +137,11 @@ const ProductAction: React.FC<ProductActionProps> = ({
     });
   }, [groups]);
 
-  // If we just selected defaults, set the preview image to the first color (if any)
-  useEffect(() => {
-    if (!onImageSelect) return;
-    for (const g of groups) {
-      if (g.type !== "color") continue;
-      const chosen = selected[g.id] ?? g.values[0]?.label;
-      const found = g.values.find((v) => v.label === chosen) ?? g.values[0];
-      if (found?.image) onImageSelect(found.image);
-      break;
-    }
-  }, [groups, selected, onImageSelect]);
+  // NOTE: Removed the auto-preview effect. Now only user clicks update hero.
 
   const choose = (id: string, val: string, image?: string) => {
     setSelected((prev) => ({ ...prev, [id]: val }));
-    if (image && onImageSelect) onImageSelect(image);
+    if (image && onImageSelect) onImageSelect(image); // last click wins
   };
 
   const selectedNames = useMemo(() => {
@@ -237,7 +229,7 @@ const ProductAction: React.FC<ProductActionProps> = ({
                   return (
                     <button
                       key={`${g.id}-${idx}`}
-                      onClick={() => choose(g.id, v.label)}
+                      onClick={() => choose(g.id, v.label, v.image)}
                       className={`px-3 border rounded-md transition text-sm flex items-center gap-1 ${
                         active ? "bg-primary text-white" : "bg-gray-100 text-gray-800"
                       }`}

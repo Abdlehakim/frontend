@@ -2,10 +2,11 @@
    src/components/product/MainProductSection.tsx
    Client Component with field-level loaders
    + fixed arrows & sliding thumbnail track (variant-aware cart)
+   + last-click-wins: thumbnails & attribute images both update hero
 ------------------------------------------------------------------ */
 "use client";
 
-import React, { useEffect, useState, useMemo, useRef } from "react";
+import React, { useEffect, useState, useMemo, useRef, useCallback } from "react";
 import Image from "next/image";
 import {
   IoCheckboxOutline,
@@ -44,7 +45,6 @@ interface Props {
 /* ---------- safe subcategorie narrowing (no any) ---------- */
 type Subcategorie = { name: string; slug: string };
 function getSubcategorie(p: Product): Subcategorie | undefined {
-  // If your Product already has `subcategorie?`, remove this helper and read directly.
   const maybe = p as Product & { subcategorie?: Subcategorie };
   return maybe.subcategorie
     ? { name: maybe.subcategorie.name, slug: maybe.subcategorie.slug }
@@ -82,6 +82,11 @@ const MainProductSection: React.FC<Props> = ({ initialProduct }) => {
   /* ---------- helpers ---------- */
   const handleImageClick = (img: string) => setSelectedImage(img);
 
+  // Attribute-driven image: last click wins (thumbnails or attributes)
+  const handleVariantImage = useCallback((img?: string) => {
+    if (img) setSelectedImage(img);
+  }, []);
+
   // Accepts the user's selected attributes and forwards to Redux
   const addToCartHandler = (
     p: Product,
@@ -102,7 +107,7 @@ const MainProductSection: React.FC<Props> = ({ initialProduct }) => {
         ? { name: p.categorie.name, slug: p.categorie.slug }
         : undefined,
       subcategorie: getSubcategorie(p),
-      selected,       
+      selected,
       selectedNames,
     };
     dispatch(addItem({ item: cartItem, quantity: qty }));
@@ -252,7 +257,7 @@ const MainProductSection: React.FC<Props> = ({ initialProduct }) => {
         <ProductAction
           product={product as Product}
           addToCartHandler={addToCartHandler}
-          onImageSelect={(img) => img && setSelectedImage(img)}
+          onImageSelect={handleVariantImage} // last click wins
         />
 
         {/* disponibilité */}

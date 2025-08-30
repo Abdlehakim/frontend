@@ -184,7 +184,7 @@ const CartModal: React.FC<CartModalProps> = ({ items, onClose }) => {
                 {/* actions */}
                 <div className="ml-auto flex flex-col gap-2 items-end shrink-0">
                   {/* quantity buttons */}
-                  <div className="flex items-center gap-2">
+                  <div className="md:flex justify-between items-center gap-2 hidden w-full">
                     <button
                       className="text-black w-8 h-8 flex items-center justify-center bg-white border-2 border-[#15335E] rounded-lg hover:bg-[#15335E] hover:text-white"
                       onClick={(e) => decrementHandler(item, e)}
@@ -204,10 +204,10 @@ const CartModal: React.FC<CartModalProps> = ({ items, onClose }) => {
 
                   {/* remove button */}
                   <button
-                    className="flex items-center gap-2 justify-center border-2 border-[#15335E] rounded text-black hover:bg-[#15335E] hover:text-white w-full"
+                    className="flex items-center gap-2 justify-center border-2 border-[#15335E] rounded text-black hover:bg-[#15335E] hover:text-white p-2"
                     onClick={(e) => removeCartHandler(item, e)}
                   >
-                    <FaRegTrashAlt size={15} /> Remove
+                    <FaRegTrashAlt size={15} /><span className='hidden md:flex'>Remove</span>
                   </button>
                 </div>
               </div>

@@ -161,7 +161,7 @@ const CartModalOnscroll: React.FC<CartModalOnscrollProps> = ({
           return (
             <div
               key={`${item._id}-${selectionKey(item.selected)}`}
-              className="flex items-center justify-between py-2 max-md:mx-[10%] border-b-2"
+              className="flex items-center gap-2 justify-start py-2 border-b-2 w-full"
             >
               {/* image */}
               <div className="relative h-16 aspect-square bg-gray-200">
@@ -208,7 +208,7 @@ const CartModalOnscroll: React.FC<CartModalOnscrollProps> = ({
               </div>
 
               {/* controls */}
-              <div className="flex flex-col gap-[8px]">
+              <div className="ml-auto flex flex-col gap-2 items-end shrink-0">
                 <div className="flex items-center gap-[8px] max-md:hidden">
                   <button
                     className="text-black w-8 h-8 flex items-center justify-center bg-opacity-40 rounded-lg border-2 border-[#15335E] bg-white hover:bg-[#15335E] hover:text-white"
@@ -227,7 +227,7 @@ const CartModalOnscroll: React.FC<CartModalOnscrollProps> = ({
                   </button>
                 </div>
                 <button
-                  className="flex gap-[8px] items-center justify-center hover:bg-[#15335E] border-2 max-md:border-none border-[#15335E] rounded text-black hover:text-white cursor-pointer"
+                  className="flex items-center gap-2 justify-center border-2 border-[#15335E] rounded text-black hover:bg-[#15335E] hover:text-white p-2"
                   onClick={(e) => removeCartHandler(item, e)}
                 >
                   <span className="max-md:hidden">Remove</span>
