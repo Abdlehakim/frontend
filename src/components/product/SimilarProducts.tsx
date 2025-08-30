@@ -11,16 +11,16 @@ interface SimilarProductsProps {
   categorieId: string;
   subcategorieId?: string | null;
   excludeSlug: string;
-  SPTitle: string;
-  SPSubTitle: string;
+  SimilarProductTitre: string;
+  SimilarProductSubTitre: string;
 }
 
 export default function SimilarProducts({
   categorieId,
   subcategorieId,
   excludeSlug,
-  SPTitle,
-  SPSubTitle,
+  SimilarProductTitre,
+  SimilarProductSubTitre,
 }: SimilarProductsProps) {
   const key = subcategorieId ?? categorieId;
 
@@ -69,9 +69,9 @@ export default function SimilarProducts({
     <section className="flex flex-col gap-4 w-full">
       <div className="flex flex-col gap-[8px] items-center w-full max-lg:text-center">
         <h2 className="font-bold text-2xl text-HomePageTitles capitalize">
-          {SPTitle}
+          {SimilarProductTitre}
         </h2>
-        <p className="test-base max-md:text-sm text-[#525566] text-center">{SPSubTitle}</p>
+        <p className="test-base max-md:text-sm text-[#525566] text-center">{SimilarProductSubTitre}</p>
       </div>
 
       <div className="flex w-full max-lg:flex-col max-lg:h-fit h-[450px] justify-center items-center gap-4">

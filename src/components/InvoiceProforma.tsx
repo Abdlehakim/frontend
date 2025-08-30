@@ -5,23 +5,27 @@ import React, { useEffect, useState } from "react";
 import Image from "next/image";
 import { useCurrency } from "@/contexts/CurrencyContext";
 
-/* ---------- types ---------- */
+interface OrderItemAttr {
+  attribute?: string;        // id (optional)
+  name: string;              // e.g. "Couleur"
+  value: string;             // e.g. "Bleu gris"
+}
+
 interface OrderItem {
   _id: string;
   reference: string;
   name: string;
-  tva: number;      // TVA percentage (e.g. 19 for 19 %)
-  discount: number; // percentage discount applied on TTC price
+  tva: number;               // % TVA
+  discount: number;          // % discount on TTC
   quantity: number;
   mainImageUrl: string;
-  price: number;    // **TTC price (already includes TVA)**
+  price: number;             // TTC unit price
+  attributes?: OrderItemAttr[];
 }
 
 type PaymentMethodUnion =
   | string
-  | Array<{
-      PaymentMethodLabel: string;
-    }>;
+  | Array<{ PaymentMethodLabel: string }>;
 
 type DeliveryMethodUnion =
   | string
@@ -40,7 +44,7 @@ interface InvoiceProformaProps {
     orderItems: OrderItem[];
     paymentMethod: PaymentMethodUnion;
     deliveryMethod: DeliveryMethodUnion;
-    deliveryCost?: number; // legacy
+    deliveryCost?: number;
     createdAt: string;
   };
   company: {
@@ -54,7 +58,7 @@ interface InvoiceProformaProps {
   };
 }
 
-/* ---------- helpers ---------- */
+/* inline SVG when possible for crisp PDF/print */
 const InlineOrImg: React.FC<{ url: string; className?: string; alt?: string }> = ({
   url,
   className,
@@ -66,7 +70,6 @@ const InlineOrImg: React.FC<{ url: string; className?: string; alt?: string }> =
   useEffect(() => {
     if (!isSvg) return;
     let canceled = false;
-
     fetch(url)
       .then((r) => r.text())
       .then((txt) => {
@@ -81,7 +84,6 @@ const InlineOrImg: React.FC<{ url: string; className?: string; alt?: string }> =
         setSvg(cleaned);
       })
       .catch(() => {});
-
     return () => {
       canceled = true;
     };
@@ -112,14 +114,9 @@ const InlineOrImg: React.FC<{ url: string; className?: string; alt?: string }> =
 
 const frDate = (iso: string) =>
   new Date(iso)
-    .toLocaleDateString("fr-FR", {
-      day: "2-digit",
-      month: "numeric",
-      year: "numeric",
-    })
+    .toLocaleDateString("fr-FR", { day: "2-digit", month: "numeric", year: "numeric" })
     .replace(/\s/g, "");
 
-/* ---------- component ---------- */
 export default function InvoiceProforma({ order, company }: InvoiceProformaProps) {
   const { fmt } = useCurrency();
 
@@ -128,13 +125,11 @@ export default function InvoiceProforma({ order, company }: InvoiceProformaProps
     ? order.pickupMagasin?.[0]?.MagasinAddress || "—"
     : order.DeliveryAddress[0]?.DeliverToAddress || "—";
 
-  // Normalize payment method(s)
   const paymentMethodText =
     typeof order.paymentMethod === "string"
       ? order.paymentMethod
       : order.paymentMethod.map((p) => p.PaymentMethodLabel).filter(Boolean).join(", ");
 
-  // Normalize delivery method(s) and cost
   const dmArray = Array.isArray(order.deliveryMethod) ? order.deliveryMethod : [];
   const deliveryMethodText =
     dmArray.length > 0
@@ -151,7 +146,6 @@ export default function InvoiceProforma({ order, company }: InvoiceProformaProps
   const shippingCost =
     typeof order.deliveryCost === "number" ? order.deliveryCost : deliveryCostFromDM;
 
-  // Expected dates (skip if pickup)
   const expectedDates: string[] =
     isPickup
       ? []
@@ -160,17 +154,14 @@ export default function InvoiceProforma({ order, company }: InvoiceProformaProps
           .filter((v): v is string | Date => Boolean(v))
           .map((v) => new Date(v as string).toLocaleDateString("fr-FR"));
 
-  /* ----- per-item + global totals ----- */
+  // per-line math (price is TTC)
   const lines = order.orderItems.map((it) => {
-    // 1. TTC after discount
     const unitTTC = it.discount > 0 ? (it.price * (100 - it.discount)) / 100 : it.price;
-    // 2. HT
     const unitHT = unitTTC / (1 + it.tva / 100);
-    // 3. Lines
     const lineHT = unitHT * it.quantity;
     const lineTTC = unitTTC * it.quantity;
     const lineTVA = lineTTC - lineHT;
-    return { ...it, unitHT, lineHT, lineTVA, lineTTC };
+    return { ...it, unitHT, unitTTC, lineHT, lineTVA, lineTTC };
   });
 
   const totalHT = lines.reduce((s, l) => s + l.lineHT, 0);
@@ -182,7 +173,7 @@ export default function InvoiceProforma({ order, company }: InvoiceProformaProps
       className="bg-white rounded-xl p-6 space-y-6"
       style={{ width: "210mm", minHeight: "297mm" }}
     >
-      {/* ---------- Header ---------- */}
+      {/* Header */}
       <div className="flex justify-between items-center">
         <h1 className="text-4xl font-bold text-black">Facture</h1>
         <div className="text-[#15335e] w-[298px] h-[64px]">
@@ -195,9 +186,8 @@ export default function InvoiceProforma({ order, company }: InvoiceProformaProps
       </div>
       <div className="h-0.5 bg-teal-400" />
 
-      {/* ---------- Company & Invoice Meta ---------- */}
+      {/* Company & Meta */}
       <div className="grid md:grid-cols-2 gap-10 text-sm">
-        {/* Company info + meta */}
         <div className="space-y-4">
           <div className="space-y-1 pb-4">
             <p className="font-semibold uppercase">{company.name}</p>
@@ -257,7 +247,7 @@ export default function InvoiceProforma({ order, company }: InvoiceProformaProps
 
       <div className="h-0.5 bg-teal-400" />
 
-      {/* ---------- Items Table ---------- */}
+      {/* Items */}
       <div className="overflow-x-auto text-sm">
         <table className="w-full">
           <thead>
@@ -273,8 +263,21 @@ export default function InvoiceProforma({ order, company }: InvoiceProformaProps
           </thead>
           <tbody>
             {lines.map((l) => (
-              <tr key={l._id} className="border-b">
-                <td className="py-2 text-center">{l.name}</td>
+              <tr key={l._id} className="border-b align-top">
+                <td className="py-2 text-left">
+                  <div className="font-medium">{l.name}</div>
+                  <div className="text-xs text-gray-600">Réf : {l.reference}</div>
+                  {Array.isArray(l.attributes) && l.attributes.length > 0 && (
+                    <ul className="mt-1 text-xs text-gray-700 space-y-0.5">
+                      {l.attributes.map((a, i) => (
+                        <li key={`${l._id}-attr-${i}`}>
+                          <span className="font-semibold">{a.name} :</span>{" "}
+                          <span>{a.value}</span>
+                        </li>
+                      ))}
+                    </ul>
+                  )}
+                </td>
                 <td className="py-2 text-center">{l.quantity}</td>
                 <td className="py-2 text-center">{fmt(l.unitHT)}</td>
                 <td className="py-2 text-center">{l.tva} %</td>
@@ -286,7 +289,7 @@ export default function InvoiceProforma({ order, company }: InvoiceProformaProps
         </table>
       </div>
 
-      {/* ---------- Totals ---------- */}
+      {/* Totals */}
       <div className="flex justify-end">
         <div className="w-full md:w-1/3 text-sm space-y-1">
           <div className="flex justify-between">

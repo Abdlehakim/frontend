@@ -4,19 +4,18 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Image from "next/image";
-import jsPDF from "jspdf";
-import html2canvas from "html2canvas";
 import { FiDownload } from "react-icons/fi";
 import { fetchData } from "@/lib/fetchData";
-import InvoiceProforma from "@/components/InvoiceProforma";
 import { useCurrency } from "@/contexts/CurrencyContext";
+import { generatePdf } from "@/lib/generatePdf";
 
 /* ---------- types ---------- */
 interface OrderItemAttr {
-  attribute: string;
-  name: string;
-  value: string;
+  attribute: string; // attribute id
+  name: string;      // e.g. "Couleur"
+  value: string;     // e.g. "Bleu gris"
 }
+
 interface OrderItem {
   _id: string;
   reference: string;
@@ -86,46 +85,27 @@ function safeToDate(val?: string | Date): Date | null {
   return isNaN(d.getTime()) ? null : d;
 }
 
-/* ---------- component ---------- */
+/* ---------- page ---------- */
 export default function OrderByRef() {
   const router = useRouter();
   const { orderRef } = useParams() as { orderRef: string };
   const { fmt } = useCurrency();
 
   const [order, setOrder] = useState<Order | null>(null);
-  const [company, setCompany] = useState<{
-    name: string;
-    logoImageUrl: string;
-    phone: string;
-    address: string;
-    city: string;
-    governorate: string;
-    zipcode: number;
-  } | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
     (async () => {
       try {
         setLoading(true);
-        const [orderData, headerData] = await Promise.all([
-          fetchData<Order>(`/client/order/getOrderByRef/${orderRef}`, {
-            credentials: "include",
-          }),
-          fetchData<{
-            name: string;
-            logoImageUrl: string;
-            phone: string;
-            address: string;
-            city: string;
-            governorate: string;
-            zipcode: number;
-          }>("/website/header/getHeaderData"),
-        ]);
+        const orderData = await fetchData<Order>(
+          `/client/order/getOrderByRef/${orderRef}`,
+          { credentials: "include" }
+        );
         setOrder(orderData || null);
-        setCompany(headerData || null);
       } catch (err) {
         console.error(err);
+        setOrder(null);
       } finally {
         setLoading(false);
       }
@@ -133,16 +113,12 @@ export default function OrderByRef() {
   }, [orderRef]);
 
   const telechargerPDF = useCallback(async () => {
-    const el = document.getElementById("invoice-to-download");
-    if (!el) return;
-    await new Promise((r) => setTimeout(r, 500));
-    const canvas = await html2canvas(el, { useCORS: true });
-    const pdf = new jsPDF({ unit: "mm", format: "a4" });
-    const imgW = 210;
-    const imgH = (canvas.height * imgW) / canvas.width;
-    pdf.addImage(canvas.toDataURL("image/png"), "PNG", 0, 0, imgW, imgH);
-    pdf.save(`FACTURE-${order?.ref.replace("ORDER-", "")}.pdf`);
-  }, [order]);
+    if (!order?.ref) return;
+    await generatePdf(
+      `/pdf/invoice/${order.ref}`,
+      `FACTURE-${order.ref.replace("ORDER-", "")}.pdf`
+    );
+  }, [order?.ref]);
 
   if (loading) {
     return (
@@ -193,7 +169,6 @@ export default function OrderByRef() {
   const addressLabel = isPickup ? "Magasin de retrait" : "Adresse de livraison";
   const addressValue = isPickup ? magasinDisplay : deliverAddress;
 
-  // dates only
   let expectedDatesText: string | null = null;
   if (!isPickup && dmArray.length) {
     const dates = dmArray
@@ -212,11 +187,8 @@ export default function OrderByRef() {
   /* ---------- render ---------- */
   return (
     <div className="w-[90%] md:w-[80%] mx-auto pt-16">
-      {/* on-screen invoice */}
-      <div
-        id="invoice-card"
-        className="bg-gray-100 border border-gray-200 rounded-xl p-6 space-y-6 max-md:p-2"
-      >
+      {/* invoice card */}
+      <div className="bg-gray-100 border border-gray-200 rounded-xl p-6 space-y-6 max-md:p-2">
         {/* meta */}
         <div className="md:flex md:divide-x divide-gray-200 text-center md:text-left">
           {([
@@ -252,7 +224,6 @@ export default function OrderByRef() {
                     ? (it.price * (100 - it.discount)) / 100
                     : it.price;
                 const lineTotal = unit * it.quantity;
-                const attrs = Array.isArray(it.attributes) ? it.attributes : [];
                 return (
                   <div key={it._id} className="flex items-start justify-between gap-4">
                     <div className="relative w-20 h-20 rounded-lg">
@@ -266,27 +237,28 @@ export default function OrderByRef() {
                         quality={75}
                       />
                     </div>
+
                     <div className="flex-1 max-md:text-xs">
                       <h4 className="font-semibold">{it.name}</h4>
                       <p className="text-sm text-gray-500 max-md:text-xs">
                         Réf :&nbsp;{it.reference}
                       </p>
-                      <p className="text-sm text-gray-500 max-md:text-xs">
+                      {/* Attributes if any */}
+                      {Array.isArray(it.attributes) && it.attributes.length > 0 && (
+                        <ul className="mt-1 text-xs text-gray-700 space-y-0.5">
+                          {it.attributes.map((a, idx) => (
+                            <li key={`${a.attribute}-${a.name}-${a.value}-${idx}`}>
+                              <span className="font-semibold">{a.name} :</span>{" "}
+                              <span>{a.value}</span>
+                            </li>
+                          ))}
+                        </ul>
+                      )}
+                      <p className="text-sm text-gray-500 max-md:text-xs mt-1">
                         Quantité :&nbsp;{it.quantity}
                       </p>
-
-                      {/* attributes (if any) */}
-                      {attrs.length > 0 && (
-                        <div className="mt-1 text-xs text-gray-800 space-y-0.5">
-                          {attrs.map((a, idx) => (
-                            <div key={`${a.attribute}-${idx}`}>
-                              <span className="font-semibold">{a.name} :</span>{" "}
-                              <span className="text-gray-700">{a.value}</span>
-                            </div>
-                          ))}
-                        </div>
-                      )}
                     </div>
+
                     <p className="font-semibold whitespace-nowrap max-md:text-xs">
                       {fmt(lineTotal)}
                     </p>
@@ -307,29 +279,6 @@ export default function OrderByRef() {
           </p>
         </div>
       </div>
-
-      {/* hidden invoice for PDF generation */}
-      {company && order && (
-        <div
-          id="invoice-to-download"
-          style={{ position: "absolute", top: "-9999px", left: "-9999px" }}
-        >
-          <InvoiceProforma
-            order={{
-              ref: order.ref,
-              DeliveryAddress: isPickup
-                ? [{ DeliverToAddress: addressValue }]
-                : order.DeliveryAddress,
-              orderItems: order.orderItems,
-              paymentMethod: paymentLabels,
-              deliveryMethod: deliveryMethodText,
-              deliveryCost: deliveryCost,
-              createdAt: order.createdAt,
-            }}
-            company={company}
-          />
-        </div>
-      )}
 
       {/* actions */}
       <div className="flex justify-between mt-4 gap-4">

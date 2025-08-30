@@ -11,8 +11,8 @@ import type { Product } from "@/types/Product";
 export const revalidate = 60;
 
 interface ProductTitleDataType {
-  SPTitle?: string;
-  SPSubTitle?: string;
+  SimilarProductTitre?: string;
+  SimilarProductSubTitre?: string;
 }
 
 /* ---------- dynamic params ---------------------------------------- */
@@ -95,10 +95,10 @@ export default async function ProductPage({
   };
 
   const titleData = await fetchData<ProductTitleDataType>(
-    "products/MainProductSection/productPageTitlesData"
+    "products/MainProductSection/SimilarProductTitles"
   ).catch(() => null);
 
-  const { SPTitle = "Produits similaires", SPSubTitle = "" } = titleData ?? {};
+  const { SimilarProductTitre = "", SimilarProductSubTitre = "" } = titleData ?? {};
 
   /* ---------- fetch lightweight description/details -------------- */
   const details = await fetchData<ProductDetailsDataType>(
@@ -121,8 +121,8 @@ export default async function ProductPage({
         categorieId={prod.categorie._id}
         subcategorieId={prod.subcategorie?._id}
         excludeSlug={prod.slug}
-        SPTitle={SPTitle}
-        SPSubTitle={SPSubTitle}
+        SimilarProductTitre={SimilarProductTitre}
+        SimilarProductSubTitre={SimilarProductSubTitre}
       />
     </div>
   );
