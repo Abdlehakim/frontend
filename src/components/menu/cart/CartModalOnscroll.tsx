@@ -209,7 +209,7 @@ const CartModalOnscroll: React.FC<CartModalOnscrollProps> = ({
 
               {/* controls */}
               <div className="ml-auto flex flex-col gap-2 items-end shrink-0">
-                <div className="flex items-center gap-[8px] max-md:hidden">
+                <div className="md:flex justify-between items-center gap-2 hidden w-full">
                   <button
                     className="text-black w-8 h-8 flex items-center justify-center bg-opacity-40 rounded-lg border-2 border-[#15335E] bg-white hover:bg-[#15335E] hover:text-white"
                     onClick={(e) => decrementHandler(item, e)}

@@ -179,6 +179,9 @@ const CartModal: React.FC<CartModalProps> = ({ items, onClose }) => {
                   <div className="text-gray-800 text-xs mt-1">
                     <span className="max-md:hidden">Price Unit:</span> {fmt(unitPrice)}
                   </div>
+                  <p className="text-gray-800 text-xs md:hidden">
+                  Qty: {item.quantity}
+                </p>
                 </div>
 
                 {/* actions */}
