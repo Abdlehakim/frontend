@@ -1,21 +1,21 @@
 // app/components/Footer/Footer.tsx (Server Component)
 
 import React from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { FiPhone, FiMail, FiMapPin } from "react-icons/fi";
 import { FaFacebookF, FaLinkedinIn, FaInstagram, FaArrowRight } from "react-icons/fa";
 import { fetchData } from "@/lib/fetchData";
+import LogoComponent from "@/components/menu/LogoComponent";
 
 export interface FooterData {
   name: string;
   logoImageUrl: string;
   address: string;
   city: string;
-  zipcode: number;
+  zipcode: string;     // ← string (matches schema)
   governorate: string;
   email: string;
-  phone?: number;
+  phone?: string;      // ← string (matches schema)
   facebook?: string;
   linkedin?: string;
   instagram?: string;
@@ -24,25 +24,27 @@ export interface FooterData {
 export const revalidate = 60;
 
 export default async function Footer() {
-  const data: FooterData =
-    await fetchData<FooterData>("/website/header/getFooterData")
-      .catch(() => ({
+  const data: FooterData = await fetchData<FooterData>("/website/header/getFooterData").catch(
+    () =>
+      ({
         name: "",
         logoImageUrl: "",
         address: "",
         city: "",
-        zipcode: 0,
+        zipcode: "",
         governorate: "",
         email: "",
         phone: undefined,
         facebook: undefined,
         linkedin: undefined,
         instagram: undefined,
-      } as FooterData));
+      } as FooterData)
+  );
 
   const {
     name,
-    logoImageUrl,
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    logoImageUrl: _logoImageUrl, // LogoComponent will fetch/handle its own src
     address,
     city,
     zipcode,
@@ -54,48 +56,49 @@ export default async function Footer() {
     instagram,
   } = data;
 
-  const formatPhoneNumber = (num: number): string => {
-    const str = num.toString().trim();
-    return str.length === 8
-      ? `${str.slice(0, 2)} ${str.slice(2, 5)} ${str.slice(5)}`
-      : str;
+  const formatPhone = (raw?: string) => {
+    if (!raw) return "";
+    const digits = raw.replace(/\D/g, ""); // keep digits only
+    // Tunisian 8-digit numbers like "27673561" → "27 673 561"
+    if (digits.length === 8) return `${digits.slice(0, 2)} ${digits.slice(2, 5)} ${digits.slice(5)}`;
+    return digits; // fallback (don’t break if a different format is stored)
   };
+
+  const phoneDigits = (phone || "").replace(/\D/g, "");
+  const hasPhone = phoneDigits.length > 0;
 
   return (
     <div className="pt-8 flex flex-col justify-center items-center">
       {/* Top Section */}
       <div className="bg-primary gap-4 text-white flex justify-center py-8 max-md:py-6 w-full">
-        <div className="flex items-start justify-between md:max-lg:justify-around w-[80%] max-xl:w-[90%] max-lg:w-[98%] max-md:w-[95%] max-md:flex-col max-md:items-center max-md:gap-[40px]">
+        <div className="flex items-start justify-between md:max-lg:justify-around w-[85%] max-xl:w-[90%] max-lg:w-[98%] max-md:w-[95%] max-md:flex-col max-md:items-center max-md:gap-[40px]">
           {/* Left */}
-          <div className="flex flex-col gap-[32px] items-center">
-            {logoImageUrl && (
-              <Image
-                src={logoImageUrl}
-                alt={`${name} logo`}
-                width={400}
-                height={60}
-                placeholder="blur"
-                blurDataURL={logoImageUrl}
-                sizes="(max-width: 640px) 15vw, (max-width: 1200px) 15vw"
-                className="w-[400px] h-[60px] object-cover"
-              />
-            )}
-            <div className="gap-[20px] flex flex-col max-md:items-center">
-              <p className="flex items-left gap-[8px]">
-                <FiMapPin className="w-10" size={25} />
-              <span className='text-sm text-center'> {address}, {zipcode} {city} {governorate}</span> 
-              </p>
-              {phone !== undefined && (
-                <p className="flex items-center gap-[8px]">
-                  <FiPhone className="w-10" size={25} />
-                  +216 {formatPhoneNumber(phone)}
-                </p>
-              )}
-              <p className="flex gap-[8px] items-center">
-                <FiMail  className="w-10" size={25} />
-                {email}
-              </p>
-            </div>
+          <div className="flex flex-col gap-4 items-center">
+  
+              <LogoComponent />
+          
+
+            <div className="gap-4 flex flex-col max-md:items-center w-[80%] md:w-full">
+  <p className="flex items-center justify-center gap-2 w-full">
+    <FiMapPin size={32} className="shrink-0 flex-none" />
+    <span className="text-sm text-center leading-snug flex-1">
+      {address}, {zipcode} {city} {governorate}
+    </span>
+  </p>
+
+  {hasPhone && (
+    <p className="flex items-center justify-center gap-2 w-full">
+      <FiPhone size={25} className="shrink-0 flex-none" />
+      <span className="text-sm">+216 {formatPhone(phone)}</span>
+    </p>
+  )}
+
+  <p className="flex items-center justify-center gap-2 w-full">
+    <FiMail size={25} className="shrink-0 flex-none" />
+    <span className="text-sm break-words">{email}</span>
+  </p>
+</div>
+
           </div>
 
           {/* Middle */}
@@ -133,6 +136,7 @@ export default async function Footer() {
                 <FaArrowRight className="absolute cursor-pointer top-1/2 right-[150%] -translate-y-1/2 translate-x-1/2 duration-500 lg:group-hover:translate-x-[300%]" />
               </div>
             </div>
+
             <p className="text-xl max-md:text-sm">Suivez-nous sur :</p>
             <div className="flex items-center gap-[8px]">
               {linkedin && (

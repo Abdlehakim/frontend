@@ -1,4 +1,4 @@
-// app/components/LogoComponent.tsx (Server Component)
+// src/components/menu/LogoComponent
 
 import React from "react";
 import Link from "next/link";
@@ -12,25 +12,34 @@ export interface LogoData {
 
 export const revalidate = 60;
 
-export default async function LogoComponent() {
+type Props = {
+  /** Override container sizing/positioning (must include `relative` + explicit size) */
+  className?: string;
+};
+
+export default async function LogoComponent({ className }: Props) {
   const { name, logoImageUrl }: LogoData = await fetchData<LogoData>(
     "/website/header/getHeaderData"
   ).catch(() => ({ name: "", logoImageUrl: "" } as LogoData));
 
   const isSvg = Boolean(logoImageUrl && logoImageUrl.toLowerCase().endsWith(".svg"));
 
+  const defaultClasses =
+    "relative w-full aspect-[16/15] max-h-[64px] max-2xl:max-h-[64px] " +
+    "max-2xl:max-w-[298px] max-w-[298px]";
+
   return (
     <Link
       href="/"
       aria-label="Home page"
-      className="relative w-full aspect-[16/15] max-h-[64px] max-2xl:max-h-[64px] max-2xl:max-w-[298px] max-w-[298px] max-md:max-h-[32px] max-md:max-w-[149px]"
+      className={className || defaultClasses}
       title={name || "Home"}
     >
-      {/* If SVG: use mask to color it white */}
+      {/* If SVG: use mask to color it white (change bg to control color) */}
       {isSvg && logoImageUrl ? (
         <span
           aria-hidden
-          className="absolute inset-0 block bg-white" // <- change this to any color you want
+          className="absolute inset-0 block bg-white"
           style={{
             WebkitMaskImage: `url(${logoImageUrl})`,
             maskImage: `url(${logoImageUrl})`,
@@ -43,7 +52,6 @@ export default async function LogoComponent() {
           } as React.CSSProperties}
         />
       ) : logoImageUrl ? (
-        // Non-SVG fallback (PNG/JPG): just render normally
         <Image
           src={logoImageUrl}
           alt={`${name || "Brand"} logo`}
