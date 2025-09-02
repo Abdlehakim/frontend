@@ -348,40 +348,40 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
               {/* Social auth (Google + Facebook), same LoadingDots & width */}
               <div className="flex flex-col items-center w-full">
                 <div className="w-full flex justify-center">
-                  <div className="w-full max-w-[400px] space-y-2">
+                  <div className="w-full space-y-2">
                     {/* Google */}
                     <div className="w-full flex justify-center">
                       {showGoogleSkeleton ? (
-                        <div className="h-12 w-full flex items-center justify-center rounded-md border border-gray-200">
+                        <div className="h-[40px] w-full flex items-center justify-center rounded-md border border-gray-200">
                           <LoadingDots />
                         </div>
                       ) : (
+                        <div className="w-full">
                         <GoogleLogin
                           onSuccess={handleGoogleSignIn}
                           onError={() =>
                             setError("Échec de la connexion Google")
                           }
-                          theme="filled_blue"
                           size="large"
-                          text="continue_with"
-                          shape="rectangular"
-                          logo_alignment="left"
-                          width="400"
+                            text="continue_with"
+                            shape="rectangular"
+                            logo_alignment="left"
                         />
+                        </div>
                       )}
                     </div>
 
                     {/* Facebook — normal button calling FB.login */}
                     <div className="w-full" ref={fbBtnHostRef}>
                       {showFacebookSkeleton ? (
-                        <div className="h-12 w-full flex items-center justify-center rounded-md border border-gray-200">
+                        <div className="h-[40px] w-full flex items-center justify-center rounded-md border border-gray-200">
                           <LoadingDots />
                         </div>
                       ) : (
                         <button
                           type="button"
                           onClick={loginWithFacebook}
-                          className="h-12 w-full rounded-md border border-gray-200 flex items-center justify-center font-semibold"
+                          className="h-[40px] w-full rounded-md border border-gray-200 flex items-center justify-center font-base text-xs"
                         >
                           Continuer avec Facebook
                         </button>
