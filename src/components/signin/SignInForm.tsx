@@ -8,7 +8,11 @@ import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
-import { GoogleLogin, type CredentialResponse, GoogleOAuthProvider } from "@react-oauth/google";
+import {
+  GoogleLogin,
+  type CredentialResponse,
+  GoogleOAuthProvider,
+} from "@react-oauth/google";
 import { fetchData } from "@/lib/fetchData";
 import LoadingDots from "@/components/LoadingDots";
 
@@ -40,6 +44,7 @@ declare global {
   interface Window {
     google?: { accounts?: Record<string, unknown> };
     FB?: FBApi;
+    fbAsyncInit?: () => void; // recommended bootstrap hook
   }
 }
 
@@ -72,7 +77,10 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
   // Detect GIS presence (gives us a stable skeleton before the widget renders)
   useEffect(() => {
     const t = setTimeout(
-      () => setHasGoogleLoaded(typeof window !== "undefined" && !!window.google?.accounts),
+      () =>
+        setHasGoogleLoaded(
+          typeof window !== "undefined" && !!window.google?.accounts
+        ),
       3000
     );
     return () => clearTimeout(t);
@@ -81,40 +89,47 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
   // Secure origin check (HTTPS or https://localhost)
   useEffect(() => {
     if (typeof window !== "undefined") {
-      setIsSecureForFB(location.protocol === "https:" || location.hostname === "localhost");
+      setIsSecureForFB(
+        location.protocol === "https:" || location.hostname === "localhost"
+      );
     }
   }, []);
 
-  // Load Facebook SDK once
+  // Load Facebook SDK once (v20.0) using the recommended fbAsyncInit bootstrap
   const fbAppId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID || "";
   useEffect(() => {
     if (typeof window === "undefined" || !fbAppId) return;
 
-    if (document.getElementById("facebook-jssdk")) {
+    // If FB already exists, we’re done
+    if (window.FB) {
       setHasFacebookLoaded(true);
       return;
     }
 
-    const script = document.createElement("script");
-    script.id = "facebook-jssdk";
-    script.src = "https://connect.facebook.net/en_US/sdk.js";
-    script.async = true;
-    script.defer = true;
-    script.onload = () => {
-      if (!window.FB) return;
+    // Define the async init hook BEFORE injecting the SDK script
+    window.fbAsyncInit = () => {
       try {
-        window.FB.init({
+        window.FB!.init({
           appId: fbAppId,
           cookie: true,
           xfbml: false,
-          version: "v19.0",
+          version: "v20.0", // keep current Graph/SDK version
         });
         setHasFacebookLoaded(true);
       } catch {
         setHasFacebookLoaded(false);
       }
     };
-    document.body.appendChild(script);
+
+    // Inject the SDK (idempotent)
+    const id = "facebook-jssdk";
+    if (document.getElementById(id)) return;
+    const js = document.createElement("script");
+    js.id = id;
+    js.async = true;
+    js.defer = true;
+    js.src = "https://connect.facebook.net/en_US/sdk.js";
+    document.body.appendChild(js);
   }, [fbAppId]);
 
   // Remember me (email)
@@ -164,7 +179,9 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
       });
       window.location.replace(redirectTo);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Échec de la connexion Google");
+      setError(
+        err instanceof Error ? err.message : "Échec de la connexion Google"
+      );
       setIsGoogleLoading(false);
       setIsSubmitting(false);
     }
@@ -173,13 +190,23 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
   // Facebook login (requires HTTPS or https://localhost)
   const handleFacebookSignIn = async () => {
     if (isFacebookLoading || !hasFacebookLoaded || !fbAppId) return;
+
+    // Hard guard: FB.login is blocked on non-HTTPS (except localhost)
+    if (isSecureForFB !== true) {
+      setError("Facebook Login nécessite HTTPS (ou https://localhost).");
+      return;
+    }
+
     setError("");
     setIsFacebookLoading(true);
     try {
       window.FB?.login(
         async (response) => {
           console.log("FB.login response →", response);
-          if (response?.status !== "connected" || !response.authResponse?.accessToken) {
+          if (
+            response?.status !== "connected" ||
+            !response.authResponse?.accessToken
+          ) {
             setError(`Facebook: ${response?.status ?? "unknown"}`);
             setIsFacebookLoading(false);
             return;
@@ -190,16 +217,18 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
           try {
             document.cookie = "token_FrontEnd_exp=; Max-Age=0; path=/";
             await fetchData("/signin/facebook", {
-  method: "POST",
-  headers: { "Content-Type": "application/json" },
-  credentials: "include",
-  body: JSON.stringify({ accessToken }),
-});
-            // If your fetchData returns raw fetch Response, you may want:
-            // if (!res.ok) { const j = await res.json().catch(()=>({})); throw new Error(j.message || "Facebook error"); }
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              credentials: "include",
+              body: JSON.stringify({ accessToken }),
+            });
             window.location.replace(redirectTo);
           } catch (err: unknown) {
-            setError(err instanceof Error ? err.message : "Échec de la connexion Facebook");
+            setError(
+              err instanceof Error
+                ? err.message
+                : "Échec de la connexion Facebook"
+            );
             setIsFacebookLoading(false);
             setIsSubmitting(false);
           }
@@ -273,9 +302,17 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
                     type="button"
                     onClick={() => setShowPassword((v) => !v)}
                     className="absolute inset-y-0 right-3 flex items-center text-gray-500"
-                    aria-label={showPassword ? "Masquer le mot de passe" : "Afficher le mot de passe"}
+                    aria-label={
+                      showPassword
+                        ? "Masquer le mot de passe"
+                        : "Afficher le mot de passe"
+                    }
                   >
-                    {showPassword ? <AiOutlineEyeInvisible size={22} /> : <AiOutlineEye size={22} />}
+                    {showPassword ? (
+                      <AiOutlineEyeInvisible size={22} />
+                    ) : (
+                      <AiOutlineEye size={22} />
+                    )}
                   </button>
                 </div>
               </div>
@@ -298,7 +335,10 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
                   />
                   Se souvenir de moi
                 </label>
-                <Link href="/forgot-password" className="text-primary hover:underline max-md:text-xs">
+                <Link
+                  href="/forgot-password"
+                  className="text-primary hover:underline max-md:text-xs"
+                >
                   Mot de passe oublié&nbsp;?
                 </Link>
               </div>
@@ -322,7 +362,9 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
                       ) : (
                         <GoogleLogin
                           onSuccess={handleGoogleSignIn}
-                          onError={() => setError("Échec de la connexion Google")}
+                          onError={() =>
+                            setError("Échec de la connexion Google")
+                          }
                           theme="filled_blue"
                           size="large"
                           text="continue_with"
@@ -346,7 +388,9 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
                           disabled={isFacebookLoading}
                           className="h-12 w-full text-white text-lg font-semibold rounded-md bg-[#1877F2] transition hover:bg-[#145DBA] disabled:opacity-60"
                         >
-                          {isFacebookLoading ? "Connexion…" : "Continuer avec Facebook"}
+                          {isFacebookLoading
+                            ? "Connexion…"
+                            : "Continuer avec Facebook"}
                         </button>
                       )}
                     </div>
@@ -359,7 +403,10 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
 
             <div className="flex items-center w-full gap-2 justify-center">
               <div className="flex-grow border-t border-gray-400" />
-              <Link href="/signup" className="text-primary text-center text-sm font-semibold hover:underline">
+              <Link
+                href="/signup"
+                className="text-primary text-center text-sm font-semibold hover:underline"
+              >
                 Vous n’avez pas de compte ? Cliquez ici pour en créer un.
               </Link>
               <div className="flex-grow border-t border-gray-400" />
@@ -368,22 +415,30 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
             <hr className="border-t border-gray-300" />
 
             <div className="flex gap-4 justify-center">
-              {[FaFacebookF, FaInstagram, FaTwitter, FaYoutube].map((Icon, i) => (
-                <a
-                  key={i}
-                  href="#"
-                  className="w-12 h-12 border-4 border-gray-500 rounded-full flex items-center justify-center text-gray-500"
-                >
-                  <Icon className="text-2xl" />
-                </a>
-              ))}
+              {[FaFacebookF, FaInstagram, FaTwitter, FaYoutube].map(
+                (Icon, i) => (
+                  <a
+                    key={i}
+                    href="#"
+                    className="w-12 h-12 border-4 border-gray-500 rounded-full flex items-center justify-center text-gray-500"
+                  >
+                    <Icon className="text-2xl" />
+                  </a>
+                )
+              )}
             </div>
           </div>
         </div>
       </div>
 
       <div className="fixed inset-0 -z-10">
-        <Image src="/signin.jpg" alt="Arrière-plan de connexion" fill priority className="object-cover" />
+        <Image
+          src="/signin.jpg"
+          alt="Arrière-plan de connexion"
+          fill
+          priority
+          className="object-cover"
+        />
       </div>
     </GoogleOAuthProvider>
   );
