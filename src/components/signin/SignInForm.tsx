@@ -54,6 +54,12 @@ interface SignInFormProps {
   redirectTo: string;
 }
 
+/* ------------------------------ Helpers ------------------------------ */
+function isMobileUA() {
+  if (typeof navigator === "undefined") return false;
+  return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
+
 /* -------------------------------- Component -------------------------------- */
 export default function SignInForm({ redirectTo }: SignInFormProps) {
   const [email, setEmail] = useState("");
@@ -99,10 +105,16 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
     }
   }, []);
 
-  // Load Facebook SDK once (no XFBML needed)
+  // Load Facebook SDK once (no XFBML needed) — for DESKTOP flow only
   const fbAppId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID || "";
   useEffect(() => {
     if (typeof window === "undefined" || !fbAppId) return;
+
+    // If we're on mobile, we don't need the SDK (we use full-page redirect)
+    if (isMobileUA()) {
+      setHasFacebookLoaded(true);
+      return;
+    }
 
     // Already present
     if (window.FB) {
@@ -197,8 +209,28 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
     })();
   }
 
-  // Facebook login via JS SDK
+  // Facebook login: Mobile => full-page OAuth (opens native app); Desktop => JS SDK
   function loginWithFacebook() {
+    if (!fbAppId) return;
+
+    // ✅ Mobile: full-page redirect to OAuth dialog (enables native-app switch)
+    if (isMobileUA()) {
+      const redirectUri = `${window.location.origin}/facebook/redirect`;
+      const state = encodeURIComponent(JSON.stringify({ redirectTo }));
+      const oauthUrl =
+        `https://www.facebook.com/v20.0/dialog/oauth` +
+        `?client_id=${encodeURIComponent(fbAppId)}` +
+        `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+        `&response_type=token` + // implicit flow → we’ll read #access_token
+        `&scope=${encodeURIComponent("public_profile,email")}` +
+        `&state=${state}` +
+        `&display=touch`; // mobile-friendly
+
+      window.location.href = oauthUrl;
+      return;
+    }
+
+    // ✅ Desktop: keep JS SDK popup
     if (!window.FB || isFacebookLoading) return;
     setError("");
     setIsFacebookLoading(true);
@@ -235,12 +267,11 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
 
   /* ---------------------- Unified skeleton flags (same UX) ---------------------- */
+  const needFbSdk = !isMobileUA(); // only desktop needs SDK
   const showGoogleSkeleton = isGoogleLoading || !hasGoogleLoaded;
   const showFacebookSkeleton =
     isFacebookLoading ||
-    !hasFacebookLoaded ||
-    !fbAppId ||
-    isSecureForFB !== true;
+    (needFbSdk && (!hasFacebookLoaded || !fbAppId || isSecureForFB !== true));
 
   /* --------------------------------- Render --------------------------------- */
   return (
@@ -364,7 +395,7 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
                             text="continue_with"
                             shape="rectangular"
                             logo_alignment="left"
-                            width='300'
+                            width="300"
                           />
                         </div>
                       )}
@@ -391,7 +422,7 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
                           <span>Continuer avec Facebook</span>
                         </button>
                       )}
-                      {isSecureForFB === false && (
+                      {!isMobileUA() && isSecureForFB === false && (
                         <p className="text-xs text-red-500 mt-2">
                           Facebook Login nécessite HTTPS (ou https://localhost).
                         </p>
