@@ -68,7 +68,8 @@ function isIOS() {
   return /iPhone|iPad|iPod/i.test(navigator.userAgent);
 }
 function buildFacebookOAuthUrl(fbAppId: string, redirectTo: string) {
-  const redirectUri = `${window.location.origin}/facebook/redirect`; // (auth) route group => no "/auth" in URL
+  // NOTE: page lives under (auth)/facebook/redirect → public path is /facebook/redirect
+  const redirectUri = `${window.location.origin}/facebook/redirect`;
   const state = encodeURIComponent(JSON.stringify({ redirectTo }));
   return (
     `https://www.facebook.com/v20.0/dialog/oauth` +
@@ -79,6 +80,15 @@ function buildFacebookOAuthUrl(fbAppId: string, redirectTo: string) {
     `&state=${state}` +
     `&display=touch`
   );
+}
+function openByAnchor(url: string) {
+  const a = document.createElement("a");
+  a.href = url;
+  a.rel = "noopener";
+  a.style.display = "none";
+  document.body.appendChild(a);
+  a.click();
+  document.body.removeChild(a);
 }
 
 /* -------------------------------- Component -------------------------------- */
@@ -131,7 +141,7 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
   useEffect(() => {
     if (typeof window === "undefined" || !fbAppId) return;
 
-    // If we're on mobile, we don't need the SDK (we use full-page redirect)
+    // If we're on mobile, we don't need the SDK (we use full-page redirect/deep-link)
     if (isMobileUA()) {
       setHasFacebookLoaded(true);
       return;
@@ -230,39 +240,60 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
     })();
   }
 
-  // Facebook login: Mobile => deep link to app with fallback to OAuth; Desktop => JS SDK
+  // Facebook login: Mobile => deep-link to app (fb:// → intent:// → web)
+  // Desktop => JS SDK popup (unchanged)
   function loginWithFacebook() {
     if (!fbAppId) return;
 
-    // ✅ Mobile: try native app first, then fall back to browser OAuth
+    // ✅ Mobile branch
     if (isMobileUA()) {
       const oauthUrl = buildFacebookOAuthUrl(fbAppId, redirectTo);
 
       try {
-        if (isAndroid()) {
-          // Android intent deep link to Facebook app (com.facebook.katana)
-          const intentUrl =
-            `intent://${oauthUrl.replace(/^https?:\/\//, "")}` +
-            `#Intent;scheme=https;package=com.facebook.katana;` +
-            `S.browser_fallback_url=${encodeURIComponent(oauthUrl)};end`;
-          window.location.href = intentUrl;
-          return;
-        }
-
         if (isIOS()) {
-          // iOS deep link; quick fallback to browser if app doesn't open
-          const appUrl = `fb://facewebmodal/f?href=${encodeURIComponent(oauthUrl)}`;
+          const appUrl = `fb://facewebmodal/f?href=${encodeURIComponent(
+            oauthUrl
+          )}`;
           const started = Date.now();
-          window.location.href = appUrl;
+          openByAnchor(appUrl);
+          // If app didn't intercept, fall back to web quickly
           setTimeout(() => {
-            if (Date.now() - started < 1500) {
-              window.location.href = oauthUrl;
-            }
+            if (Date.now() - started < 1500) window.location.href = oauthUrl;
           }, 800);
           return;
         }
+
+        if (isAndroid()) {
+          // Try fb:// first
+          const appUrl = `fb://facewebmodal/f?href=${encodeURIComponent(
+            oauthUrl
+          )}`;
+          let fellBack = false;
+
+          const fallbackTimer = setTimeout(() => {
+            if (fellBack) return;
+            // Then try intent:// with package + browser fallback
+            const intentUrl =
+              `intent://${oauthUrl.replace(/^https?:\/\//, "")}` +
+              `#Intent;scheme=https;package=com.facebook.katana;` +
+              `S.browser_fallback_url=${encodeURIComponent(oauthUrl)};end`;
+            openByAnchor(intentUrl);
+            // Final safety fallback to web
+            setTimeout(() => {
+              if (!fellBack) window.location.href = oauthUrl;
+            }, 800);
+          }, 600);
+
+          openByAnchor(appUrl);
+          // If the app grabbed focus, timers won't run
+          setTimeout(() => {
+            fellBack = true;
+            clearTimeout(fallbackTimer);
+          }, 1800);
+          return;
+        }
       } catch {
-        // ignore and fall through to default browser OAuth
+        // ignore and fall through
       }
 
       // Default mobile fallback: normal OAuth in browser
