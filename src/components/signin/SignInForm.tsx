@@ -4,7 +4,7 @@
 "use client";
 
 import { FaFacebookF, FaInstagram, FaTwitter, FaYoutube } from "react-icons/fa";
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { AiOutlineEye, AiOutlineEyeInvisible } from "react-icons/ai";
@@ -38,13 +38,18 @@ interface FBApi {
     cb: (resp: FBLoginStatus) => void,
     opts?: { scope?: string; return_scopes?: boolean }
   ) => void;
+  getLoginStatus?: (cb: (resp: FBLoginStatus) => void) => void;
+  XFBML?: { parse: (node?: Element) => void };
 }
 
 declare global {
   interface Window {
     google?: { accounts?: Record<string, unknown> };
     FB?: FBApi;
-    fbAsyncInit?: () => void; // recommended bootstrap hook
+    fbAsyncInit?: () => void;
+    // for XFBML onlogin callback:
+    statusChangeCallback?: (resp: FBLoginStatus) => void;
+    checkLoginState?: () => void;
   }
 }
 
@@ -73,8 +78,11 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
   // HTTPS check for FB.login — set after mount to avoid hydration mismatch
   const [isSecureForFB, setIsSecureForFB] = useState<boolean | null>(null);
 
+  // Where we inject & parse the XFBML button
+  const fbBtnHostRef = useRef<HTMLDivElement>(null);
+
   /* ------------------------------ Effects ---------------------------------- */
-  // Detect GIS presence (gives us a stable skeleton before the widget renders)
+  // Detect GIS presence
   useEffect(() => {
     const t = setTimeout(
       () =>
@@ -90,47 +98,93 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
   useEffect(() => {
     if (typeof window !== "undefined") {
       setIsSecureForFB(
-        location.protocol === "https:" || location.hostname === "localhost"
+        window.location.protocol === "https:" ||
+          window.location.hostname === "localhost"
       );
     }
   }, []);
 
-  // Load Facebook SDK once (v20.0) using the recommended fbAsyncInit bootstrap
+  // Load Facebook SDK (XFBML) once
   const fbAppId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID || "";
   useEffect(() => {
     if (typeof window === "undefined" || !fbAppId) return;
 
-    // If FB already exists, we’re done
     if (window.FB) {
       setHasFacebookLoaded(true);
+      // parse XFBML in our host (in case it was already mounted)
+      window.FB.XFBML?.parse(fbBtnHostRef.current ?? undefined);
       return;
     }
 
-    // Define the async init hook BEFORE injecting the SDK script
+    // Expose the classic callbacks the XFBML button expects:
+    window.statusChangeCallback = async (response: FBLoginStatus) => {
+      // Equivalent to the sample you referenced: statusChangeCallback(response)
+      if (
+        response?.status === "connected" &&
+        response.authResponse?.accessToken
+      ) {
+        try {
+          setError("");
+          setIsFacebookLoading(true);
+          document.cookie = "token_FrontEnd_exp=; Max-Age=0; path=/";
+          await fetchData("/signin/facebook", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            credentials: "include",
+            body: JSON.stringify({
+              accessToken: response.authResponse.accessToken,
+            }),
+          });
+          window.location.replace(redirectTo);
+        } catch (err: unknown) {
+          setError(
+            err instanceof Error
+              ? err.message
+              : "Échec de la connexion Facebook"
+          );
+          setIsFacebookLoading(false);
+        }
+      } else {
+        setError(`Facebook: ${response?.status ?? "unknown"}`);
+        setIsFacebookLoading(false);
+      }
+    };
+
+    window.checkLoginState = () => {
+      // checkLoginState(): FB.getLoginStatus(…)
+      window.FB?.getLoginStatus?.((resp) =>
+        window.statusChangeCallback?.(resp)
+      );
+    };
+
+    // SDK bootstrap
     window.fbAsyncInit = () => {
       try {
         window.FB!.init({
           appId: fbAppId,
           cookie: true,
-          xfbml: false,
-          version: "v20.0", // keep current Graph/SDK version
+          xfbml: true, // IMPORTANT: render XFBML like <div class="fb-login-button"> / <fb:login-button>
+          version: "v20.0",
         });
         setHasFacebookLoaded(true);
+        // parse only our host to keep things scoped
+        window.FB!.XFBML?.parse(fbBtnHostRef.current ?? undefined);
       } catch {
         setHasFacebookLoaded(false);
       }
     };
 
-    // Inject the SDK (idempotent)
+    // Inject SDK if needed
     const id = "facebook-jssdk";
-    if (document.getElementById(id)) return;
-    const js = document.createElement("script");
-    js.id = id;
-    js.async = true;
-    js.defer = true;
-    js.src = "https://connect.facebook.net/en_US/sdk.js";
-    document.body.appendChild(js);
-  }, [fbAppId]);
+    if (!document.getElementById(id)) {
+      const js = document.createElement("script");
+      js.id = id;
+      js.async = true;
+      js.defer = true;
+      js.src = "https://connect.facebook.net/en_US/sdk.js";
+      document.body.appendChild(js);
+    }
+  }, [fbAppId, redirectTo]);
 
   // Remember me (email)
   useEffect(() => {
@@ -184,60 +238,6 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
       );
       setIsGoogleLoading(false);
       setIsSubmitting(false);
-    }
-  };
-
-  // Facebook login (requires HTTPS or https://localhost)
-  const handleFacebookSignIn = async () => {
-    if (isFacebookLoading || !hasFacebookLoaded || !fbAppId) return;
-
-    // Hard guard: FB.login is blocked on non-HTTPS (except localhost)
-    if (isSecureForFB !== true) {
-      setError("Facebook Login nécessite HTTPS (ou https://localhost).");
-      return;
-    }
-
-    setError("");
-    setIsFacebookLoading(true);
-    try {
-      window.FB?.login(
-        async (response) => {
-          console.log("FB.login response →", response);
-          if (
-            response?.status !== "connected" ||
-            !response.authResponse?.accessToken
-          ) {
-            setError(`Facebook: ${response?.status ?? "unknown"}`);
-            setIsFacebookLoading(false);
-            return;
-          }
-
-          const accessToken = response.authResponse.accessToken;
-
-          try {
-            document.cookie = "token_FrontEnd_exp=; Max-Age=0; path=/";
-            await fetchData("/signin/facebook", {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              credentials: "include",
-              body: JSON.stringify({ accessToken }),
-            });
-            window.location.replace(redirectTo);
-          } catch (err: unknown) {
-            setError(
-              err instanceof Error
-                ? err.message
-                : "Échec de la connexion Facebook"
-            );
-            setIsFacebookLoading(false);
-            setIsSubmitting(false);
-          }
-        },
-        { scope: "email,public_profile", return_scopes: true }
-      );
-    } catch {
-      setError("Échec de la connexion Facebook");
-      setIsFacebookLoading(false);
     }
   };
 
@@ -349,7 +349,7 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
                 <hr className="flex-grow border-t border-gray-300" />
               </div>
 
-              {/* Social auth (Google + Facebook), same LoadingDots & same width */}
+              {/* Social auth (Google + Facebook), same LoadingDots & width */}
               <div className="flex flex-col items-center w-full">
                 <div className="w-full flex justify-center">
                   <div className="w-full max-w-[400px] space-y-2">
@@ -370,28 +370,42 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
                           text="continue_with"
                           shape="rectangular"
                           logo_alignment="left"
-                          width="400" // pixels; GIS caps max width to 400
+                          width="400"
                         />
                       )}
                     </div>
 
-                    {/* Facebook */}
+                    {/* Facebook (XFBML Login Button) */}
                     <div className="w-full">
                       {showFacebookSkeleton ? (
                         <div className="h-12 w-full flex items-center justify-center rounded-md border border-gray-200">
                           <LoadingDots />
                         </div>
                       ) : (
-                        <button
-                          type="button"
-                          onClick={handleFacebookSignIn}
-                          disabled={isFacebookLoading}
-                          className="h-12 w-full text-white text-lg font-semibold rounded-md bg-[#1877F2] transition hover:bg-[#145DBA] disabled:opacity-60"
-                        >
-                          {isFacebookLoading
-                            ? "Connexion…"
-                            : "Continuer avec Facebook"}
-                        </button>
+                        <div
+                          ref={fbBtnHostRef}
+                          // We inject the XFBML markup here; FB.XFBML.parse will transform it.
+                          dangerouslySetInnerHTML={{
+                            __html: `
+                              <div class="fb-login-button"
+                                   data-width=""
+                                   data-size="large"
+                                   data-button-type="continue_with"
+                                   data-layout="default"
+                                   data-auto-logout-link="false"
+                                   data-use-continue-as="true"
+                                   data-scope="public_profile,email"
+                                   onlogin="checkLoginState();">
+                              </div>`,
+                          }}
+                        />
+                      )}
+
+                      {isSecureForFB === false && (
+                        <p className="text-xs text-red-500 mt-2">
+                          Facebook Login nécessite HTTPS (ou
+                          https://localhost).
+                        </p>
                       )}
                     </div>
                   </div>
