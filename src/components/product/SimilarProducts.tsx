@@ -15,6 +15,12 @@ interface SimilarProductsProps {
   SimilarProductSubTitre: string;
 }
 
+function computeLimit(w: number) {
+  // Keep your exact thresholds:
+  // 1 ≤ 767, 2 < 1024, 3 < 1536, 4 ≥ 1536
+  return w <= 767 ? 1 : w < 1024 ? 2 : w < 1536 ? 3 : 4;
+}
+
 export default function SimilarProducts({
   categorieId,
   subcategorieId,
@@ -24,42 +30,65 @@ export default function SimilarProducts({
 }: SimilarProductsProps) {
   const key = subcategorieId ?? categorieId;
 
-  /* ----------------------------------------------------------------
-     Limite dynamique :
-       –  1   ≤  767 px   (max-sm)
-       –  2   ≤ 1023 px   (max-lg)
-       –  3   < 1536 px   (max-2xl)
-       –  4   ≥ 1536 px   (2xl et +)
-  ---------------------------------------------------------------- */
+  // Keep initial 4 to match your original default
   const [limit, setLimit] = useState(4);
 
   const [products, setProducts] = useState<Product[]>([]);
   const [loading, setLoading] = useState(true);
   const [refresh, setRefresh] = useState(0);
 
+  // Recompute limit on mount + resize (no style changes)
+  useEffect(() => {
+    const apply = () => {
+      const w = typeof window !== "undefined" ? window.innerWidth : 1024;
+      const next = computeLimit(w);
+      setLimit((prev) => (prev !== next ? next : prev));
+    };
+
+    // initial sync
+    apply();
+
+    // debounce resize updates
+    let tid: number | undefined;
+    const onResize = () => {
+      if (tid) window.clearTimeout(tid);
+      tid = window.setTimeout(apply, 150);
+    };
+
+    window.addEventListener("resize", onResize);
+    return () => {
+      window.removeEventListener("resize", onResize);
+      if (tid) window.clearTimeout(tid);
+    };
+  }, []);
+
+  // Fetch whenever key / slug / limit / refresh change
   useEffect(() => {
     setLoading(true);
-
-    const w = typeof window !== "undefined" ? window.innerWidth : 1024;
-    
-    const fetchLimit = w <= 767 ? 1 : w < 1024 ? 2 : w < 1536 ? 3 : 4;
-    setLimit(fetchLimit);
+    const controller = new AbortController();
 
     const url =
       `products/MainProductSection/similarById/${key}` +
-      `?limit=${fetchLimit}&exclude=${excludeSlug}&t=${Date.now()}`;
+      `?limit=${limit}&exclude=${encodeURIComponent(excludeSlug)}&t=${Date.now()}`;
 
-    fetchData<Product[]>(url)
+    fetchData<Product[]>(url, { signal: controller.signal })
       .then((data) => {
-        setProducts(data);
+        if (!controller.signal.aborted) {
+          setProducts(Array.isArray(data) ? data : []);
+        }
       })
       .catch((err) => {
-        console.error("SimilarProducts fetch error:", err);
-        setProducts([]);
+        if (!controller.signal.aborted) {
+          console.error("SimilarProducts fetch error:", err);
+          setProducts([]);
+        }
       })
-      .finally(() => setLoading(false));
-  }, [key, excludeSlug, refresh]);
+      .finally(() => {
+        if (!controller.signal.aborted) setLoading(false);
+      });
 
+    return () => controller.abort();
+  }, [key, excludeSlug, limit, refresh]);
 
   if (!loading && products.length === 0) {
     return <p className="w-full text-center py-10">No similar product.</p>;
@@ -71,7 +100,9 @@ export default function SimilarProducts({
         <h2 className="font-bold text-2xl text-HomePageTitles capitalize">
           {SimilarProductTitre}
         </h2>
-        <p className="test-base max-md:text-sm text-[#525566] text-center">{SimilarProductSubTitre}</p>
+        <p className="test-base max-md:text-sm text-[#525566] text-center">
+          {SimilarProductSubTitre}
+        </p>
       </div>
 
       <div className="flex w-full max-lg:flex-col max-lg:h-fit h-[450px] justify-center items-center gap-4">
