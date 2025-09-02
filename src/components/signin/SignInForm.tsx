@@ -350,11 +350,11 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
                     {/* Google */}
                     <div className="w-full flex justify-center">
                       {showGoogleSkeleton ? (
-                        <div className="h-[40px] w-full flex items-center justify-center rounded-md border border-gray-200">
+                        <div className="h-[40px] w-[300px] flex items-center justify-center rounded-md border border-gray-200">
                           <LoadingDots />
                         </div>
                       ) : (
-                        <div className="w-full">
+                        <div className="w-full flex justify-center">
                           <GoogleLogin
                             onSuccess={handleGoogleSignIn}
                             onError={() =>
@@ -364,15 +364,16 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
                             text="continue_with"
                             shape="rectangular"
                             logo_alignment="left"
+                            width='300'
                           />
                         </div>
                       )}
                     </div>
 
                     {/* Facebook — button with left icon */}
-                    <div className="w-full" ref={fbBtnHostRef}>
+                    <div className="w-full flex justify-center" ref={fbBtnHostRef}>
                       {showFacebookSkeleton ? (
-                        <div className="h-[40px] w-full flex items-center justify-center rounded-md border border-gray-200">
+                        <div className="h-[40px] w-[300px] flex items-center justify-center rounded-md border border-gray-200">
                           <LoadingDots />
                         </div>
                       ) : (
@@ -380,7 +381,7 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
                           type="button"
                           onClick={loginWithFacebook}
                           aria-label="Continuer avec Facebook"
-                          className="relative h-[40px] w-full rounded-md border border-gray-200 flex items-center justify-center text-sm font-normal hover:bg-gray-50"
+                          className="relative h-[40px] w-full max-w-[300px] rounded-md border border-gray-200 flex items-center justify-center text-sm font-normal hover:bg-gray-50"
                         >
                           <FaFacebookF
                             className="absolute left-3 text-[#1877F2]"
