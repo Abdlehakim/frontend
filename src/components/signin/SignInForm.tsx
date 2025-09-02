@@ -39,7 +39,6 @@ interface FBApi {
     opts?: { scope?: string; return_scopes?: boolean }
   ) => void;
   getLoginStatus?: (cb: (resp: FBLoginStatus) => void) => void;
-  XFBML?: { parse: (node?: Element) => void };
 }
 
 declare global {
@@ -47,9 +46,6 @@ declare global {
     google?: { accounts?: Record<string, unknown> };
     FB?: FBApi;
     fbAsyncInit?: () => void;
-    // for XFBML onlogin callback:
-    statusChangeCallback?: (resp: FBLoginStatus) => void;
-    checkLoginState?: () => void;
   }
 }
 
@@ -78,11 +74,10 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
   // HTTPS check for FB.login — set after mount to avoid hydration mismatch
   const [isSecureForFB, setIsSecureForFB] = useState<boolean | null>(null);
 
-  // Where we inject & parse the XFBML button
   const fbBtnHostRef = useRef<HTMLDivElement>(null);
 
   /* ------------------------------ Effects ---------------------------------- */
-  // Detect GIS presence
+  // Detect Google one-tap presence (for skeleton swap)
   useEffect(() => {
     const t = setTimeout(
       () =>
@@ -104,77 +99,32 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
     }
   }, []);
 
-  // Load Facebook SDK (XFBML) once
+  // Load Facebook SDK once (no XFBML needed)
   const fbAppId = process.env.NEXT_PUBLIC_FACEBOOK_APP_ID || "";
   useEffect(() => {
     if (typeof window === "undefined" || !fbAppId) return;
 
+    // Already present
     if (window.FB) {
       setHasFacebookLoaded(true);
-      // parse XFBML in our host (in case it was already mounted)
-      window.FB.XFBML?.parse(fbBtnHostRef.current ?? undefined);
       return;
     }
 
-    // Expose the classic callbacks the XFBML button expects:
-    window.statusChangeCallback = async (response: FBLoginStatus) => {
-      // Equivalent to the sample you referenced: statusChangeCallback(response)
-      if (
-        response?.status === "connected" &&
-        response.authResponse?.accessToken
-      ) {
-        try {
-          setError("");
-          setIsFacebookLoading(true);
-          document.cookie = "token_FrontEnd_exp=; Max-Age=0; path=/";
-          await fetchData("/signin/facebook", {
-            method: "POST",
-            headers: { "Content-Type": "application/json" },
-            credentials: "include",
-            body: JSON.stringify({
-              accessToken: response.authResponse.accessToken,
-            }),
-          });
-          window.location.replace(redirectTo);
-        } catch (err: unknown) {
-          setError(
-            err instanceof Error
-              ? err.message
-              : "Échec de la connexion Facebook"
-          );
-          setIsFacebookLoading(false);
-        }
-      } else {
-        setError(`Facebook: ${response?.status ?? "unknown"}`);
-        setIsFacebookLoading(false);
-      }
-    };
-
-    window.checkLoginState = () => {
-      // checkLoginState(): FB.getLoginStatus(…)
-      window.FB?.getLoginStatus?.((resp) =>
-        window.statusChangeCallback?.(resp)
-      );
-    };
-
-    // SDK bootstrap
     window.fbAsyncInit = () => {
       try {
         window.FB!.init({
           appId: fbAppId,
           cookie: true,
-          xfbml: true, // IMPORTANT: render XFBML like <div class="fb-login-button"> / <fb:login-button>
+          xfbml: false, // using JS SDK directly, not XFBML
           version: "v20.0",
         });
         setHasFacebookLoaded(true);
-        // parse only our host to keep things scoped
-        window.FB!.XFBML?.parse(fbBtnHostRef.current ?? undefined);
       } catch {
         setHasFacebookLoaded(false);
       }
     };
 
-    // Inject SDK if needed
+    // Inject SDK
     const id = "facebook-jssdk";
     if (!document.getElementById(id)) {
       const js = document.createElement("script");
@@ -184,7 +134,7 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
       js.src = "https://connect.facebook.net/en_US/sdk.js";
       document.body.appendChild(js);
     }
-  }, [fbAppId, redirectTo]);
+  }, [fbAppId]);
 
   // Remember me (email)
   useEffect(() => {
@@ -196,57 +146,103 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
   }, []);
 
   /* ------------------------------ Handlers --------------------------------- */
-  async function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
+  function handleSubmit(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     if (isSubmitting) return;
     setError("");
     setIsSubmitting(true);
-    try {
-      document.cookie = "token_FrontEnd_exp=; Max-Age=0; path=/";
-      await fetchData("/signin", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ email, password }),
-      });
-      if (rememberMe) localStorage.setItem("rememberedEmail", email);
-      else localStorage.removeItem("rememberedEmail");
-      window.location.replace(redirectTo);
-    } catch (err: unknown) {
-      console.error(err);
-      setIsSubmitting(false);
-      setError("E-mail ou mot de passe incorrect.");
-    }
+
+    // keep callback sync; run async work inside IIFE
+    void (async () => {
+      try {
+        document.cookie = "token_FrontEnd_exp=; Max-Age=0; path=/";
+        await fetchData("/signin", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ email, password }),
+        });
+        if (rememberMe) localStorage.setItem("rememberedEmail", email);
+        else localStorage.removeItem("rememberedEmail");
+        window.location.replace(redirectTo);
+      } catch (err) {
+        console.error(err);
+        setIsSubmitting(false);
+        setError("E-mail ou mot de passe incorrect.");
+      }
+    })();
   }
 
-  const handleGoogleSignIn = async (resp: CredentialResponse) => {
+  // keep prop callback sync; run async inside
+  function handleGoogleSignIn(resp: CredentialResponse) {
     if (!resp.credential || isGoogleLoading) return;
     setError("");
     setIsGoogleLoading(true);
-    try {
-      document.cookie = "token_FrontEnd_exp=; Max-Age=0; path=/";
-      await fetchData("/signin/google", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        credentials: "include",
-        body: JSON.stringify({ idToken: resp.credential }),
-      });
-      window.location.replace(redirectTo);
-    } catch (err: unknown) {
-      setError(
-        err instanceof Error ? err.message : "Échec de la connexion Google"
-      );
-      setIsGoogleLoading(false);
-      setIsSubmitting(false);
-    }
-  };
+
+    void (async () => {
+      try {
+        document.cookie = "token_FrontEnd_exp=; Max-Age=0; path=/";
+        await fetchData("/signin/google", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          credentials: "include",
+          body: JSON.stringify({ idToken: resp.credential }),
+        });
+        window.location.replace(redirectTo);
+      } catch (err) {
+        setError(
+          err instanceof Error ? err.message : "Échec de la connexion Google"
+        );
+        setIsGoogleLoading(false);
+        setIsSubmitting(false);
+      }
+    })();
+  }
+
+  // Facebook login via JS SDK — keep FB.login callback sync too
+  function loginWithFacebook() {
+    if (!window.FB || isFacebookLoading) return;
+    setError("");
+    setIsFacebookLoading(true);
+
+    window.FB.login(
+      (resp) => {
+        void (async () => {
+          try {
+            if (resp?.status === "connected" && resp.authResponse?.accessToken) {
+              document.cookie = "token_FrontEnd_exp=; Max-Age=0; path=/";
+              await fetchData("/signin/facebook", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                credentials: "include",
+                body: JSON.stringify({
+                  accessToken: resp.authResponse.accessToken,
+                }),
+              });
+              window.location.replace(redirectTo);
+            } else {
+              setError("Connexion Facebook annulée.");
+              setIsFacebookLoading(false);
+            }
+          } catch {
+            setError("Échec de la connexion Facebook");
+            setIsFacebookLoading(false);
+          }
+        })();
+      },
+      { scope: "public_profile,email", return_scopes: true }
+    );
+  }
 
   const clientId = process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID || "";
 
   /* ---------------------- Unified skeleton flags (same UX) ---------------------- */
   const showGoogleSkeleton = isGoogleLoading || !hasGoogleLoaded;
   const showFacebookSkeleton =
-    isFacebookLoading || !hasFacebookLoaded || !fbAppId || isSecureForFB !== true;
+    isFacebookLoading ||
+    !hasFacebookLoaded ||
+    !fbAppId ||
+    isSecureForFB !== true;
 
   /* --------------------------------- Render --------------------------------- */
   return (
@@ -375,36 +371,24 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
                       )}
                     </div>
 
-                    {/* Facebook (XFBML Login Button) */}
-                    <div className="w-full">
+                    {/* Facebook — normal button calling FB.login */}
+                    <div className="w-full" ref={fbBtnHostRef}>
                       {showFacebookSkeleton ? (
                         <div className="h-12 w-full flex items-center justify-center rounded-md border border-gray-200">
                           <LoadingDots />
                         </div>
                       ) : (
-                        <div
-                          ref={fbBtnHostRef}
-                          // We inject the XFBML markup here; FB.XFBML.parse will transform it.
-                          dangerouslySetInnerHTML={{
-                            __html: `
-                              <div class="fb-login-button"
-                                   data-width=""
-                                   data-size="large"
-                                   data-button-type="continue_with"
-                                   data-layout="default"
-                                   data-auto-logout-link="false"
-                                   data-use-continue-as="true"
-                                   data-scope="public_profile,email"
-                                   onlogin="checkLoginState();">
-                              </div>`,
-                          }}
-                        />
+                        <button
+                          type="button"
+                          onClick={loginWithFacebook}
+                          className="h-12 w-full rounded-md border border-gray-200 flex items-center justify-center font-semibold"
+                        >
+                          Continuer avec Facebook
+                        </button>
                       )}
-
                       {isSecureForFB === false && (
                         <p className="text-xs text-red-500 mt-2">
-                          Facebook Login nécessite HTTPS (ou
-                          https://localhost).
+                          Facebook Login nécessite HTTPS (ou https://localhost).
                         </p>
                       )}
                     </div>
