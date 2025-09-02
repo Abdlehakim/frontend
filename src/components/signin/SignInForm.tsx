@@ -59,6 +59,27 @@ function isMobileUA() {
   if (typeof navigator === "undefined") return false;
   return /Android|iPhone|iPad|iPod/i.test(navigator.userAgent);
 }
+function isAndroid() {
+  if (typeof navigator === "undefined") return false;
+  return /Android/i.test(navigator.userAgent);
+}
+function isIOS() {
+  if (typeof navigator === "undefined") return false;
+  return /iPhone|iPad|iPod/i.test(navigator.userAgent);
+}
+function buildFacebookOAuthUrl(fbAppId: string, redirectTo: string) {
+  const redirectUri = `${window.location.origin}/facebook/redirect`; // (auth) route group => no "/auth" in URL
+  const state = encodeURIComponent(JSON.stringify({ redirectTo }));
+  return (
+    `https://www.facebook.com/v20.0/dialog/oauth` +
+    `?client_id=${encodeURIComponent(fbAppId)}` +
+    `&redirect_uri=${encodeURIComponent(redirectUri)}` +
+    `&response_type=token` +
+    `&scope=${encodeURIComponent("public_profile,email")}` +
+    `&state=${state}` +
+    `&display=touch`
+  );
+}
 
 /* -------------------------------- Component -------------------------------- */
 export default function SignInForm({ redirectTo }: SignInFormProps) {
@@ -209,23 +230,42 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
     })();
   }
 
-  // Facebook login: Mobile => full-page OAuth (opens native app); Desktop => JS SDK
+  // Facebook login: Mobile => deep link to app with fallback to OAuth; Desktop => JS SDK
   function loginWithFacebook() {
     if (!fbAppId) return;
 
-    // ✅ Mobile: full-page redirect to OAuth dialog (enables native-app switch)
+    // ✅ Mobile: try native app first, then fall back to browser OAuth
     if (isMobileUA()) {
-      const redirectUri = `${window.location.origin}/facebook/redirect`;
-      const state = encodeURIComponent(JSON.stringify({ redirectTo }));
-      const oauthUrl =
-        `https://www.facebook.com/v20.0/dialog/oauth` +
-        `?client_id=${encodeURIComponent(fbAppId)}` +
-        `&redirect_uri=${encodeURIComponent(redirectUri)}` +
-        `&response_type=token` + // implicit flow → we’ll read #access_token
-        `&scope=${encodeURIComponent("public_profile,email")}` +
-        `&state=${state}` +
-        `&display=touch`; // mobile-friendly
+      const oauthUrl = buildFacebookOAuthUrl(fbAppId, redirectTo);
 
+      try {
+        if (isAndroid()) {
+          // Android intent deep link to Facebook app (com.facebook.katana)
+          const intentUrl =
+            `intent://${oauthUrl.replace(/^https?:\/\//, "")}` +
+            `#Intent;scheme=https;package=com.facebook.katana;` +
+            `S.browser_fallback_url=${encodeURIComponent(oauthUrl)};end`;
+          window.location.href = intentUrl;
+          return;
+        }
+
+        if (isIOS()) {
+          // iOS deep link; quick fallback to browser if app doesn't open
+          const appUrl = `fb://facewebmodal/f?href=${encodeURIComponent(oauthUrl)}`;
+          const started = Date.now();
+          window.location.href = appUrl;
+          setTimeout(() => {
+            if (Date.now() - started < 1500) {
+              window.location.href = oauthUrl;
+            }
+          }, 800);
+          return;
+        }
+      } catch {
+        // ignore and fall through to default browser OAuth
+      }
+
+      // Default mobile fallback: normal OAuth in browser
       window.location.href = oauthUrl;
       return;
     }
