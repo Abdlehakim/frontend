@@ -152,7 +152,6 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
     setError("");
     setIsSubmitting(true);
 
-    // keep callback sync; run async work inside IIFE
     void (async () => {
       try {
         document.cookie = "token_FrontEnd_exp=; Max-Age=0; path=/";
@@ -173,7 +172,6 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
     })();
   }
 
-  // keep prop callback sync; run async inside
   function handleGoogleSignIn(resp: CredentialResponse) {
     if (!resp.credential || isGoogleLoading) return;
     setError("");
@@ -199,7 +197,7 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
     })();
   }
 
-  // Facebook login via JS SDK — keep FB.login callback sync too
+  // Facebook login via JS SDK
   function loginWithFacebook() {
     if (!window.FB || isFacebookLoading) return;
     setError("");
@@ -357,21 +355,21 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
                         </div>
                       ) : (
                         <div className="w-full">
-                        <GoogleLogin
-                          onSuccess={handleGoogleSignIn}
-                          onError={() =>
-                            setError("Échec de la connexion Google")
-                          }
-                          size="large"
+                          <GoogleLogin
+                            onSuccess={handleGoogleSignIn}
+                            onError={() =>
+                              setError("Échec de la connexion Google")
+                            }
+                            size="large"
                             text="continue_with"
                             shape="rectangular"
                             logo_alignment="left"
-                        />
+                          />
                         </div>
                       )}
                     </div>
 
-                    {/* Facebook — normal button calling FB.login */}
+                    {/* Facebook — button with left icon */}
                     <div className="w-full" ref={fbBtnHostRef}>
                       {showFacebookSkeleton ? (
                         <div className="h-[40px] w-full flex items-center justify-center rounded-md border border-gray-200">
@@ -381,9 +379,15 @@ export default function SignInForm({ redirectTo }: SignInFormProps) {
                         <button
                           type="button"
                           onClick={loginWithFacebook}
-                          className="h-[40px] w-full rounded-md border border-gray-200 flex items-center justify-center font-base text-xs"
+                          aria-label="Continuer avec Facebook"
+                          className="relative h-[40px] w-full rounded-md border border-gray-200 flex items-center justify-center text-sm font-normal hover:bg-gray-50"
                         >
-                          Continuer avec Facebook
+                          <FaFacebookF
+                            className="absolute left-3 text-[#1877F2]"
+                            size={18}
+                            aria-hidden
+                          />
+                          <span>Continuer avec Facebook</span>
                         </button>
                       )}
                       {isSecureForFB === false && (
