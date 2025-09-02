@@ -105,7 +105,7 @@ export default async function Footer() {
           <div className="flex w-1/5 max-md:w-full justify-between max-md:justify-center items-center gap-4 max-md:gap-20 md:max-lg:hidden">
             <div className="flex flex-col gap-[16px] max-md:text-sm">
               <Link href="/"><p className="hover:text-white cursor-pointer">Home</p></Link>
-              <Link href="/about"><p className="hover:text-white cursor-pointer">À propos</p></Link>
+              <Link href="/privacy"><p className="hover:text-white cursor-pointer">Politique de confidentialité</p></Link>
               <Link href="/contactus"><p className="hover:text-white cursor-pointer">Contactez-nous</p></Link>
               <Link href="/blog"><p className="hover:text-white cursor-pointer">Blogs</p></Link>
             </div>
