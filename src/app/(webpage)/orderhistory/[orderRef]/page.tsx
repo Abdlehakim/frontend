@@ -5,15 +5,17 @@ import React, { useEffect, useState, useCallback } from "react";
 import { useRouter, useParams } from "next/navigation";
 import Image from "next/image";
 import { FiDownload } from "react-icons/fi";
+
 import { fetchData } from "@/lib/fetchData";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { generatePdf } from "@/lib/generatePdf";
+import LoadingDots from "@/components/LoadingDots";
 
 /* ---------- types ---------- */
 interface OrderItemAttr {
   attribute: string; // attribute id
-  name: string;      // e.g. "Couleur"
-  value: string;     // e.g. "Bleu gris"
+  name: string; // e.g. "Couleur"
+  value: string; // e.g. "Bleu gris"
 }
 
 interface OrderItem {
@@ -94,6 +96,11 @@ export default function OrderByRef() {
   const [order, setOrder] = useState<Order | null>(null);
   const [loading, setLoading] = useState(true);
 
+  // Download UI state
+  const [downloading, setDownloading] = useState(false);
+  const [downloadOk, setDownloadOk] = useState(false);
+  const [downloadError, setDownloadError] = useState<string | null>(null);
+
   useEffect(() => {
     (async () => {
       try {
@@ -113,12 +120,34 @@ export default function OrderByRef() {
   }, [orderRef]);
 
   const telechargerPDF = useCallback(async () => {
-    if (!order?.ref) return;
-    await generatePdf(
-      `/pdf/invoice/${order.ref}`,
-      `FACTURE-${order.ref.replace("ORDER-", "")}.pdf`
-    );
-  }, [order?.ref]);
+    if (!order?.ref || downloading) return;
+
+    setDownloadError(null);
+
+    try {
+      await generatePdf(
+        `/pdf/invoice/${order.ref}`,
+        `FACTURE-${order.ref.replace("ORDER-", "")}.pdf`,
+        {
+          onStart: () => setDownloading(true),
+          onDownloaded: () => {
+            setDownloadOk(true);
+            // brief success flash
+            setTimeout(() => setDownloadOk(false), 1200);
+          },
+          onError: (e) => {
+            console.error(e);
+            setDownloadError(
+              e instanceof Error ? e.message : "Échec du téléchargement."
+            );
+          },
+          onFinally: () => setDownloading(false),
+        }
+      );
+    } catch {
+      // already handled in onError
+    }
+  }, [order?.ref, downloading]);
 
   if (loading) {
     return (
@@ -137,8 +166,7 @@ export default function OrderByRef() {
 
   /* ---------- totals & derived fields ---------- */
   const itemsTotal = order.orderItems.reduce((sum, it) => {
-    const unit =
-      it.discount > 0 ? (it.price * (100 - it.discount)) / 100 : it.price;
+    const unit = it.discount > 0 ? (it.price * (100 - it.discount)) / 100 : it.price;
     return sum + unit * it.quantity;
   }, 0);
 
@@ -186,21 +214,43 @@ export default function OrderByRef() {
 
   /* ---------- render ---------- */
   return (
-    <div className="w-[90%] md:w-[80%] mx-auto pt-16">
+    <div className="w-[90%] md:w-[80%] mx-auto pt-16 relative">
+      {/* FULL-SCREEN OVERLAY DURING DOWNLOAD */}
+      {(downloading || downloadOk) && (
+        <div className="fixed inset-0 z-[1000] bg-white/80 backdrop-blur-sm flex items-center justify-center">
+          <div aria-live="polite" aria-busy={downloading}>
+            <LoadingDots
+              loadingMessage="Génération de la facture…"
+              successMessage="Téléchargement démarré ✅"
+              isSuccess={downloadOk}
+            />
+          </div>
+        </div>
+      )}
+
+      {/* optional error banner */}
+      {downloadError && (
+        <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          {downloadError}
+        </div>
+      )}
+
       {/* invoice card */}
       <div className="bg-gray-100 border border-gray-200 rounded-xl p-6 space-y-6 max-md:p-2">
         {/* meta */}
         <div className="md:flex md:divide-x divide-gray-200 text-center md:text-left">
-          {([
-            ["N° de commande", `#${order.ref.replace("ORDER-", "")}`],
-            ["Date de commande", frDate(order.createdAt)],
-            ["Méthode de livraison", deliveryMethodText],
-            ["Moyen de paiement", paymentLabels],
-            [addressLabel, addressValue],
-            ...(expectedDatesText
-              ? ([["Date de livraison prévue", expectedDatesText]] as const)
-              : []),
-          ] as const).map(([label, value]) => (
+          {(
+            [
+              ["N° de commande", `#${order.ref.replace("ORDER-", "")}`],
+              ["Date de commande", frDate(order.createdAt)],
+              ["Méthode de livraison", deliveryMethodText],
+              ["Moyen de paiement", paymentLabels],
+              [addressLabel, addressValue],
+              ...(expectedDatesText
+                ? ([["Date de livraison prévue", expectedDatesText]] as const)
+                : []),
+            ] as const
+          ).map(([label, value]) => (
             <div key={label} className="flex-1 pb-4 md:pb-0 md:pl-6 space-y-1">
               <p className="text-xs text-gray-400">{label}</p>
               <p className="text-sm font-medium">{value}</p>
@@ -220,9 +270,7 @@ export default function OrderByRef() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-6 sm:gap-x-12">
               {order.orderItems.map((it) => {
                 const unit =
-                  it.discount > 0
-                    ? (it.price * (100 - it.discount)) / 100
-                    : it.price;
+                  it.discount > 0 ? (it.price * (100 - it.discount)) / 100 : it.price;
                 const lineTotal = unit * it.quantity;
                 return (
                   <div key={it._id} className="flex items-start justify-between gap-4">
@@ -290,9 +338,12 @@ export default function OrderByRef() {
         </button>
         <button
           onClick={telechargerPDF}
-          className="mt-2 rounded-md border border-gray-300 px-2 py-2 text-sm text-black hover:text-white hover:bg-primary max-md:text-xs max-md:w-full flex items-center justify-center gap-2"
+          disabled={downloading}
+          className="mt-2 rounded-md border border-gray-300 px-3 py-2 text-sm text-black hover:text-white hover:bg-primary max-md:text-xs max-md:w-full flex items-center justify-center gap-2 disabled:opacity-60 disabled:cursor-not-allowed"
+          aria-busy={downloading}
         >
-          <FiDownload /> Télécharger la facture
+          <FiDownload />
+          {downloading ? "Téléchargement…" : "Télécharger la facture"}
         </button>
       </div>
     </div>
