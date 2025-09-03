@@ -101,6 +101,9 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
   const [totalWithShipping, setTotalWithShipping] = useState(totalPrice + deliveryCost);
   const [totalTva, setTotalTva] = useState(0);
 
+  // NEW: lightweight status flag to control LoadingDots message
+  const [submitStatus, setSubmitStatus] = useState<"idle" | "loading" | "success">("idle");
+
   useEffect(() => {
     setTotalWithShipping(totalPrice + deliveryCost);
     const tvaSum = items.reduce((sum, it) => {
@@ -171,7 +174,7 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
         quantity,
         tva,
         mainImageUrl,
-        discount: discount ?? 0, // <- FIX: ensure number
+        discount: discount ?? 0,
         price,
         attributes: attrsFromCartItem(selected, selectedNames),
       })
@@ -243,10 +246,15 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
       return;
     }
 
+    setSubmitStatus("loading"); // NEW
     setIsSubmittingOrder(true);
     try {
       await postOrder();
+      setSubmitStatus("success"); // NEW: show success text briefly
+      // let the success message be visible for a moment
+      setTimeout(() => setSubmitStatus("idle"), 1200);
     } catch {
+      setSubmitStatus("idle"); // NEW: make sure success text isn't shown on error
       setNotification({
         message: "Échec de l’envoi de la commande. Veuillez réessayer.",
         type: "error",
@@ -265,9 +273,13 @@ const PaymentSummary: React.FC<PaymentSummaryProps> = ({
         <Notification message={notification.message} type={notification.type} onClose={hideNotification} />
       )}
 
-      {isSubmittingOrder && (
-        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
-          <LoadingDots />
+      {(isSubmittingOrder || submitStatus === "success") && (
+        <div className="fixed inset-0 z-[1000] bg-white/80 backdrop-blur-sm flex items-center justify-center">
+          <LoadingDots
+            loadingMessage="Commande en cours d’envoi…"
+            successMessage="Commande envoyée avec succès."
+            isSuccess={submitStatus === "success"}
+          />
         </div>
       )}
 
