@@ -147,13 +147,16 @@ const Headerbottomleft: React.FC<HeaderbottomleftProps> = ({ categories }) => {
       {isMenuOpen && (
         <div
           className="lg:hidden fixed inset-0 z-40 bg-black/30"
-          onClick={closeMenu}
+          onClick={(e) => {
+            e.stopPropagation(); // prevent bubbling to the trigger
+            closeMenu();
+          }}
         />
       )}
 
       {/* Drawer */}
       <div
-        className={`lg:hidden fixed inset-y-0 left-0 z-50 h-full w-[90%] max-w-[95%] bg-white shadow-2xl transform transition-transform duration-300 ease-out ${
+        className={`lg:hidden fixed inset-y-0 left-0 z-50 h-full w-[80%] max-w-[80%] bg-white shadow-2xl transform transition-transform duration-300 ease-out ${
           isMenuOpen ? "translate-x-0" : "-translate-x-full"
         }`}
         onClick={(e) => e.stopPropagation()}
@@ -162,7 +165,7 @@ const Headerbottomleft: React.FC<HeaderbottomleftProps> = ({ categories }) => {
         aria-label="Navigation catégories"
       >
         <div className="h-14 px-4 flex items-center gap-3 border-b-2 border-primary">
-          <span className="font-bold">TOUTES NOS CATEGORIES</span>
+          <span className="font-bold text-sm">TOUTES NOS CATEGORIES</span>
           <button
             onClick={closeMenu}
             className="ml-auto p-2 rounded hover:bg-gray-100"
