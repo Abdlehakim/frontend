@@ -40,8 +40,13 @@ body {
 
 html {
   scroll-behavior: smooth !important;
-  scroll-padding-bottom: 400px !important;
-  overflow-y: scroll;
+}
+
+@supports selector(html:has(*)) {
+  html:has(select:focus) {
+    scroll-behavior: auto !important;
+    scroll-padding-bottom: 0 !important;
+  }
 }
 
 /* ---------- transitions / animations ---------- */

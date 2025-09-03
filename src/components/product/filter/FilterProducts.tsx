@@ -203,16 +203,19 @@ const ProductsFilter: React.FC<Props> = ({
 
         {/* sort */}
         <div className="flex flex-col gap-2">
-          <label htmlFor="sort" className="font-bold max-md:text-sm">Trier par prix :</label>
+          <label className="font-bold max-md:text-sm">Trier par prix :</label>
           <select
-            id="sort"
-            className="w-full border rounded p-2 max-md:text-sm"
-            value={sortDraft}
-            onChange={(e) => setSortDraft(e.target.value as "asc" | "desc")}
-          >
-            <option value="asc max-md:text-sm">Du moins cher</option>
-            <option value="desc max-md:text-sm">Du plus cher</option>
-          </select>
+  className="w-full border rounded p-2 max-md:text-sm"
+  aria-label="Trier par prix"
+  value={sortDraft}
+  onMouseDown={() => (document.documentElement.style.scrollBehavior = "auto")}
+  onBlur={() => (document.documentElement.style.scrollBehavior = "")}
+  onChange={(e) => setSortDraft(e.target.value as "asc" | "desc")}
+>
+  <option value="asc">Du moins cher</option>
+  <option value="desc">Du plus cher</option>
+</select>
+
         </div>
       </div>
     );

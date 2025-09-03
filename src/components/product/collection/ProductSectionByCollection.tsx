@@ -142,7 +142,7 @@ export default function ProductSectionByCollection() {
 
   /* -------- render -------- */
   return (
-    <div className="flex flex-col xl:flex-row gap-16 w-[90%] mx-auto pt-8">
+    <div className="flex flex-col xl:flex-row gap-16 w-[90%] mx-auto pt-8 select-none">
       <FilterProducts
         selectedCategorie={selectedCategorie}    setSelectedCategorie={setSelectedCategorie}
         selectedSubCategorie={selectedSubCategorie} setSelectedSubCategorie={setSelectedSubCategorie}

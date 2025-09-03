@@ -175,7 +175,7 @@ export default function ProductSectionCategoriePage({
      RENDER
   ================================================================== */
   return (
-    <div className="flex flex-row justify-around max-xl:flex-col gap-6 w-[95%] min-h-screen mx-auto my-4">
+    <div className="flex flex-row justify-around max-xl:flex-col gap-6 w-[95%] min-h-screen mx-auto my-4 select-none">
       <FilterProducts
         selectedBrand={selectedBrand}
         setSelectedBrand={setSelectedBrand}
