@@ -24,6 +24,7 @@ const ProductDetails: FC<Props> = ({ description, productDetails }) => {
   /* pick first tab by default (safe-guard for empty array) */
   const firstName = productDetails?.[0]?.name ?? "";
   const [selectedTab, setSelectedTab] = useState(firstName);
+  const [showFullDesc, setShowFullDesc] = useState(false);
   const currentRow = productDetails?.find((r) => r.name === selectedTab);
 
   if (!description && (!productDetails || productDetails.length === 0)) {
@@ -36,7 +37,37 @@ const ProductDetails: FC<Props> = ({ description, productDetails }) => {
 
       {/* intro description (always visible) */}
       {description && (
-        <p className="text-gray-700 leading-relaxed">{description}</p>
+        <p className="text-gray-700 leading-relaxed">
+          {(() => {
+            const LIMIT = 100;
+            const words = description.trim().split(/\s+/);
+            const needsTruncate = words.length > LIMIT;
+            const visible =
+              showFullDesc || !needsTruncate
+                ? description
+                : words.slice(0, LIMIT).join(" ");
+
+            return (
+              <>
+                {visible}
+                {needsTruncate && (
+                  <>
+                    {!showFullDesc && "… "}
+                    <button
+                      type="button"
+                      onClick={() => setShowFullDesc((v) => !v)}
+                      className="text-blue-600 hover:underline font-medium text-xs px-2"
+                      aria-expanded={showFullDesc}
+                      title={showFullDesc ? "Masquer" : "Lire plus"}
+                    >
+                      {showFullDesc ? "Réduire" : "Lire plus"}
+                    </button>
+                  </>
+                )}
+              </>
+            );
+          })()}
+        </p>
       )}
 
       {/* tabs */}
@@ -77,11 +108,11 @@ const ProductDetails: FC<Props> = ({ description, productDetails }) => {
                     src={currentRow.image}
                     alt={currentRow.name}
                     quality={75}
-                  placeholder="empty"
-                  priority
-                  sizes="(max-width: 600px) 100vw, 600px"
-                  fill
-                  className="object-cover"
+                    placeholder="empty"
+                    priority
+                    sizes="(max-width: 600px) 100vw, 600px"
+                    fill
+                    className="object-cover"
                   />
                 </div>
               )}

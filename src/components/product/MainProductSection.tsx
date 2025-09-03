@@ -246,7 +246,7 @@ const MainProductSection: React.FC<Props> = ({ initialProduct }) => {
 
         {/* info */}
         {product.info ? (
-          <p className="text-lg text-gray-700 h-8 max-lg:h-fit max-lg:text-sm">
+          <p className="text-lg text-gray-700 h-fit max-lg:h-fit max-lg:text-sm">
             {product.info}
           </p>
         ) : (
