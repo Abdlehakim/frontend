@@ -67,7 +67,7 @@ const UserMenu = () => {
                 <Dropdown userName={user?.username ?? "User"} />
               </div>
             ) : (
-              <div className="absolute shadow-xl z-30 flex gap-[8px] flex-col top-12 -translate-x-1/5 max-md:-translate-x-[120px] bg-white p-4 border-[#15335D] border-4 rounded-lg">
+              <div className="absolute shadow-xl z-30 flex gap-[8px] flex-col top-12 -translate-x-1/5 max-md:-translate-x-[130px] bg-white p-4 border-[#15335D] border-4 rounded-lg">
                 <Link
                   href="/signin"
                   className="bg-primary px-8 py-2 rounded border-2 border-primary text-center hover:bg-white hover:text-black"
