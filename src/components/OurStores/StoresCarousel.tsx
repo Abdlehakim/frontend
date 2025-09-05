@@ -162,7 +162,7 @@ const EPS = 10;
               ref={listRef}
               className="
                 text-sm max-lg:text-xs divide-y divide-white/20
-                max-h-56 max-lg:max-h-40 overflow-y-auto pr-2
+                max-h-56 max-lg:max-h-40 w-fit overflow-y-auto
                 scrollbar-thin scrollbar-track-transparent scrollbar-thumb-white/40
                 [scrollbar-color:rgba(255,255,255,.4)_transparent] [scrollbar-width:thin]
               "
