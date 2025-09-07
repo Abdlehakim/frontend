@@ -16,7 +16,7 @@ interface OrderItemAttr {
   value: string;
 }
 interface OrderItem {
-  _id: Key | null | undefined;
+  _id?: Key | null;
   product: string;
   reference: string;
   name: string;
@@ -32,25 +32,21 @@ interface DeliveryAddressItem {
   AddressID: string;
   DeliverToAddress: string;
 }
-
 interface PickupMagasinItem {
   MagasinID: string;
   MagasinAddress: string;
   MagasinName?: string;
 }
-
 interface PaymentMethodItem {
   PaymentMethodID: string;
   PaymentMethodLabel: string;
 }
-
 interface DeliveryMethodItem {
   deliveryMethodID: string;
   deliveryMethodName?: string;
   Cost: string | number;
   expectedDeliveryDate?: string | Date;
 }
-
 interface Order {
   _id: string;
   ref?: string;
@@ -99,7 +95,6 @@ const OrderSummary: React.FC<{ data: string }> = ({ data }) => {
       </div>
     );
   }
-
   if (!order) return <div>Order data not found.</div>;
 
   const paymentLabels = order.paymentMethod.map((p) => p.PaymentMethodLabel).filter(Boolean);
@@ -137,6 +132,16 @@ const OrderSummary: React.FC<{ data: string }> = ({ data }) => {
     null;
   const expectedDate = expectedFromDM ? new Date(expectedFromDM).toLocaleDateString() : null;
 
+  // ---- helper to build a unique, stable key for each line item ----
+  const makeLineKey = (it: OrderItem, idx: number) => {
+    const attrSig = (it.attributes ?? [])
+      .map(a => `${a.attribute}:${a.value}`)
+      .sort()
+      .join("|"); // same attributes = same signature
+    const base = it.product || it.reference || "item";
+    return `${base}|${attrSig}|${idx}`; // idx only as final disambiguator
+  };
+
   return (
     <div className="w-full flex flex-col items-center">
       <div className="bg-white shadow-lg rounded-lg p-6 w-[50%] max-md:w-[90%]">
@@ -161,14 +166,14 @@ const OrderSummary: React.FC<{ data: string }> = ({ data }) => {
             <p className="font-semibold text-lg mb-2">Article(s)&nbsp;:</p>
             <div className="flex flex-col divide-y divide-gray-200">
               {order.orderItems.length > 0 ? (
-                order.orderItems.map((item) => {
+                order.orderItems.map((item, idx) => {
                   const unit =
                     item.discount > 0 ? item.price * (1 - item.discount / 100) : item.price;
                   const lineTotal = unit * item.quantity;
                   const attrs = Array.isArray(item.attributes) ? item.attributes : [];
                   return (
                     <div
-                      key={item._id}
+                      key={makeLineKey(item, idx)}
                       className="py-4 flex max-md:flex-col justify-between items-center"
                     >
                       <div className="flex items-center gap-4">
@@ -193,11 +198,10 @@ const OrderSummary: React.FC<{ data: string }> = ({ data }) => {
                             Quantité&nbsp;: {item.quantity}
                           </p>
 
-                          {/* attributes (if any) */}
                           {attrs.length > 0 && (
                             <div className="mt-1 text-xs text-gray-800 space-y-0.5">
-                              {attrs.map((a, idx) => (
-                                <div key={`${a.attribute}-${idx}`}>
+                              {attrs.map((a, aIdx) => (
+                                <div key={`${a.attribute}:${a.value}:${aIdx}`}>
                                   <span className="font-semibold">{a.name} :</span>{" "}
                                   <span className="text-gray-700">{a.value}</span>
                                 </div>

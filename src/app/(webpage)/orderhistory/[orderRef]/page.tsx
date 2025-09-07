@@ -14,12 +14,12 @@ import LoadingDots from "@/components/LoadingDots";
 /* ---------- types ---------- */
 interface OrderItemAttr {
   attribute: string; // attribute id
-  name: string; // e.g. "Couleur"
-  value: string; // e.g. "Bleu gris"
+  name: string;      // e.g. "Couleur"
+  value: string;     // e.g. "Bleu gris"
 }
 
 interface OrderItem {
-  _id: string;
+  _id?: string;      // may be absent/duplicated on your data
   reference: string;
   name: string;
   tva: number;
@@ -87,6 +87,16 @@ function safeToDate(val?: string | Date): Date | null {
   return isNaN(d.getTime()) ? null : d;
 }
 
+/** Build a stable, unique key for a line item even when `_id` is missing/duplicated. */
+function lineKey(it: OrderItem, idx: number): string {
+  const attrs = (it.attributes ?? [])
+    .map((a) => `${a.attribute}:${a.value}`)
+    .sort()
+    .join("|");
+  const base = it._id || it.reference || "item";
+  return `${base}|${attrs}|${idx}`;
+}
+
 /* ---------- page ---------- */
 export default function OrderByRef() {
   const router = useRouter();
@@ -132,7 +142,6 @@ export default function OrderByRef() {
           onStart: () => setDownloading(true),
           onDownloaded: () => {
             setDownloadOk(true);
-            // brief success flash
             setTimeout(() => setDownloadOk(false), 1200);
           },
           onError: (e) => {
@@ -145,7 +154,7 @@ export default function OrderByRef() {
         }
       );
     } catch {
-      // already handled in onError
+      // handled above
     }
   }, [order?.ref, downloading]);
 
@@ -215,7 +224,6 @@ export default function OrderByRef() {
   /* ---------- render ---------- */
   return (
     <div className="w-[90%] md:w-[80%] mx-auto pt-16 relative">
-      {/* FULL-SCREEN OVERLAY DURING DOWNLOAD */}
       {(downloading || downloadOk) && (
         <div className="fixed inset-0 z-[1000] bg-white/80 backdrop-blur-sm flex items-center justify-center">
           <div aria-live="polite" aria-busy={downloading}>
@@ -228,14 +236,12 @@ export default function OrderByRef() {
         </div>
       )}
 
-      {/* optional error banner */}
       {downloadError && (
         <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
           {downloadError}
         </div>
       )}
 
-      {/* invoice card */}
       <div className="bg-gray-100 border border-gray-200 rounded-xl p-6 space-y-6 max-md:p-2">
         {/* meta */}
         <div className="md:flex md:divide-x divide-gray-200 text-center md:text-left">
@@ -251,7 +257,7 @@ export default function OrderByRef() {
                 : []),
             ] as const
           ).map(([label, value]) => (
-            <div key={label} className="flex-1 pb-4 md:pb-0 md:pl-6 space-y-1">
+            <div key={`meta-${label}`} className="flex-1 pb-4 md:pb-0 md:pl-6 space-y-1">
               <p className="text-xs text-gray-400">{label}</p>
               <p className="text-sm font-medium">{value}</p>
             </div>
@@ -262,18 +268,15 @@ export default function OrderByRef() {
 
         {/* items */}
         <div className="relative">
-          <span
-            aria-hidden
-            className="hidden sm:block absolute inset-y-0 left-1/2 w-px bg-gray-200"
-          />
+          <span aria-hidden className="hidden sm:block absolute inset-y-0 left-1/2 w-px bg-gray-200" />
           <div className="h-[420px] overflow-y-auto px-4">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-y-6 sm:gap-x-12">
-              {order.orderItems.map((it) => {
+              {order.orderItems.map((it, idx) => {
                 const unit =
                   it.discount > 0 ? (it.price * (100 - it.discount)) / 100 : it.price;
                 const lineTotal = unit * it.quantity;
                 return (
-                  <div key={it._id} className="flex items-start justify-between gap-4">
+                  <div key={lineKey(it, idx)} className="flex items-start justify-between gap-4">
                     <div className="relative w-20 h-20 rounded-lg">
                       <Image
                         src={it.mainImageUrl || "/placeholder.png"}
@@ -291,17 +294,18 @@ export default function OrderByRef() {
                       <p className="text-sm text-gray-500 max-md:text-xs">
                         Réf :&nbsp;{it.reference}
                       </p>
-                      {/* Attributes if any */}
+
                       {Array.isArray(it.attributes) && it.attributes.length > 0 && (
                         <ul className="mt-1 text-xs text-gray-700 space-y-0.5">
-                          {it.attributes.map((a, idx) => (
-                            <li key={`${a.attribute}-${a.name}-${a.value}-${idx}`}>
+                          {it.attributes.map((a, aIdx) => (
+                            <li key={`${a.attribute}:${a.value}:${aIdx}`}>
                               <span className="font-semibold">{a.name} :</span>{" "}
                               <span>{a.value}</span>
                             </li>
                           ))}
                         </ul>
                       )}
+
                       <p className="text-sm text-gray-500 max-md:text-xs mt-1">
                         Quantité :&nbsp;{it.quantity}
                       </p>
