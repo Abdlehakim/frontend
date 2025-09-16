@@ -32,12 +32,12 @@ export default async function ProductsBestCollection() {
         <h2 className="font-bold text-2xl text-HomePageTitles capitalize text-center max-md:text-lg">
           {header.HPBestCollectionTitle}
         </h2>
-        <p className="test-base max-md:text-sm text-[#525566] text-center max-md:text-sm">
+        <p className="test-base max-md:text-sm text-[#525566] text-center">
           {header.HPBestCollectionSubTitle}
         </p>
         <div className="absolute max-lg:justify-center max-lg:static w-full flex justify-end mt-2">
           <Link
-            href="/bestproductcollection"
+            href="/best-collection"
             className="group inline-flex items-center border-2 border-secondary text-secondary font-semibold uppercase tracking-wide px-6 py-2 rounded-full transition-colors duration-200 ease-in-out hover:bg-secondary hover:text-white"
           >
             Voir plus ...

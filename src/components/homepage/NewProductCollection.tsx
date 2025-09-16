@@ -34,7 +34,7 @@ export default async function NewProductCollection() {
         </p>
         <div className="absolute max-lg:justify-center max-lg:static w-full flex justify-end mt-2">
           <Link
-            href="/nouveau-product"
+            href="/new-products"
             className="group inline-flex items-center border-2 border-secondary text-secondary font-semibold uppercase tracking-wide px-6 py-2 rounded-full transition-colors duration-200 ease-in-out hover:bg-secondary hover:text-white"
           >
             Voir plus ...
