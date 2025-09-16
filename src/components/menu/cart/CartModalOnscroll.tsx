@@ -179,8 +179,7 @@ const CartModalOnscroll: React.FC<CartModalOnscrollProps> = ({
 
               {/* info */}
               <div className="text-black flex flex-col gap-[6px] min-w-0">
-                <p className="text-sm font-bold truncate">{item.name}</p>
-                <p className="text-[11px] text-gray-600 truncate">{item.reference}</p>
+                <p className="text-sm font-bold truncate">{item.name}</p>            
 
                 {/* Attributes like "Couleur : Blanc" */}
                 {displayAttrs.length > 0 && (
@@ -227,7 +226,7 @@ const CartModalOnscroll: React.FC<CartModalOnscrollProps> = ({
                   </button>
                 </div>
                 <button
-                  className="flex items-center gap-2 justify-center border-2 border-[#15335E] rounded text-black hover:bg-[#15335E] hover:text-white p-2"
+                  className="flex items-center gap-2 justify-center border-2 border-[#15335E] rounded text-black hover:bg-[#15335E] hover:text-white px-2"
                   onClick={(e) => removeCartHandler(item, e)}
                 >
                   <span className="max-md:hidden">Remove</span>
