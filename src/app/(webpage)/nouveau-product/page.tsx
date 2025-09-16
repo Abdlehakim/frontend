@@ -1,7 +1,5 @@
-/* ------------------------------------------------------------------ */
-/*  src/app/nouveau-product/page.tsx                                  */
-/*  (Server component — fetches only the banner; product list is      */
-/*   loaded lazily by <ProductSectionByCollection />)                 */
+/* ------------------------------------------------------------------ 
+/*  // src/app/(webpage)/nouveau-product/page.tsx                                  
 /* ------------------------------------------------------------------ */
 import Banner from "@/components/Banner";
 import ProductSectionByCollection
@@ -27,9 +25,6 @@ export default async function NewProductsPage() {
       {banner.NPBannerTitle && banner.NPBannerImgUrl && (
         <Banner title={banner.NPBannerTitle} imageBanner={banner.NPBannerImgUrl} />
       )}
-
-      {/* client component will call
-          `/NavMenu/NewProducts/products?limit=8&skip=0` and lazy-load more */}
       <ProductSectionByCollection />
     </>
   );
