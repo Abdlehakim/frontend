@@ -9,6 +9,8 @@ import Providers from "@/components/Providers";
 import GoogleIdentityLoader from "@/components/GoogleIdentityLoader";
 import ClientShell from "@/components/ClientShell";
 import { fetchData } from "@/lib/fetchData";
+import { FooterLockProvider } from "@/contexts/FooterLockContext";
+import FooterVisibilityController from "@/components/menu/FooterVisibilityController";
 
 export const revalidate = 10;
 
@@ -26,14 +28,22 @@ export default async function Layout({ children }: { children: React.ReactNode }
     <div className="flex flex-col">
       <CurrencyProvider initial={primary}>
         <Providers>
-          {/* Public: no auth required */}
-          <ClientShell requireAuth={false}>
-            <StoreProviders>
-              <Header />
-              {children}
-              <Footer />
-            </StoreProviders>
-          </ClientShell>
+          <FooterLockProvider>
+            <ClientShell requireAuth={false}>
+              <StoreProviders>
+                <Header />
+                {children}
+
+                {/* Footer stays server-rendered */}
+                <div id="footer-container">
+                  <Footer />
+                </div>
+
+                {/* Client controller toggles visibility */}
+                <FooterVisibilityController />
+              </StoreProviders>
+            </ClientShell>
+          </FooterLockProvider>
         </Providers>
       </CurrencyProvider>
       <GoogleIdentityLoader />

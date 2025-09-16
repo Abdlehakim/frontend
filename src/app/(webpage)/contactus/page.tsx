@@ -14,7 +14,6 @@ interface ContactBanner {
 }
 
 export default async function ContactPage() {
-  // Fetch banner server-side (same pattern as nouveau-product)
   const banner = await fetchData<ContactBanner>(
     "NavMenu/contactus/ContactBanner"
   ).catch(() => ({} as ContactBanner));

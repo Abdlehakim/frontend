@@ -1,9 +1,8 @@
-/* ------------------------------------------------------------------ 
-/*  // src/app/(webpage)/nouveau-product/page.tsx                                  
-/* ------------------------------------------------------------------ */
+/* ------------------------------------------------------------------
+   // src/app/(webpage)/new-products/page.tsx
+------------------------------------------------------------------ */
 import Banner from "@/components/Banner";
-import ProductSectionByCollection
-  from "@/components/product/collection/ProductSectionByCollection";
+import ProductSectionByStatusPage from "@/components/product/collection/ProductSectionByStatusPage";
 import { fetchData } from "@/lib/fetchData";
 
 export const revalidate = 60;
@@ -25,7 +24,8 @@ export default async function NewProductsPage() {
       {banner.NPBannerTitle && banner.NPBannerImgUrl && (
         <Banner title={banner.NPBannerTitle} imageBanner={banner.NPBannerImgUrl} />
       )}
-      <ProductSectionByCollection />
+      {/* Load products with statuspage=new-products */}
+      <ProductSectionByStatusPage statusKey="new-products" />
     </>
   );
 }

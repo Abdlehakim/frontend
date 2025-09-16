@@ -1,6 +1,6 @@
-/* ------------------------------------------------------------------ */
-/*  ProductSectionByCollection (client-side, lazy load)               */
-/* ------------------------------------------------------------------ */
+/* ------------------------------------------------------------------
+   src/components/product/collection/ProductSectionByStatusPage.tsx
+------------------------------------------------------------------ */
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
@@ -9,17 +9,24 @@ import FilterProducts from "@/components/product/filter/FilterProducts";
 import LoadingDots from "@/components/LoadingDots";
 import { fetchData } from "@/lib/fetchData";
 import type { Product } from "@/types/Product";
+import { useFooterLock } from "@/contexts/FooterLockContext";
+
+type StatusKey = "promotion" | "new-products" | "best-collection";
+
+interface Props {
+  statusKey: StatusKey;
+}
 
 interface OptionItem { _id: string; name: string; }
 
-export default function ProductSectionByCollection() {
+export default function ProductSectionByStatusPage({ statusKey }: Props) {
   const itemsPerBatch = 8;
 
   /* -------- live filter state -------- */
-  const [selectedCategorie,    setSelectedCategorie]    = useState<string | null>(null);
+  const [selectedCategorie, setSelectedCategorie] = useState<string | null>(null);
   const [selectedSubCategorie, setSelectedSubCategorie] = useState<string | null>(null);
-  const [selectedBrand,        setSelectedBrand]        = useState<string | null>(null);
-  const [selectedMagasin,     setSelectedMagasin]     = useState<string | null>(null);
+  const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
+  const [selectedMagasin, setSelectedMagasin] = useState<string | null>(null);
   const [minPrice, setMinPrice] = useState<number | null>(null);
   const [maxPrice, setMaxPrice] = useState<number | null>(null);
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
@@ -28,36 +35,48 @@ export default function ProductSectionByCollection() {
   const [products, setProducts] = useState<Product[]>([]);
   const [loadingInit, setLoadingInit] = useState(true);
   const [loadingMore, setLoadingMore] = useState(false);
-  const [hasMore,     setHasMore]     = useState(true);
+  const [hasMore, setHasMore] = useState(true);
 
   /* -------- option lists -------- */
-  const [categories,    setCategories]    = useState<OptionItem[]>([]);
+  const [categories, setCategories] = useState<OptionItem[]>([]);
   const [subcategories, setSubcategories] = useState<OptionItem[]>([]);
-  const [brands,        setBrands]        = useState<OptionItem[]>([]);
-  const [magasins,     setMagasins]     = useState<OptionItem[]>([]);
+  const [brands, setBrands] = useState<OptionItem[]>([]);
+  const [magasins, setMagasins] = useState<OptionItem[]>([]);
 
-  /* -------- sentinel -------- */
+  /* -------- sentinel / guards -------- */
   const loaderRef = useRef<HTMLDivElement | null>(null);
+  const prefillRunning = useRef(false);
+
+  /* -------- footer lock (hide footer while more can load) -------- */
+  const { setLocked } = useFooterLock();
+  useEffect(() => {
+    setLocked(loadingInit || loadingMore || hasMore);
+    return () => setLocked(false);
+  }, [loadingInit, loadingMore, hasMore, setLocked]);
 
   /* -------- query builder -------- */
   const buildQuery = useCallback(
     (skip: number) => {
       const qs = new URLSearchParams();
       qs.set("limit", itemsPerBatch.toString());
-      qs.set("skip",  skip.toString());
+      qs.set("skip", skip.toString());
 
-      if (selectedCategorie)    qs.set("categorie", selectedCategorie);
-      if (selectedSubCategorie) qs.set("subCat",     selectedSubCategorie);
-      if (selectedBrand)        qs.set("brand",      selectedBrand);
-      if (selectedMagasin)     qs.set("magasin",   selectedMagasin);
-      if (minPrice !== null)    qs.set("priceMin",   minPrice.toString());
-      if (maxPrice !== null)    qs.set("priceMax",   maxPrice.toString());
+      // core: filter by statuspage
+      qs.set("statuspage", statusKey);
+
+      if (selectedCategorie) qs.set("categorie", selectedCategorie);
+      if (selectedSubCategorie) qs.set("subCat", selectedSubCategorie);
+      if (selectedBrand) qs.set("brand", selectedBrand);
+      if (selectedMagasin) qs.set("magasin", selectedMagasin);
+      if (minPrice !== null) qs.set("priceMin", String(minPrice));
+      if (maxPrice !== null) qs.set("priceMax", String(maxPrice));
       qs.set("sort", sortOrder);
 
       return qs.toString();
     },
     [
       itemsPerBatch,
+      statusKey,
       selectedCategorie,
       selectedSubCategorie,
       selectedBrand,
@@ -68,15 +87,23 @@ export default function ProductSectionByCollection() {
     ]
   );
 
+  /* -------- endpoints (adjust if your backend path differs) -------- */
+  const productsEndpoint = useCallback(
+    (skip: number) => `NavMenu/products/by-status?${buildQuery(skip)}`,
+    [buildQuery]
+  );
+  const optionsEndpoint = useCallback(
+    () => `NavMenu/products/by-status/options?statuspage=${encodeURIComponent(statusKey)}`,
+    [statusKey]
+  );
+
   /* -------- fetch first batch & on filter change -------- */
   useEffect(() => {
     let ignore = false;
     (async () => {
       setLoadingInit(true);
       try {
-        const batch = await fetchData<Product[]>(
-          `NavMenu/ProductPromotion/products?${buildQuery(0)}`
-        );
+        const batch = await fetchData<Product[]>(productsEndpoint(0));
         if (!ignore) {
           setProducts(batch);
           setHasMore(batch.length === itemsPerBatch);
@@ -88,16 +115,14 @@ export default function ProductSectionByCollection() {
       }
     })();
     return () => { ignore = true; };
-  }, [buildQuery]);
+  }, [productsEndpoint]);
 
   /* -------- infinite scroll -------- */
   const loadMore = useCallback(async () => {
     if (loadingMore || !hasMore) return;
     setLoadingMore(true);
     try {
-      const next = await fetchData<Product[]>(
-        `NavMenu/ProductPromotion/products?${buildQuery(products.length)}`
-      );
+      const next = await fetchData<Product[]>(productsEndpoint(products.length));
       setProducts((prev) => [...prev, ...next]);
       setHasMore(next.length === itemsPerBatch);
     } catch (err) {
@@ -105,18 +130,43 @@ export default function ProductSectionByCollection() {
     } finally {
       setLoadingMore(false);
     }
-  }, [loadingMore, hasMore, buildQuery, products.length]);
+  }, [loadingMore, hasMore, productsEndpoint, products.length]);
 
   useEffect(() => {
     const node = loaderRef.current;
     if (!node) return;
     const obs = new IntersectionObserver(
       (entries) => entries[0].isIntersecting && loadMore(),
-      { rootMargin: "200px" }
+      { rootMargin: "800px" }
     );
     obs.observe(node);
     return () => obs.disconnect();
   }, [loadMore, products.length]);
+
+  /* -------- prefill until tall enough (avoid blank space) -------- */
+  useEffect(() => {
+    if (loadingInit || !hasMore) return;
+    let canceled = false;
+
+    const bufferPx = 200;
+    const prefill = async () => {
+      if (prefillRunning.current) return;
+      prefillRunning.current = true;
+      try {
+        while (!canceled && hasMore) {
+          const doc = document.documentElement;
+          const pageTooShort = doc.scrollHeight <= window.innerHeight + bufferPx;
+          if (!pageTooShort) break;
+          await loadMore();
+        }
+      } finally {
+        prefillRunning.current = false;
+      }
+    };
+
+    prefill();
+    return () => { canceled = true; };
+  }, [products.length, hasMore, loadingInit, loadMore]);
 
   /* -------- option lists -------- */
   useEffect(() => {
@@ -128,7 +178,7 @@ export default function ProductSectionByCollection() {
             subcategories: OptionItem[];
             brands: OptionItem[];
             magasins: OptionItem[];
-          }>("NavMenu/ProductPromotion/products/options");
+          }>(optionsEndpoint());
 
         setCategories(categories);
         setSubcategories(subcategories);
@@ -138,39 +188,43 @@ export default function ProductSectionByCollection() {
         console.error(err);
       }
     })();
-  }, []);
+  }, [optionsEndpoint]);
 
   /* -------- render -------- */
   return (
     <div className="flex flex-col xl:flex-row gap-16 w-[90%] mx-auto pt-8 select-none">
       <FilterProducts
-        selectedCategorie={selectedCategorie}    setSelectedCategorie={setSelectedCategorie}
-        selectedSubCategorie={selectedSubCategorie} setSelectedSubCategorie={setSelectedSubCategorie}
-        selectedBrand={selectedBrand}            setSelectedBrand={setSelectedBrand}
-        selectedMagasin={selectedMagasin}      setSelectedMagasin={setSelectedMagasin}
-        minPrice={minPrice} setMinPrice={setMinPrice}
-        maxPrice={maxPrice} setMaxPrice={setMaxPrice}
+        selectedCategorie={selectedCategorie}
+        setSelectedCategorie={setSelectedCategorie}
+        selectedSubCategorie={selectedSubCategorie}
+        setSelectedSubCategorie={setSelectedSubCategorie}
+        selectedBrand={selectedBrand}
+        setSelectedBrand={setSelectedBrand}
+        selectedMagasin={selectedMagasin}
+        setSelectedMagasin={setSelectedMagasin}
+        minPrice={minPrice}
+        setMinPrice={setMinPrice}
+        maxPrice={maxPrice}
+        setMaxPrice={setMaxPrice}
         categories={categories}
         subcategories={subcategories}
         brands={brands}
         magasins={magasins}
-        sortOrder={sortOrder} setSortOrder={setSortOrder}
+        sortOrder={sortOrder}
+        setSortOrder={setSortOrder}
       />
 
       <div className="flex flex-col flex-1 items-center gap-16">
         {loadingInit ? (
           <div className="grid grid-cols-4 gap-10 max-md:grid-cols-1">
             {Array.from({ length: itemsPerBatch }).map((_, i) => (
-              <div
-                key={i}
-                className="h-[400px] w-[280px] bg-gray-200 rounded animate-pulse"
-              />
+              <div key={i} className="h-[400px] w-[280px] bg-gray-200 rounded animate-pulse" />
             ))}
           </div>
         ) : products.length ? (
           <>
             <ProductCard products={products} />
-            <div ref={loaderRef} key={products.length} />
+            <div ref={loaderRef} key={products.length} className="h-1 w-full" />
             {loadingMore && <LoadingDots />}
           </>
         ) : (

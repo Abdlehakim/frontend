@@ -1,6 +1,6 @@
-/* ------------------------------------------------------------------ */
-/*  src/components/product/categorie/ProductSectionCategoriePage.tsx  */
-/* ------------------------------------------------------------------ */
+/* ------------------------------------------------------------------
+   src/components/product/categorie/ProductSectionCategoriePage.tsx
+------------------------------------------------------------------ */
 "use client";
 
 import React, { useState, useEffect, useRef, useCallback } from "react";
@@ -9,6 +9,7 @@ import ProductCard from "@/components/product/categorie/ProductCard";
 import FilterProducts from "@/components/product/filter/FilterProducts";
 import LoadingDots from "@/components/LoadingDots";
 import { fetchData } from "@/lib/fetchData";
+import { useFooterLock } from "@/contexts/FooterLockContext";
 
 /* ---------- types ---------- */
 interface Props {
@@ -31,9 +32,7 @@ export default function ProductSectionCategoriePage({
   /* ---------- filter state ---------- */
   const [selectedBrand, setSelectedBrand] = useState<string | null>(null);
   const [selectedMagasin, setSelectedMagasin] = useState<string | null>(null);
-  const [selectedSubCategorie, setSelectedSubCategorie] = useState<
-    string | null
-  >(null);
+  const [selectedSubCategorie, setSelectedSubCategorie] = useState<string | null>(null);
   const [minPrice, setMinPrice] = useState<number | null>(null);
   const [maxPrice, setMaxPrice] = useState<number | null>(null);
   const [sortOrder, setSortOrder] = useState<"asc" | "desc">("asc");
@@ -51,6 +50,16 @@ export default function ProductSectionCategoriePage({
 
   /* ---------- refs ---------- */
   const loaderRef = useRef<HTMLDivElement | null>(null);
+  const prefillRunning = useRef(false);
+
+  /* ---------- footer lock ---------- */
+  const { setLocked } = useFooterLock();
+
+  /* Keep the footer hidden while there are more products to load or while fetching */
+  useEffect(() => {
+    setLocked(loadingInitial || loadingMore || hasMore);
+    return () => setLocked(false);
+  }, [loadingInitial, loadingMore, hasMore, setLocked]);
 
   /* =================================================================
      BUILD QUERY STRING
@@ -90,9 +99,7 @@ export default function ProductSectionCategoriePage({
       setLoadingInitial(true);
       try {
         const firstBatch = await fetchData<Product[]>(
-          `NavMenu/categorieSubCategoriePage/products/${slugCategorie}?${buildQuery(
-            0
-          )}`
+          `NavMenu/categorieSubCategoriePage/products/${slugCategorie}?${buildQuery(0)}`
         );
         if (!ignore) {
           setProducts(firstBatch);
@@ -117,9 +124,7 @@ export default function ProductSectionCategoriePage({
     setLoadingMore(true);
     try {
       const nextBatch = await fetchData<Product[]>(
-        `NavMenu/categorieSubCategoriePage/products/${slugCategorie}?${buildQuery(
-          products.length
-        )}`
+        `NavMenu/categorieSubCategoriePage/products/${slugCategorie}?${buildQuery(products.length)}`
       );
       setProducts((prev) => [...prev, ...nextBatch]);
       setHasMore(nextBatch.length === itemsPerBatch);
@@ -130,17 +135,48 @@ export default function ProductSectionCategoriePage({
     }
   }, [loadingMore, hasMore, slugCategorie, buildQuery, products.length]);
 
+  /* Trigger loading when the sentinel nears the viewport */
   useEffect(() => {
     const node = loaderRef.current;
     if (!node) return;
 
     const obs = new IntersectionObserver(
       (entries) => entries[0].isIntersecting && loadMore(),
-      { rootMargin: "200px" }
+      { rootMargin: "800px" }
     );
     obs.observe(node);
     return () => obs.disconnect();
   }, [loadMore, products.length]);
+
+  /* =================================================================
+     AUTO-PREFILL UNTIL PAGE IS TALL ENOUGH (no white-space scrolling)
+  ================================================================== */
+  useEffect(() => {
+    if (loadingInitial || !hasMore) return;
+    let canceled = false;
+
+    const bufferPx = 200;
+    const prefill = async () => {
+      if (prefillRunning.current) return;
+      prefillRunning.current = true;
+      try {
+        while (!canceled && hasMore) {
+          const doc = document.documentElement;
+          const pageTooShort = doc.scrollHeight <= window.innerHeight + bufferPx;
+          if (!pageTooShort) break;
+          await loadMore();
+          // No artificial delay; rely on subsequent renders to update height.
+        }
+      } finally {
+        prefillRunning.current = false;
+      }
+    };
+
+    prefill();
+    return () => {
+      canceled = true;
+    };
+  }, [products.length, hasMore, loadingInitial, loadMore]);
 
   /* =================================================================
      FETCH OPTION LISTS (once per slugCategorie)
@@ -209,7 +245,8 @@ export default function ProductSectionCategoriePage({
         ) : products.length ? (
           <>
             <ProductCard products={products} />
-            <div ref={loaderRef} key={products.length} />
+            {/* IntersectionObserver sentinel (no spacer below) */}
+            <div ref={loaderRef} key={products.length} className="h-1 w-full" />
             {loadingMore && <LoadingDots />}
           </>
         ) : (

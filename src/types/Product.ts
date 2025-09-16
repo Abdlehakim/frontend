@@ -53,7 +53,7 @@ export interface Product {
   tva: number;
   discount?: number;
   stockStatus: "in stock" | "out of stock";
-  statuspage: "none" | "New-Products" | "promotion" | "best-collection";
+  statuspage: "none" | "new-products" | "promotion" | "best-collection";
 
   mainImageUrl: string;
   mainImageId?: string;

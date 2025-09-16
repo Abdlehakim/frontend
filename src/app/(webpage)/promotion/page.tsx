@@ -2,8 +2,8 @@
 /*  productpromotion page                                             */
 /* ------------------------------------------------------------------ */
 import Banner from "@/components/Banner";
-import ProductSectionByCollection
-  from "@/components/product/collection/ProductSectionByCollection";
+import ProductSectionByStatusPage
+  from "@/components/product/collection/ProductSectionByStatusPage";
 import { fetchData } from "@/lib/fetchData";
 
 export const revalidate = 60;
@@ -26,9 +26,7 @@ export default async function ProductPromotionPage() {
           imageBanner={banner.PromotionBannerImgUrl}
         />
       )}
-
-      {/* ➊ no props now – the client component will fetch batches itself */}
-      <ProductSectionByCollection />
+      <ProductSectionByStatusPage statusKey="promotion" />
     </>
   );
 }

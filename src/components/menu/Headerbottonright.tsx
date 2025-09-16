@@ -6,13 +6,13 @@ const Headerbottonright = () => {
     
         
           <div className="flex justify-end gap-[8px] xl:gap-[16px]  2xl:gap-[40px] font-semibold items-center text-white   max-xl:text-xs max-lg:hidden">
-            <Link className="hover:text-secondary uppercase" href="/productpromotion">
+            <Link className="hover:text-secondary uppercase" href="/promotion">
               PROMOTION
             </Link>
-            <Link className="hover:text-secondary uppercase" href="/nouveau-product">
+            <Link className="hover:text-secondary uppercase" href="/new-products">
             Nouveau PRODUITS
             </Link>
-            <Link className="hover:text-secondary " href="/bestproductcollection">
+            <Link className="hover:text-secondary " href="/best-collection">
             MEILLEURE COLLECTION
             </Link>  
             <Link className="hover:text-secondary uppercase" href="/blog">
