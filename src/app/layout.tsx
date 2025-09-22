@@ -4,7 +4,7 @@
 import { ReactNode } from "react";
 import { Poppins } from "next/font/google";
 import type { Metadata } from "next";
-
+import { SpeedInsights } from "@vercel/speed-insights/next"
 // Keep globals.css for truly critical styles only
 import "@/styles/globals.css";
 
@@ -37,6 +37,7 @@ export default function RootLayout({ children }: { children: ReactNode }) {
         {children}
         {/* Inject non-critical CSS after first paint (non-blocking) */}
         <AsyncStyles />
+        <SpeedInsights/>
       </body>
     </html>
   );

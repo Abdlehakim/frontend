@@ -12,6 +12,7 @@
     "@paypal/react-paypal-js": "^8.7.0",
     "@react-oauth/google": "^0.12.1",
     "@reduxjs/toolkit": "^2.5.0",
+    "@vercel/speed-insights": "^1.2.0",
     "bcryptjs": "^2.4.3",
     "cloudinary": "^2.5.1",
     "html2canvas": "^1.4.1",
