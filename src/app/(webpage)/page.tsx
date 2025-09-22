@@ -2,12 +2,6 @@
 /*  src/app/page.tsx                                                  */
 /* ------------------------------------------------------------------ */
 import Banner from "@/components/Banner";
-import Categories from "@/components/homepage/Categories";
-import NewProductCollection from "@/components/homepage/NewProductCollection";
-import ProductInPromotion from "@/components/homepage/ProductInPromotionCollection";
-import Brands from "@/components/homepage/Brands";
-import BestProductCollection from "@/components/homepage/BestProductCollection";
-import Stores from "@/components/homepage/Stores";
 import { fetchData } from "@/lib/fetchData";
 
 /* ---------- types ---------- */
@@ -31,7 +25,6 @@ export default async function HomePage() {
     <div className="homepage flex flex-col justify-start gap-10 max-md:gap-4 items-center">
       {title && image && <Banner title={title} imageBanner={image} />}
       {/* Static sections */}
-  
     </div>
   );
 }
