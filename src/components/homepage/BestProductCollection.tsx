@@ -36,6 +36,7 @@ export default async function ProductsBestCollection() {
           {/* Choose A or B (below). This shows Option A: solid accessible button */}
           <Link
             href="/best-collection"
+            prefetch={false}
             aria-label="Voir plus — Best Collection"
             className="group inline-flex items-center rounded-full bg-[#1F7A47] text-white border-2 border-[#1F7A47] px-6 py-2 font-semibold uppercase tracking-wide transition-colors duration-200 ease-in-out hover:bg-[#18633a] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#1F7A47]"
           >
