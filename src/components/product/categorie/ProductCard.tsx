@@ -6,7 +6,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import { FaEye, FaRegHeart, FaHeart, FaCartShopping } from "react-icons/fa6";
+import {FaRegHeart, FaHeart } from "react-icons/fa6";
 import { FaSpinner } from "react-icons/fa";
 import { useDispatch, useSelector } from "react-redux";
 import { addItem, type CartItem } from "@/store/cartSlice";
@@ -259,44 +259,35 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
               <button
                 disabled={isOutOfStock || isLoading}
                 onClick={() => handleAddToCart(product, isOutOfStock)}
-                className={`AddtoCart relative w-[50%] max-lg:w-[60%] max-md:rounded-[3px] group/box ${
+                className={`AddtoCart relative w-[50%] max-lg:w-[60%] max-md:rounded-[3px] hover:bg-secondary hover:text-white ${
                   isOutOfStock || isLoading || isSuccess
                     ? "bg-gray-400 cursor-not-allowed"
                     : "bg-primary text-white hover:bg-[#15335D]"
                 }`}
               >
                 {isOutOfStock ? (
-                  <p className="absolute inset-0 flex items-center justify-center transition-transform duration-300 text-sm">
+                  <p className="flex items-center justify-center transition-transform duration-300 text-sm">
                     Rupture de stock
                   </p>
                 ) : isLoading ? (
-                  <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="flex items-center justify-center">
                     <FaSpinner className="w-5 h-5 animate-spin" />
                   </div>
                 ) : isSuccess ? (
-                  <p className="absolute inset-0 flex items-center justify-center text-sm">
+                  <p className="flex items-center justify-center text-sm">
                     Produit ajouté
                   </p>
                 ) : (
-                  <p className="absolute inset-0 flex items-center justify-center transition-transform duration-300 lg:group-hover/box:translate-x-[10%] text-sm">
+                  <p className="flex items-center justify-center text-sm">
                     A. au panier
                   </p>
-                )}
-
-                {!isOutOfStock && !isLoading && !isSuccess && (
-                  <span className="absolute inset-0 flex items-center justify-center -translate-x-full transition-transform duration-300 lg:group-hover/box:translate-x-[-35%]">
-                    <FaCartShopping className="w-6 h-6" />
-                  </span>
                 )}
               </button>
 
               <Link href={productUrl} className="w-[25%] max-lg:w-[30%]">
-                <button className="AddtoCart relative h-full w-full bg-white text-primary border border-primary max-md:rounded-[3px] group/box">
-                  <span className="absolute inset-0 flex items-center justify-center transition-transform duration-300 lg:group-hover/box:-translate-y-full text-sm">
+                <button className="AddtoCart relative h-full w-full bg-white text-primary border border-primary max-md:rounded-[3px] group/box hover:bg-primary hover:text-white">
+                  <span className="flex items-center justify-center">
                     Voir
-                  </span>
-                  <span className="absolute inset-0 flex items-center justify-center -translate-y-full transition-transform duration-300 lg:group-hover/box:translate-y-0">
-                    <FaEye className="w-5 h-5" />
                   </span>
                 </button>
               </Link>
