@@ -38,7 +38,7 @@ export default async function ProductsBestCollection() {
             href="/best-collection"
             prefetch={false}
             aria-label="Voir plus — Best Collection"
-            className="group inline-flex items-center rounded-full bg-[#1F7A47] text-white border-2 border-[#1F7A47] px-6 py-2 font-semibold uppercase tracking-wide transition-colors duration-200 ease-in-out hover:bg-[#18633a] focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-[#1F7A47]"
+            className="group inline-flex items-center border-2 border-secondary text-secondary font-semibold uppercase tracking-wide px-6 py-2 rounded-full transition-colors duration-200 ease-in-out hover:bg-secondary hover:text-white"
           >
             Voir plus ...
             <FiArrowRight className="ml-2 w-5 h-5 transition-transform duration-200 group-hover:translate-x-1" aria-hidden />
