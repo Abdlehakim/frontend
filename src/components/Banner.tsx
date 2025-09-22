@@ -16,33 +16,21 @@ const Banner: React.FC<BannerProps> = ({ title, imageBanner }) => {
         alt={title}
         className="object-cover"
         fill
+        // Preload & prioritize for LCP:
         priority
-        loading="eager"
-        sizes="(max-width: 768px) 100vw,
-               (max-width: 1280px) 100vw,
-               1280px"
-        quality={75}
-        placeholder="blur"
-        blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA"
+        fetchPriority="high"
+        // Full-width across breakpoints:
+        sizes="100vw"
+        // Smaller file is fine; tweak if needed:
+        quality={70}
+        // For LCP, prefer no blur:
+        // placeholder="empty"
       />
-      <div
-        className="
-      absolute
-      bottom-0
-      max-md:bottom-0
-      w-full  
-      flex-col
-      text-4xl
-      text-white
-      font-semibold    
-      tracking-wide
-      drop-shadow-lg
-    "
-      >
+      <div className="absolute bottom-0 w-full flex-col text-4xl text-white font-semibold tracking-wide drop-shadow-lg">
         <h1 className="h-16 flex items-center bg-primary pl-6 max-md:text-lg capitalize max-md:h-10 justify-center max-md:pl-0">
           {title}
         </h1>
-        <div className="h-2 bg-secondary"></div>
+        <div className="h-2 bg-secondary" />
       </div>
     </div>
   );
