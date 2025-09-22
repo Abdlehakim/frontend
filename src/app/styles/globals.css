@@ -1,0 +1,41 @@
+/* ------------------------------------------------------------------
+   src/styles/globals.css  (CRITICAL ONLY)
+------------------------------------------------------------------ */
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* ---------- CSS variables ---------- */
+:root {
+  --color-primary: #15335e;
+  --color-secondary: #5FBF88;
+  --color-accent: #ff5733;
+  --color-background: #ffffff;
+  --color-text: rgb(204 204 204);
+  --color-starsCard: #ffeb3b;
+  --color-productNameCard: rgb(55 65 81);
+  --color-HomePageTitles: rgb(31 41 55);
+}
+
+/* ---------- element resets ---------- */
+body {
+  margin: 0;
+  background-color: var(--color-background);
+  letter-spacing: 1px;
+  scrollbar-gutter: stable;
+}
+
+/* ---------- layout helpers ---------- */
+.desktop { @apply w-[80%] mx-auto; }
+.mobile  { @apply w-[95%]; }
+.homepage { @apply flex flex-col justify-start gap-10; }
+
+/* ---------- base html behavior ---------- */
+html { scroll-behavior: smooth !important; }
+
+@supports selector(html:has(*)) {
+  html:has(select:focus) {
+    scroll-behavior: auto !important;
+    scroll-padding-bottom: 0 !important;
+  }
+}
