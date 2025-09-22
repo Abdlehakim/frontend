@@ -1,9 +1,12 @@
-// app/components/Headertop.tsx (Server Component)
+// ------------------------------------------------------------------
+// app/components/Headertop.tsx  (Server Component • A11y-optimized)
+// ------------------------------------------------------------------
 
 import React from "react";
 import { FaFacebookF, FaInstagram, FaLinkedinIn } from "react-icons/fa";
 import { fetchData } from "@/lib/fetchData";
 
+/* ---------- types ---------- */
 export interface HeaderData {
   address: string;
   city: string;
@@ -19,6 +22,42 @@ export interface HeaderData {
 
 export const revalidate = 60;
 
+/* ---------- helpers ---------- */
+const formatPhoneTN = (phone: number): string => {
+  const s = String(phone ?? "").replace(/\D+/g, "");
+  return s.length === 8 ? `${s.slice(0, 2)} ${s.slice(2, 5)} ${s.slice(5)}` : s;
+};
+
+/** Accessible icon-only link (best-practice)
+ *  - <a> gets an aria-label & title (discernible name)
+ *  - SVG is wrapped in aria-hidden to stay decorative
+ *  - A visually hidden <span> provides redundant text for AT
+ */
+function SocialIconLink({
+  href,
+  label,
+  children,
+}: {
+  href: string;
+  label: string;
+  children: React.ReactNode;
+}) {
+  return (
+    <a
+      href={href}
+      target="_blank"
+      rel="noopener noreferrer"
+      aria-label={label}
+      title={label}
+      className="text-white transition-transform duration-200 hover:scale-110 hover:text-secondary focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-secondary rounded-sm"
+    >
+      <span aria-hidden="true">{children}</span>
+      <span className="sr-only">{label}</span>
+    </a>
+  );
+}
+
+/* ---------- component ---------- */
 export default async function Headertop() {
   const data: HeaderData = await fetchData<HeaderData>(
     "/website/header/getHeadertopData"
@@ -38,14 +77,6 @@ export default async function Headertop() {
       } as HeaderData)
   );
 
-  // Format 8-digit Tunisian phone: "XX XXX XXX"
-  const formatPhoneNumber = (phone: number): string => {
-    const str = phone.toString().trim();
-    return str.length === 8
-      ? `${str.slice(0, 2)} ${str.slice(2, 5)} ${str.slice(5)}`
-      : str;
-  };
-
   const {
     address,
     zipcode,
@@ -58,65 +89,71 @@ export default async function Headertop() {
     linkedin,
   } = data;
 
+  const phoneDisplay = formatPhoneTN(phone);
+  const phoneHref = phoneDisplay ? `tel:+216${phoneDisplay.replace(/\s/g, "")}` : undefined;
+  const emailHref = email ? `mailto:${email}` : undefined;
+
   return (
-    <div className="w-full h-[40px] flex bg-primary max-lg:hidden justify-center">
-      <div className="flex w-[90%] text-white justify-between max-2xl:text-base text-sm">
+    <div className="w-full h-[40px] bg-primary max-lg:hidden flex justify-center">
+      <div className="flex w-[90%] text-white justify-between max-2xl:text-base text-sm items-center">
         {/* Left: Address, Phone, Email */}
-        <div className="flex gap-[8px] items-center text-sm max-2xl:text-xs">
-          <p className="flex gap-[8px] items-center">
-            <span className="font-semibold uppercase tracking-wider">
-              ADRESSE:
+        <div className="flex gap-2 items-center text-sm max-2xl:text-xs">
+          <p className="flex gap-2 items-center">
+            <span className="font-semibold uppercase tracking-wider">ADRESSE:</span>
+            <span>
+              {address}
+              {address && (zipcode || city || governorate) ? "," : ""}{" "}
+              {zipcode ? `${zipcode} ` : ""}
+              {city}
+              {city && governorate ? ", " : ""}
+              {governorate}
+              {address || zipcode || city || governorate ? ", Tunisie" : ""}
             </span>
-            {address}, {zipcode} {city}, {governorate}, Tunisie
           </p>
-          <p className="flex gap-[8px] items-center px-4">
-            <span className="font-semibold uppercase tracking-wider">
-              TÉLÉ:
-            </span>
-            +216 {formatPhoneNumber(phone)}
-          </p>
-          <p className="flex gap-[8px] items-center px-4">
-            <span className="font-semibold uppercase tracking-wider">
-              EMAIL:
-            </span>
-            {email}
-          </p>
+
+          {phoneHref && (
+            <p className="flex gap-2 items-center px-4">
+              <span className="font-semibold uppercase tracking-wider">TÉLÉ:</span>
+              <a
+                href={phoneHref}
+                className="underline underline-offset-2 hover:no-underline focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-secondary rounded-sm"
+                aria-label={`Téléphone : +216 ${phoneDisplay}`}
+              >
+                +216 {phoneDisplay}
+              </a>
+            </p>
+          )}
+
+          {emailHref && (
+            <p className="flex gap-2 items-center px-4">
+              <span className="font-semibold uppercase tracking-wider">EMAIL:</span>
+              <a
+                href={emailHref}
+                className="underline underline-offset-2 hover:no-underline break-all focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-secondary rounded-sm"
+                aria-label={`Envoyer un email à ${email}`}
+              >
+                {email}
+              </a>
+            </p>
+          )}
         </div>
 
         {/* Right: Social Icons */}
-        <div className="flex w-[200px] gap-[16px] justify-center items-center px-4">
+        <div className="flex w-[200px] gap-4 justify-center items-center px-4">
           {facebook && (
-            <a
-              href={facebook}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Visit our Facebook page"
-              className="text-white transition transform duration-200 hover:scale-110 hover:text-secondary"
-            >
+            <SocialIconLink href={facebook} label="Facebook">
               <FaFacebookF size={18} />
-            </a>
+            </SocialIconLink>
           )}
           {instagram && (
-            <a
-              href={instagram}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Visit our Instagram profile"
-              className="text-white transition transform duration-200 hover:scale-110 hover:text-secondary"
-            >
+            <SocialIconLink href={instagram} label="Instagram">
               <FaInstagram size={18} />
-            </a>
+            </SocialIconLink>
           )}
           {linkedin && (
-            <a
-              href={linkedin}
-              target="_blank"
-              rel="noopener noreferrer"
-              aria-label="Visit our LinkedIn profile"
-              className="text-white transition transform duration-200 hover:scale-110 hover:text-secondary"
-            >
+            <SocialIconLink href={linkedin} label="LinkedIn">
               <FaLinkedinIn size={18} />
-            </a>
+            </SocialIconLink>
           )}
         </div>
       </div>
