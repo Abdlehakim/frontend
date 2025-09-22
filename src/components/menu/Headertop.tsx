@@ -1,12 +1,10 @@
 // ------------------------------------------------------------------
-// app/components/Headertop.tsx  (Server Component • A11y-optimized)
+// app/components/Headertop.tsx  (Server Component • A11y fixed)
 // ------------------------------------------------------------------
-
 import React from "react";
 import { FaFacebookF, FaInstagram, FaLinkedinIn } from "react-icons/fa";
 import { fetchData } from "@/lib/fetchData";
 
-/* ---------- types ---------- */
 export interface HeaderData {
   address: string;
   city: string;
@@ -22,16 +20,16 @@ export interface HeaderData {
 
 export const revalidate = 60;
 
-/* ---------- helpers ---------- */
+/* Format 8-digit Tunisian phone: "XX XXX XXX" */
 const formatPhoneTN = (phone: number): string => {
   const s = String(phone ?? "").replace(/\D+/g, "");
-  return s.length === 8 ? `${s.slice(0, 2)} ${s.slice(2, 5)} ${s.slice(5)}` : s;
+  return s.length === 8 ? `${s.slice(0,2)} ${s.slice(2,5)} ${s.slice(5)}` : s;
 };
 
-/** Accessible icon-only link (best-practice)
- *  - <a> gets an aria-label & title (discernible name)
- *  - SVG is wrapped in aria-hidden to stay decorative
- *  - A visually hidden <span> provides redundant text for AT
+/** Icon-only link with a discernible name (best practice)
+ *  - anchor gets aria-label + title
+ *  - SVG is decorative: aria-hidden + focusable=false
+ *  - hidden <span className="sr-only"> provides text for AT
  */
 function SocialIconLink({
   href,
@@ -42,14 +40,21 @@ function SocialIconLink({
   label: string;
   children: React.ReactNode;
 }) {
+  // Normalize URLs so they’re absolute (helps audits/tools)
+  const normalized =
+    href.startsWith("http://") || href.startsWith("https://")
+      ? href
+      : `https://${href.replace(/^\/+/, "")}`;
+
   return (
     <a
-      href={href}
+      href={normalized}
       target="_blank"
       rel="noopener noreferrer"
       aria-label={label}
       title={label}
-      className="text-white transition-transform duration-200 hover:scale-110 hover:text-secondary focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-secondary rounded-sm"
+      className="text-white transition-transform duration-200 hover:scale-110 hover:text-secondary
+                 focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-secondary rounded-sm"
     >
       <span aria-hidden="true">{children}</span>
       <span className="sr-only">{label}</span>
@@ -57,36 +62,25 @@ function SocialIconLink({
   );
 }
 
-/* ---------- component ---------- */
 export default async function Headertop() {
   const data: HeaderData = await fetchData<HeaderData>(
     "/website/header/getHeadertopData"
-  ).catch(
-    () =>
-      ({
-        address: "",
-        city: "",
-        governorate: "",
-        zipcode: 0,
-        phone: 0,
-        email: "",
-        facebook: undefined,
-        twitter: undefined,
-        linkedin: undefined,
-        instagram: undefined,
-      } as HeaderData)
-  );
+  ).catch(() => ({
+    address: "",
+    city: "",
+    governorate: "",
+    zipcode: 0,
+    phone: 0,
+    email: "",
+    facebook: undefined,
+    twitter: undefined,
+    linkedin: undefined,
+    instagram: undefined,
+  }));
 
   const {
-    address,
-    zipcode,
-    city,
-    governorate,
-    phone,
-    email,
-    facebook,
-    instagram,
-    linkedin,
+    address, zipcode, city, governorate, phone, email,
+    facebook, instagram, linkedin,
   } = data;
 
   const phoneDisplay = formatPhoneTN(phone);
@@ -101,13 +95,9 @@ export default async function Headertop() {
           <p className="flex gap-2 items-center">
             <span className="font-semibold uppercase tracking-wider">ADRESSE:</span>
             <span>
-              {address}
-              {address && (zipcode || city || governorate) ? "," : ""}{" "}
-              {zipcode ? `${zipcode} ` : ""}
-              {city}
-              {city && governorate ? ", " : ""}
-              {governorate}
-              {address || zipcode || city || governorate ? ", Tunisie" : ""}
+              {address}{address && (zipcode || city || governorate) ? "," : ""}{" "}
+              {zipcode ? `${zipcode} ` : ""}{city}{city && governorate ? ", " : ""}{governorate}
+              {(address || zipcode || city || governorate) && ", Tunisie"}
             </span>
           </p>
 
@@ -116,8 +106,9 @@ export default async function Headertop() {
               <span className="font-semibold uppercase tracking-wider">TÉLÉ:</span>
               <a
                 href={phoneHref}
-                className="underline underline-offset-2 hover:no-underline focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-secondary rounded-sm"
                 aria-label={`Téléphone : +216 ${phoneDisplay}`}
+                className="underline underline-offset-2 hover:no-underline
+                           focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-secondary rounded-sm"
               >
                 +216 {phoneDisplay}
               </a>
@@ -129,8 +120,9 @@ export default async function Headertop() {
               <span className="font-semibold uppercase tracking-wider">EMAIL:</span>
               <a
                 href={emailHref}
-                className="underline underline-offset-2 hover:no-underline break-all focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-secondary rounded-sm"
                 aria-label={`Envoyer un email à ${email}`}
+                className="underline underline-offset-2 hover:no-underline break-all
+                           focus:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 focus-visible:ring-secondary rounded-sm"
               >
                 {email}
               </a>
@@ -140,19 +132,20 @@ export default async function Headertop() {
 
         {/* Right: Social Icons */}
         <div className="flex w-[200px] gap-4 justify-center items-center px-4">
+          {linkedin && (
+            <SocialIconLink href={linkedin} label="LinkedIn">
+              {/* react-icons renders an SVG; we make it decorative explicitly */}
+              <FaLinkedinIn size={18} aria-hidden="true" focusable="false" />
+            </SocialIconLink>
+          )}
           {facebook && (
             <SocialIconLink href={facebook} label="Facebook">
-              <FaFacebookF size={18} />
+              <FaFacebookF size={18} aria-hidden="true" focusable="false" />
             </SocialIconLink>
           )}
           {instagram && (
             <SocialIconLink href={instagram} label="Instagram">
-              <FaInstagram size={18} />
-            </SocialIconLink>
-          )}
-          {linkedin && (
-            <SocialIconLink href={linkedin} label="LinkedIn">
-              <FaLinkedinIn size={18} />
+              <FaInstagram size={18} aria-hidden="true" focusable="false" />
             </SocialIconLink>
           )}
         </div>
