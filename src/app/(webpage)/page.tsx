@@ -30,14 +30,8 @@ export default async function HomePage() {
   return (
     <div className="homepage flex flex-col justify-start gap-10 max-md:gap-4 items-center">
       {title && image && <Banner title={title} imageBanner={image} />}
-
       {/* Static sections */}
-      <Categories />
-      <NewProductCollection />
-      <ProductInPromotion />
-      <Brands />
-      <BestProductCollection />
-      <Stores />
+  
     </div>
   );
 }
