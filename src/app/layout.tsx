@@ -6,7 +6,7 @@ import { Poppins } from "next/font/google";
 import type { Metadata } from "next";
 
 // Keep globals.css for truly critical styles only
-import "@/app/globals.css"; 
+import "@/styles/globals.css";
 
 import AsyncStyles from "./AsyncStyles";
 
