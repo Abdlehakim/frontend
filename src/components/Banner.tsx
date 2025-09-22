@@ -10,7 +10,7 @@ interface BannerProps {
 
 const Banner: React.FC<BannerProps> = ({ title, imageBanner }) => {
   return (
-    <div className="relative w-full aspect-[16/4]">
+    <div className="relative w-full aspect-[16/4] max-lg:hidden">
       <Image
         src={imageBanner}
         alt={title}

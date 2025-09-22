@@ -42,14 +42,33 @@ interface StoresProps {
 interface StoresCardProps {
   store: StoreType;
   itemsPerSlide: number;
+  /** mark only the first visible image as LCP/priority */
+  isLCP?: boolean;
 }
 
+/* ---------- image size helper (keep bytes tight) ---------- */
+const cardSizes = (itemsPerSlide: number) => {
+  // Container for each card is ~90% width of slide; we expose sane maxes per layout
+  switch (itemsPerSlide) {
+    case 1:
+      // 1 card per slide
+      return "(max-width: 1210px) 90vw, (max-width: 1620px) 70vw, 50vw";
+    case 2:
+      // 2 cards per slide
+      return "(max-width: 1210px) 45vw, (max-width: 1620px) 40vw, 33vw";
+    default:
+      // 3 cards per slide
+      return "(max-width: 1210px) 30vw, (max-width: 1620px) 28vw, 25vw";
+  }
+};
+
 /* ---------- card ---------- */
-const StoresCard: React.FC<StoresCardProps> = ({ store, itemsPerSlide }) => {
+const StoresCard: React.FC<StoresCardProps> = ({ store, itemsPerSlide, isLCP }) => {
   const [showHours, setShowHours] = useState(false);
   const [showAddress, setShowAddress] = useState(false);
-const EPS = 10;  
-  /* scroll hint states */
+
+  // scroll hint states
+  const EPS = 10;
   const listRef = useRef<HTMLUListElement>(null);
   const [atTop, setAtTop] = useState(true);
   const [atBottom, setAtBottom] = useState(true);
@@ -79,12 +98,10 @@ const EPS = 10;
           alt={store.name}
           className="object-cover rounded-xl"
           fill
-          priority
-          loading="eager"
-          sizes="(max-width: 768px) 100vw,
-               (max-width: 1280px) 100vw,
-               1280px"
-          quality={75}
+          sizes={cardSizes(itemsPerSlide)}
+          priority={!!isLCP}
+          fetchPriority={isLCP ? "high" : "auto"}
+          quality={70}
           placeholder="blur"
           blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA"
         />
@@ -341,11 +358,12 @@ const StoresCarousel: React.FC<StoresProps> = ({ storesData }) => {
               className="flex-shrink-0 w-full flex gap-4 justify-center"
             >
               {i === currentSlide &&
-                slideItems.map((store) => (
+                slideItems.map((store, idx) => (
                   <StoresCard
                     key={store._id ?? store.name}
                     store={store}
                     itemsPerSlide={itemsPerSlide}
+                    isLCP={currentSlide === 0 && idx === 0}
                   />
                 ))}
             </div>
