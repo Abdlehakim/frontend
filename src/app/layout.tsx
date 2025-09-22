@@ -8,7 +8,7 @@ import { SpeedInsights } from "@vercel/speed-insights/next"
 // Keep globals.css for truly critical styles only
 import "@/styles/globals.css";
 
-import AsyncStyles from "./AsyncStyles";
+
 
 /* ---------- font ---------- */
 const poppins = Poppins({
@@ -36,7 +36,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
       <body>
         {children}
         {/* Inject non-critical CSS after first paint (non-blocking) */}
-        <AsyncStyles />
         <SpeedInsights/>
       </body>
     </html>
