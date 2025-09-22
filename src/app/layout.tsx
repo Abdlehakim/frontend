@@ -1,44 +1,16 @@
-/* ------------------------------------------------------------------
-   src/app/layout.tsx      (root layout – server component)
------------------------------------------------------------------- */
+// src/app/layout.tsx
 import { ReactNode } from "react";
 import { Poppins } from "next/font/google";
-import type { Metadata } from "next";
-import "@/app/globals.css";
+import AsyncStyles from "./AsyncStyles"; // ⬅️ add this
 
+const poppins = Poppins({ subsets: ["latin","latin-ext"], weight: ["400","600","700"], display: "swap" });
 
-/* ---------- font ---------- */
-const poppins = Poppins({
-  subsets: ["latin", "latin-ext"],
-  weight: ["100", "200", "300", "400", "500", "600", "700", "800", "900"],
-  style: ["normal", "italic"],
-  display: "swap",
-});
-
-/* ---------- metadata ---------- */
-export const metadata: Metadata = {
-  title: {
-    default: "Souk el Meuble – Mobilier & Décoration",
-    template: "%s | Souk el Meuble",
-  },
-  description:
-    "Achetez vos meubles et articles de décoration en ligne en Tunisie au meilleur prix.",
-  robots: { index: true, follow: true },
-  icons: { icon: "/favicon.ico" },
-};
-
-
-export default async function RootLayout({
-  children,
-}: {
-  children: ReactNode;
-}) {
-  
-
+export default function RootLayout({ children }: { children: ReactNode }) {
   return (
     <html lang="fr" className={poppins.className}>
       <body>
-          {children}
+        {children}
+        <AsyncStyles /> {/* injects non-blocking CSS after first paint */}
       </body>
     </html>
   );
