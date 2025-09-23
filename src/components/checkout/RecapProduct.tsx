@@ -149,7 +149,7 @@ const RecapProduct: React.FC<RecapProductProps> = ({
                 <label key={id} className="flex items-center gap-2 text-xs max-md:flex-col">
                   <span className="font-semibold">{label} :</span>
                   <select
-                    className="border rounded px-2 py-1 text-xs bg-white"
+                    className="w-[60%] max-md:w-full border rounded px-2 py-1 text-xs bg-white truncate "
                     value={current}
                     onChange={(e) => {
                       const v = e.target.value;
@@ -201,7 +201,7 @@ const RecapProduct: React.FC<RecapProductProps> = ({
                     <p className="text-xs font-bold break-words">{item.name}</p>
                   </div>
 
-                  <p className="font-semibold flex gap-2 max-md:flex-col">
+                  <p className="font-semibold flex gap-2 max-md:flex-col items-center">
                     {discountPct > 0 && (
                       <span className="line-through text-gray-500 ml-2 text-xs">
                         {fmt(price)}
