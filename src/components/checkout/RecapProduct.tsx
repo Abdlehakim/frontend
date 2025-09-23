@@ -146,7 +146,7 @@ const RecapProduct: React.FC<RecapProductProps> = ({
               const visibleOpts = opts.filter((o) => o.value !== current);
 
               return (
-                <label key={id} className="flex items-center gap-2 text-xs">
+                <label key={id} className="flex items-center gap-2 text-xs max-md:flex-col">
                   <span className="font-semibold">{label} :</span>
                   <select
                     className="border rounded px-2 py-1 text-xs bg-white"
@@ -191,7 +191,7 @@ const RecapProduct: React.FC<RecapProductProps> = ({
                 <div className="flex flex-col justify-center max-lg:items-center w-2/5 max-lg:w-full gap-2">
                   <p className="text-gray-600 uppercase text-xs">REF&nbsp;: {item.reference}</p>
 
-                  <div className="flex gap-2 items-center">
+                  <div className="flex max-md:flex-col gap-2 items-center">
                     {item.categorie && (
                       <p className="text-gray-500 uppercase text-xs">
                         {item.categorie.name}
@@ -201,19 +201,14 @@ const RecapProduct: React.FC<RecapProductProps> = ({
                     <p className="text-xs font-bold break-words">{item.name}</p>
                   </div>
 
-                  <p className="font-semibold flex gap-2">
+                  <p className="font-semibold flex gap-2 max-md:flex-col">
                     {discountPct > 0 && (
-                      <span className="line-through text-gray-500 ml-2">
+                      <span className="line-through text-gray-500 ml-2 text-xs">
                         {fmt(price)}
                       </span>
                     )}
                     {fmt(priceTtc)} TTC
                   </p>
-
-                  <p className="text-xs text-gray-600">
-                    HT&nbsp;: {fmt(unitHt)} • TVA&nbsp;({tvaPct}%)&nbsp;: {fmt(unitTva)}
-                  </p>
-
                   {attributeRows.length > 0 ? (
                     <div className="flex flex-wrap gap-3">
                       {attributeRows.map((row) => renderAttrSelector(row))}
