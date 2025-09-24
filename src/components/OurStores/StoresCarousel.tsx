@@ -27,8 +27,8 @@ interface OpeningHours {
 export interface StoreType {
   _id?: string;
   name: string;
-  image: string;         // optimized URL now
-  blurDataURL?: string;  // NEW
+  image: string;
+  blurDataURL?: string;  
   phoneNumber: string;
   address: string;
   city: string;

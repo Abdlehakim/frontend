@@ -1,3 +1,4 @@
+// src/components/homepage/Brands.tsx  (your BrandsPage)
 import React from "react";
 import Image from "next/image";
 import { fetchData } from "@/lib/fetchData";
@@ -12,22 +13,22 @@ interface BrandTitles {
 interface Brand {
   _id: string;
   name: string;
-  place?: string;
+  place?: string | null;
   description?: string | null;
-  imageUrl?: string | null;
-  logoUrl?: string | null;
-  reference?: string;
-  slug?: string;
-  vadmin?: "approve" | "not-approve";
-  createdBy?: string;
-  updatedBy?: string | null;
-  createdAt?: string;
-  updatedAt?: string;
+  imageUrl: string;      // optimized (800x400)
+  imageBlur?: string;    // NEW
+  logoUrl: string;       // optimized (400x400)
+  logoBlur?: string;     // NEW
 }
 
 export default async function BrandsPage() {
-  const titles = (await fetchData<BrandTitles>("brands/titles")) ?? {};
-  const brands = (await fetchData<Brand[]>("brands")) ?? [];
+  const titles = (await fetchData<BrandTitles>("brands/titles", {
+    next: { revalidate: 300, tags: ["brands-titles"] },
+  })) ?? {};
+
+  const brands = (await fetchData<Brand[]>("brands", {
+    next: { revalidate: 300, tags: ["brands"] },
+  })) ?? [];
 
   if (brands.length === 0) return null;
 
@@ -52,53 +53,55 @@ export default async function BrandsPage() {
                        transition-all duration-300 ease-[cubic-bezier(.5,.85,.25,1.15)]
                        focus-within:ring focus-within:ring-indigo-300 cursor-pointer"
           >
+            {/* Banner image: 800x400 optimized, use px-based sizes so Next doesn’t jump to 640 */}
             <div className="relative w-full h-[400px] max-md:h-[300px]">
               <Image
-                src={brand.imageUrl || ""}
+                src={brand.imageUrl}
                 alt={brand.name}
                 fill
                 className="object-cover"
-                sizes="(max-width:1024px) 100vw, 80vw"
+                // Each card typically ~16–20% of 80vw group → about 250–360px wide
+                sizes="(max-width: 640px) 95vw, (max-width: 1024px) 360px, 320px"
                 quality={75}
-                placeholder="blur"
-                blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA"
+                placeholder={brand.imageBlur ? "blur" : "empty"}
+                blurDataURL={brand.imageBlur}
                 loading="lazy"
               />
             </div>
 
             <div className="absolute max-md:h-[10%] top-0 left-0 w-full h-[15%] bg-primary" />
 
+            {/* Bottom overlay with logo */}
             <div
               className="absolute bottom-0 left-0 w-full h-[25%] bg-primary
-                            opacity-0 max-md:opacity-100 group-hover/article:opacity-100 transition-opacity duration-200
-                            flex justify-center items-center gap-4"
+                         opacity-0 max-md:opacity-100 group-hover/article:opacity-100 transition-opacity duration-200
+                         flex justify-center items-center gap-4"
             >
               <div className="rounded-full w-40 h-40 max-md:w-20 max-md:h-20 border-primary border-4 bg-white flex items-center justify-center z-40">
                 <div className="relative w-24 h-24 max-md:w-14 max-md:h-14">
                   <Image
-                    src={brand.logoUrl || ""}
+                    src={brand.logoUrl}
                     alt={`${brand.name} logo`}
                     fill
-                    className="object-cover"
-                    sizes="(max-width:1024px) 100vw, 80vw"
-                    blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA"
+                    className="object-cover rounded-full"
+                    // The displayed logo box is ~96px (24) to 160px (40) → request small rungs
+                    sizes="(max-width: 640px) 96px, 160px"
+                    placeholder={brand.logoBlur ? "blur" : "empty"}
+                    blurDataURL={brand.logoBlur}
                     loading="lazy"
+                    quality={70}
                   />
                 </div>
               </div>
               <div className="flex flex-col w-[60%]">
                 <p className="text-white font-bold max-md:text-xs">{brand.place}</p>
                 <p className="text-white max-md:text-xs truncate">
-  {brand.description}
-</p>
+                  {brand.description}
+                </p>
               </div>
             </div>
 
-            <span
-              className="absolute inset-x-0 top-0 text-2xl max-lg:text-xs max-xl:text-sm
-                             uppercase tracking-widest font-bold p-4 max-md:p-2 text-white z-20
-                             transition duration-200 ease-[cubic-bezier(.5,.85,.25,1.8)]"
-            >
+            <span className="absolute inset-x-0 top-0 text-2xl max-lg:text-xs max-xl:text-sm uppercase tracking-widest font-bold p-4 max-md:p-2 text-white z-20">
               {brand.name}
             </span>
           </div>

@@ -30,7 +30,6 @@ export default async function HomePage() {
       {title && image && (
         <Banner title={title} imageBanner={image} blurDataURL={blur} />
       )}
-
       <Categories />
       <NewProductCollection />
       <ProductInPromotion />
