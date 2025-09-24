@@ -6,7 +6,7 @@
 import React, { useState } from "react";
 import Image from "next/image";
 import Link from "next/link";
-import {FaRegHeart, FaHeart } from "react-icons/fa6";
+import { FaRegHeart, FaHeart } from "react-icons/fa6";
 import { FaSpinner } from "react-icons/fa";
 import { useDispatch, useSelector } from "react-redux";
 import { addItem, type CartItem } from "@/store/cartSlice";
@@ -17,7 +17,7 @@ import { Product } from "@/types/Product";
 import { useCurrency } from "@/contexts/CurrencyContext";
 import { fetchData } from "@/lib/fetchData";
 
-/* attribute types */
+/* ---------- attribute types ---------- */
 type AttrColor = { name: string; hex: string; image?: string };
 type AttrOther = { name: string; value?: string; image?: string };
 type AttrVal = string | AttrColor | AttrOther;
@@ -26,7 +26,11 @@ type AttrSelectedObj = { _id: string; name: string; type: string | string[] };
 type AttrSelected = AttrSelectedObj | string;
 type AttrRow = { attributeSelected: AttrSelected; value?: AttrVal | AttrVal[] };
 
-type ProductWithAttrs = Product & { attributes?: AttrRow[] };
+type ProductWithAttrs = Product & {
+  attributes?: AttrRow[];
+  /** NEW: LQIP from API, optional */
+  mainImageBlur?: string;
+};
 
 function isAttrSelectedObj(x: AttrSelected): x is AttrSelectedObj {
   return typeof x === "object" && x !== null && "_id" in x && "name" in x;
@@ -103,10 +107,14 @@ const toNumber = (v: unknown, fallback = 0): number => {
 };
 
 interface ProductCardProps {
-  products: Product[];
+  products: (Product & { mainImageBlur?: string })[]; // accept blur if present
 }
 
 type BtnState = "loading" | "success";
+
+/** px-based sizes so Next selects ~280–320 px (not 640) */
+const cardSizes =
+  "(max-width: 640px) 45vw, (max-width: 1024px) 33vw, 280px";
 
 const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
   const { fmt } = useCurrency();
@@ -114,7 +122,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
   const wishlist = useSelector((s: RootState) => s.wishlist.items);
   const isInWishlist = (slug: string) => wishlist.some((w) => w.slug === slug);
 
-  const [btnStates, setBtnStates] = useState<Record<string, BtnState | undefined>>({});
+  const [btnStates, setBtnStates] = useState<
+    Record<string, BtnState | undefined>
+  >({});
 
   const handleWishlistClick = (product: Product) => {
     if (!product.categorie) return;
@@ -134,7 +144,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
     );
   };
 
-  /* add to cart: include default attributes (fetch if missing) */
   const handleAddToCart = async (product: Product, isOutOfStock: boolean) => {
     if (isOutOfStock || btnStates[product._id] === "loading") return;
 
@@ -142,7 +151,6 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
 
     const { selected, selectedNames } = await getSelections(product);
 
-    // ---- normalize risky numeric fields WITHOUT any ----
     type TvaLike = { tva?: number | string | null | undefined };
     const priceNum = toNumber(product.price);
     const tvaNum = toNumber((product as Product & TvaLike).tva);
@@ -186,7 +194,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
 
   return (
     <div className="group w-fit h-fit grid grid-cols-4 max-2xl:grid-cols-3 max-lg:grid-cols-2 max-sm:grid-cols-1 gap-[40px]">
-      {products.map((product) => {
+      {products.map((product, idx) => {
         const priceNum = toNumber(product.price);
         const discountNum = toNumber(product.discount);
 
@@ -211,16 +219,21 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
             className="h-fit w-[280px] flex flex-col gap-[10px] transform duration-200 ease-in-out group-hover:scale-[0.9] hover:!scale-[1.1] max-md:group-hover:scale-[1] max-md:hover:!scale-[1]"
           >
             <Link href={productUrl}>
-              <div className="relative aspect-[16/14] bg-gray-200">
+              {/* match the CDN transform: square thumbnail */}
+              <div className="relative aspect-square bg-gray-200 rounded-lg overflow-hidden">
                 <Image
                   src={product.mainImageUrl ?? ""}
                   alt={product.name}
                   fill
-                  sizes="(max-width: 600px) 100vw, 600px"
                   className="object-cover"
-                  placeholder="empty"
-                  priority
-                  quality={75}
+                  sizes={cardSizes}                 // px-based sizes → ~280 px source
+                  placeholder={product.mainImageBlur ? "blur" : "empty"}
+                  blurDataURL={product.mainImageBlur}
+                  quality={70}
+                  // Only the very first card should be priority for LCP
+                  priority={idx === 0}
+                  fetchPriority={idx === 0 ? "high" : "auto"}
+                  decoding="async"
                 />
               </div>
             </Link>
@@ -230,7 +243,9 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
                 <div className="flex justify-between h-[65px] max-sm:h-16 max-md:h-20">
                   <div className="flex flex-col gap-[4px]">
                     <p className="text-lg font-bold capitalize">
-                      {product.name?.length > 8 ? product.name.slice(0, 8) + "..." : product.name}
+                      {product.name?.length > 24
+                        ? product.name.slice(0, 24) + "..."
+                        : product.name}
                     </p>
                     <ReviewClient productId={product._id} summary />
                   </div>
@@ -286,9 +301,7 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
 
               <Link href={productUrl} className="w-[25%] max-lg:w-[30%]">
                 <button className="AddtoCart relative h-full w-full bg-white text-primary border border-primary max-md:rounded-[3px] group/box hover:bg-primary hover:text-white">
-                  <span className="flex items-center justify-center">
-                    Voir
-                  </span>
+                  <span className="flex items-center justify-center">Voir</span>
                 </button>
               </Link>
 
