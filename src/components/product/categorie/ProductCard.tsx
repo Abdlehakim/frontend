@@ -28,7 +28,7 @@ type AttrRow = { attributeSelected: AttrSelected; value?: AttrVal | AttrVal[] };
 
 type ProductWithAttrs = Product & {
   attributes?: AttrRow[];
-  /** NEW: LQIP from API, optional */
+  /** Optional LQIP provided by API (Base64 tiny JPEG preferred) */
   mainImageBlur?: string;
 };
 
@@ -107,7 +107,7 @@ const toNumber = (v: unknown, fallback = 0): number => {
 };
 
 interface ProductCardProps {
-  products: (Product & { mainImageBlur?: string })[]; // accept blur if present
+  products: (Product & { mainImageBlur?: string })[];
 }
 
 type BtnState = "loading" | "success";
@@ -213,6 +213,16 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
         const isLoading = state === "loading";
         const isSuccess = state === "success";
 
+        // Only the first card is the likely LCP
+        const isLCP = idx === 0;
+
+        // Ignore SVG shimmer placeholders (cause the 2.2 KiB "Unattributable")
+        const blur =
+          product.mainImageBlur &&
+          !product.mainImageBlur.startsWith("data:image/svg")
+            ? product.mainImageBlur
+            : undefined;
+
         return (
           <div
             key={product._id}
@@ -220,20 +230,29 @@ const ProductCard: React.FC<ProductCardProps> = ({ products }) => {
           >
             <Link href={productUrl}>
               {/* match the CDN transform: square thumbnail */}
-              <div className="relative aspect-square bg-gray-200 rounded-lg overflow-hidden">
+              <div
+                className="relative aspect-square bg-gray-200 rounded-lg overflow-hidden"
+                style={{
+                  contentVisibility: "auto",
+                  containIntrinsicSize: "280px 280px",
+                }}
+              >
                 <Image
                   src={product.mainImageUrl ?? ""}
                   alt={product.name}
                   fill
                   className="object-cover"
                   sizes={cardSizes}                 // px-based sizes → ~280 px source
-                  placeholder={product.mainImageBlur ? "blur" : "empty"}
-                  blurDataURL={product.mainImageBlur}
                   quality={70}
-                  // Only the very first card should be priority for LCP
-                  priority={idx === 0}
-                  fetchPriority={idx === 0 ? "high" : "auto"}
+                  // LCP only: eager + high, others: lazy
+                  priority={isLCP}
+                  fetchPriority={isLCP ? "high" : "auto"}
+                  loading={isLCP ? "eager" : "lazy"}
                   decoding="async"
+                  // Show blur only for LCP and only if it's NOT an SVG shimmer
+                  placeholder={isLCP && blur ? "blur" : "empty"}
+                  blurDataURL={isLCP ? blur : undefined}
+                  draggable={false}
                 />
               </div>
             </Link>
