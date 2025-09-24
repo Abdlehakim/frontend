@@ -7,7 +7,6 @@ import Header from "@/components/menu/Header";
 import StoreProviders from "@/components/Provider/StoreProvider";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import Providers from "@/components/Providers";
-import GoogleIdentityLoader from "@/components/GoogleIdentityLoader";
 import ClientShell from "@/components/ClientShell";
 import { fetchData } from "@/lib/fetchData";
 import { FooterLockProvider } from "@/contexts/FooterLockContext";
@@ -66,7 +65,6 @@ export default async function Layout({
       </CurrencyProvider>
 
       {/* Ensure this uses next/script with afterInteractive or lazyOnload */}
-      <GoogleIdentityLoader />
     </div>
   );
 }
