@@ -43,20 +43,22 @@ interface StoresProps {
 interface StoresCardProps {
   store: StoreType;
   itemsPerSlide: number;
-  /** mark only the first visible image as LCP/priority */
   isLCP?: boolean;
 }
 
 /* ---------- image size helper (keep bytes tight) ---------- */
+// Replace your cardSizes with this px-based map
 const cardSizes = (itemsPerSlide: number) => {
   switch (itemsPerSlide) {
     case 1:
-      return "(max-width: 640px) 92vw, (max-width: 1200px) 80vw, 60vw";
+      // big single card
+      return "(max-width: 640px) 92vw, (max-width: 1024px) 720px, 720px";
     case 2:
-      return "(max-width: 640px) 92vw, (max-width: 1200px) 42vw, 36vw";
+      // real-world ~480px
+      return "(max-width: 640px) 92vw, (max-width: 1024px) 480px, 480px";
     default:
-      // 3 per slide → ~28–32vw; map to ~280–320px on common widths
-      return "(max-width: 640px) 92vw, (max-width: 1200px) 30vw, 28vw";
+      // 3 per slide → ~300px target
+      return "(max-width: 640px) 92vw, (max-width: 1024px) 300px, 300px";
   }
 };
 
@@ -96,8 +98,8 @@ const StoresCard: React.FC<StoresCardProps> = ({ store, itemsPerSlide, isLCP }) 
     alt={store.name}
     className="object-cover rounded-xl"
     fill
-    sizes={cardSizes(itemsPerSlide)}   // already responsive
-    priority={!!isLCP}                 // only first visible card is LCP
+    sizes={cardSizes(itemsPerSlide)} 
+    priority={!!isLCP}                 
     fetchPriority={isLCP ? "high" : "auto"}
     quality={70}
     placeholder={store.blurDataURL ? "blur" : "empty"}
