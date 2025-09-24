@@ -27,7 +27,8 @@ interface OpeningHours {
 export interface StoreType {
   _id?: string;
   name: string;
-  image: string;
+  image: string;         // optimized URL now
+  blurDataURL?: string;  // NEW
   phoneNumber: string;
   address: string;
   city: string;
@@ -48,17 +49,14 @@ interface StoresCardProps {
 
 /* ---------- image size helper (keep bytes tight) ---------- */
 const cardSizes = (itemsPerSlide: number) => {
-  // Container for each card is ~90% width of slide; we expose sane maxes per layout
   switch (itemsPerSlide) {
     case 1:
-      // 1 card per slide
-      return "(max-width: 1210px) 90vw, (max-width: 1620px) 70vw, 50vw";
+      return "(max-width: 640px) 92vw, (max-width: 1200px) 80vw, 60vw";
     case 2:
-      // 2 cards per slide
-      return "(max-width: 1210px) 45vw, (max-width: 1620px) 40vw, 33vw";
+      return "(max-width: 640px) 92vw, (max-width: 1200px) 42vw, 36vw";
     default:
-      // 3 cards per slide
-      return "(max-width: 1210px) 30vw, (max-width: 1620px) 28vw, 25vw";
+      // 3 per slide → ~28–32vw; map to ~280–320px on common widths
+      return "(max-width: 640px) 92vw, (max-width: 1200px) 30vw, 28vw";
   }
 };
 
@@ -93,20 +91,19 @@ const StoresCard: React.FC<StoresCardProps> = ({ store, itemsPerSlide, isLCP }) 
       style={{ flex: `0 0 ${90 / itemsPerSlide}%` }}
     >
       {store.image && (
-        <Image
-          src={store.image}
-          alt={store.name}
-          className="object-cover rounded-xl"
-          fill
-          sizes={cardSizes(itemsPerSlide)}
-          priority={!!isLCP}
-          fetchPriority={isLCP ? "high" : "auto"}
-          quality={70}
-          placeholder="blur"
-          blurDataURL="data:image/png;base64,iVBORw0KGgoAAAANSUhEUgAAAAUA"
-        />
-      )}
-
+  <Image
+    src={store.image}
+    alt={store.name}
+    className="object-cover rounded-xl"
+    fill
+    sizes={cardSizes(itemsPerSlide)}   // already responsive
+    priority={!!isLCP}                 // only first visible card is LCP
+    fetchPriority={isLCP ? "high" : "auto"}
+    quality={70}
+    placeholder={store.blurDataURL ? "blur" : "empty"}
+    blurDataURL={store.blurDataURL}
+  />
+)}
       <h2 className="bg-primary relative top-0 w-full rounded-t-xl h-16 max-lg:h-12 flex items-center justify-center text-2xl font-bold capitalize text-white tracking-wide border-b-8 border-secondary max-lg:text-sm z-30">
         {store.name}
       </h2>
