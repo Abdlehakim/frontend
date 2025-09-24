@@ -1,5 +1,5 @@
 /* ------------------------------------------------------------------ */
-/*  src/app/page.tsx                                                  */
+/*  src/app/(webpage)/page.tsx                                                  */
 /* ------------------------------------------------------------------ */
 import Banner from "@/components/Banner";
 import Categories from "@/components/homepage/Categories";

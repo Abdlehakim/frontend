@@ -22,8 +22,6 @@ const Banner: React.FC<BannerProps> = ({ title, imageBanner, blurDataURL }) => {
         fetchPriority="high"
         loading="eager"
         sizes="100vw"
-        // Let Next/Image optimize external if domain is configured.
-        // Use a *real* blur for instant paint:
         placeholder={blurDataURL ? "blur" : "empty"}
         blurDataURL={blurDataURL}
       />
