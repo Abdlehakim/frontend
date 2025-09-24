@@ -5,7 +5,6 @@ import type { ReactNode } from "react";
 import StoreProviders from "@/components/Provider/StoreProvider";
 import { CurrencyProvider } from "@/contexts/CurrencyContext";
 import Providers from "@/components/Providers";
-import GoogleIdentityLoader from "@/components/GoogleIdentityLoader";
 import ClientShell from "@/components/ClientShell";
 import { fetchData } from "@/lib/fetchData";
 
@@ -30,7 +29,6 @@ export default async function Layout({ children }: { children: ReactNode }) {
           </ClientShell>
         </Providers>
       </CurrencyProvider>
-      <GoogleIdentityLoader />
     </div>
   );
 }

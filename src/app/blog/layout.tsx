@@ -1,7 +1,6 @@
 import HeaderBlog from "@/components/menu/blog/HeaderBlog";
 import Footer from "@/components/menu/Footer";
 import Providers from "@/components/Providers";
-import GoogleIdentityLoader from "@/components/GoogleIdentityLoader";
 import ClientShell from "@/components/ClientShell";
 
 const SubLayout = ({ children }: { children: React.ReactNode }) => {
@@ -14,7 +13,6 @@ const SubLayout = ({ children }: { children: React.ReactNode }) => {
           <Footer />
         </ClientShell>
       </Providers>
-      <GoogleIdentityLoader />
     </div>
   );
 };
