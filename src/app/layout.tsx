@@ -35,7 +35,6 @@ export default function RootLayout({ children }: { children: ReactNode }) {
     <html lang="fr" className={poppins.className}>
       <body>
         {children}
-        {/* Inject non-critical CSS after first paint (non-blocking) */}
         <SpeedInsights/>
       </body>
     </html>
