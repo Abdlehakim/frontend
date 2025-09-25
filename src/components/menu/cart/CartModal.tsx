@@ -210,7 +210,7 @@ const CartModal: React.FC<CartModalProps> = ({ items, onClose }) => {
                     className="flex items-center gap-2 justify-center border-2 border-[#15335E] rounded text-black hover:bg-[#15335E] hover:text-white px-2 max-md:py-2"
                     onClick={(e) => removeCartHandler(item, e)}
                   >
-                    <FaRegTrashAlt size={15} /><span className='hidden md:flex'>Supprimer</span>
+                    <FaRegTrashAlt size={15} /><span className='hidden md:flex'>Retirer</span>
                   </button>
                 </div>
               </div>

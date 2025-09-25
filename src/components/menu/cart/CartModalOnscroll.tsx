@@ -229,7 +229,7 @@ const CartModalOnscroll: React.FC<CartModalOnscrollProps> = ({
                   className="flex items-center gap-2 justify-center border-2 border-[#15335E] rounded text-black hover:bg-[#15335E] hover:text-white px-2"
                   onClick={(e) => removeCartHandler(item, e)}
                 >
-                  <span className="max-md:hidden">Supprimer</span>
+                  <span className="max-md:hidden">Retirer</span>
                   <FaRegTrashAlt size={15} />
                 </button>
               </div>
